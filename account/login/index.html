@@ -59,11 +59,21 @@ body { background: var(--bg, #f8f4e9); color: var(--text, #2a241b);
 </main>
 <script>
 (function () {
+  function checkSignedIn() {
+    // Already signed in? Go to account page. Retry until BSR.me is available.
+    var tries = 0;
+    var iv = setInterval(function () {
+      tries++;
+      if (window.BSR && BSR.me) {
+        clearInterval(iv);
+        BSR.me().then(function (c) { if (c) window.location = '/account/'; }).catch(function () {});
+      } else if (tries > 50) {
+        clearInterval(iv);
+      }
+    }, 100);
+  }
+  checkSignedIn();
   function render() {
-    // Already signed in? Back to the homepage.
-    if (window.BSR && BSR.me) {
-      BSR.me().then(function (c) { if (c) window.location = '/account/'; }).catch(function () {});
-    }
     // Cache the real theme object for instant application on next page load.
     if (window.BSR && BSR.loadTheme) {
       BSR.loadTheme().then(function (t) {
