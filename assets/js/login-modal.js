@@ -638,8 +638,12 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     overlay = null;
     document.removeEventListener('keydown', onEsc);
     if (document.body.dataset.bsrScrollLock !== undefined) {
-      document.body.style.overflow = document.body.dataset.bsrScrollLock;
+      var _y = parseInt(document.body.dataset.bsrScrollLock, 10) || 0;
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
       delete document.body.dataset.bsrScrollLock;
+      window.scrollTo(0, _y);
     }
   }
   function onEsc(e) {
@@ -662,8 +666,10 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     });
     document.addEventListener('keydown', onEsc);
     if (!document.body.dataset.bsrScrollLock) {
-      document.body.dataset.bsrScrollLock = document.body.style.overflow || '';
-      document.body.style.overflow = 'hidden';
+      document.body.dataset.bsrScrollLock = window.scrollY || 0;
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = '-' + (window.scrollY || 0) + 'px';
     }
     document.body.appendChild(overlay);
     buildForm(overlay.querySelector('[data-el="form"]'));
