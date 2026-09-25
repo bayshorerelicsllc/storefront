@@ -27,65 +27,61 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=20260925b">
 <script src="/assets/js/bsr.js?v=20260925c" defer></script>
-<script src="/assets/js/login-modal.js?v=20260925e" defer></script>
+<script src="/assets/js/login-modal.js?v=20260925f" defer></script>
 <style>
-/* Standalone login page: centered card using the shared login-form styles. */
-.login-page-wrap { max-width: 440px; margin: 40px auto; padding: 0 20px; }
-.login-page-card { background: var(--bg-soft, #f8f4e9); border: 1px solid var(--line, #e7dfc9);
-  border-radius: 16px; padding: 34px 30px 28px; box-shadow: 0 8px 28px rgba(30,77,51,.08); }
+/* Standalone Logitech-style sign-in page: minimal, centered, no site chrome. */
+html, body { margin: 0; padding: 0; }
+body { background: var(--bg, #f8f4e9); color: var(--text, #2a241b);
+  font-family: var(--font-body, system-ui, -apple-system, "Segoe UI", sans-serif); }
+.logi-page { min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 56px 20px 64px;
+  box-sizing: border-box; }
+.logi-page-inner { width: 100%; max-width: 400px; }
+.logi-loading { text-align: center; color: #8a8172; font-size: .95rem; }
 </style>
 </head>
 <body>
-<div id="bsr-header"></div>
-<main id="content">
-  <div class="login-page-wrap">
-    <div class="login-page-card" id="login-form-root">
-      <p class="muted">Loading…</p>
-    </div>
+<main class="logi-page">
+  <div class="logi-page-inner" id="login-form-root">
+    <p class="logi-loading">Loading…</p>
   </div>
 </main>
-<div id="bsr-footer"></div>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  BSR.init({ active: 'account' });
-  // Cache the real theme object for instant application on next page load.
-  if (BSR.loadTheme) {
-    BSR.loadTheme().then(function (t) {
-      try { if (t && t.color_bg) localStorage.setItem('bsr-theme-cache', JSON.stringify(t)); } catch (e) {}
-    });
-  }
-  // Already signed in? Go straight to the account page.
-  BSR.me().then(function (c) { if (c) window.location = '/account/'; });
-  // Render the shared email-first login form inline (no modal on this page).
-  // login-modal.js defines BSR.renderLoginForm; fall back to the modal if it
-  // failed to load for any reason.
+(function () {
   function render() {
-    if (BSR.renderLoginForm && !BSR.renderLoginForm._missing) {
-      BSR.renderLoginForm('#login-form-root', {
-        heading: 'Sign in',
-        sub: "Don't have an account yet? Enter your email and we'll help you create one!"
-      });
-    } else {
-      BSR.showLogin().then(function () {
-        // Modal opened as fallback; nothing inline to render.
-        document.getElementById('login-form-root').innerHTML = '';
-      });
+    // Already signed in? Back to the homepage.
+    if (window.BSR && BSR.me) {
+      BSR.me().then(function (c) { if (c) window.location = '/'; }).catch(function () {});
+    }
+    // Cache the real theme object for instant application on next page load.
+    if (window.BSR && BSR.loadTheme) {
+      BSR.loadTheme().then(function (t) {
+        try { if (t && t.color_bg) localStorage.setItem('bsr-theme-cache', JSON.stringify(t)); } catch (e) {}
+      }).catch(function () {});
+    }
+    // Render the shared Logitech-style form inline (no modal on this page).
+    if (window.BSR && BSR.renderLoginForm && !BSR.renderLoginForm._missing) {
+      BSR.renderLoginForm('#login-form-root');
+    } else if (window.BSR && BSR.showLogin) {
+      // login-modal.js failed to load: fall back to the modal.
+      BSR.showLogin();
+      document.getElementById('login-form-root').innerHTML = '';
     }
   }
-  if (document.readyState === 'complete') render();
-  else window.addEventListener('load', render);
-  // If login-modal.js is deferred, it may not be ready at DOMContentLoaded.
-  // Poll briefly for BSR.renderLoginForm.
+  // login-modal.js is deferred; poll briefly until BSR.renderLoginForm exists.
   var tries = 0;
   var iv = setInterval(function () {
     tries++;
-    if ((BSR.renderLoginForm && !BSR.renderLoginForm._missing) || tries > 40) {
+    var ready = window.BSR && BSR.renderLoginForm && !BSR.renderLoginForm._missing;
+    var root = document.getElementById('login-form-root');
+    var stillLoading = root && root.querySelector('.logi-loading');
+    if ((ready && stillLoading) || tries > 60) {
       clearInterval(iv);
-      var root = document.getElementById('login-form-root');
-      if (root && root.querySelector('.muted')) render();
+      if (stillLoading) render();
     }
   }, 100);
-});
+  if (document.readyState === 'complete') { /* poller handles it */ }
+})();
 </script>
 </body>
 </html>
