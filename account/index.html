@@ -576,13 +576,19 @@ document.addEventListener('DOMContentLoaded', function () {
     form.querySelector('[data-addr-cancel]').addEventListener('click', function () { slot.innerHTML = ''; });
     /* Live as-you-type address validation. */
     if (window.BSRAddrValidate && BSRAddrValidate.attachLive) BSRAddrValidate.attachLive(form);
-    /* "Same as" toggle hides the fields. */
+    /* "Same as" toggle hides the fields and lifts native validation while
+       checked, so the empty hidden required fields can't block the copy. */
     var sameBox = form.querySelector('input[name="same_as_other"]');
     var fieldsWrap = form.querySelector('[data-addr-fields]');
     if (sameBox && fieldsWrap) {
-      sameBox.addEventListener('change', function () {
-        fieldsWrap.style.display = sameBox.checked ? 'none' : '';
-      });
+      var sameSubmit = form.querySelector('[type="submit"]');
+      var syncSameAs = function () {
+        var on = sameBox.checked;
+        fieldsWrap.style.display = on ? 'none' : '';
+        if (sameSubmit) sameSubmit.formNoValidate = on;
+      };
+      sameBox.addEventListener('change', syncSameAs);
+      syncSameAs();
     }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
