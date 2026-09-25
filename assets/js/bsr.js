@@ -195,10 +195,11 @@
       drawerNav.innerHTML = main.items.map(function (it) {
         return '<a href="' + esc(it.url || '#') + '">' + icon('arrow-right', 'ic-sm') + esc(it.label || '') + '</a>';
       }).join('') +
-      '<a href="/account/">' + icon('account', 'ic-sm') + 'Account</a>' +
+      '<a href="/account/" data-account-btn>' + icon('account', 'ic-sm') + 'Account</a>' +
       '<a href="/cart/">' + icon('cart', 'ic-sm') + 'Cart</a>';
     }
   }
+    wireAccountButtons();
   function loadMenus() {
     if (menuCache) { applyMenus(menuCache); return Promise.resolve(menuCache); }
     return api('/api/catalog/menus').then(function (j) {
@@ -253,7 +254,7 @@
         '<nav class="main-nav" aria-label="Main">' + navHtml + '</nav>' +
         '<div class="header-icons">' +
         '<button class="icon-btn" id="bsr-search-btn" aria-label="Search">' + icon('search') + '</button>' +
-        '<a class="icon-btn" href="/account/" aria-label="Account">' + icon('account') + '</a>' +
+        '<button class="icon-btn" data-account-btn aria-label="Account">' + icon('account') + '</button>' +
         '<a class="icon-btn" href="/cart/" aria-label="Cart">' + icon('cart') + '<span class="cart-count"></span></a>' +
         '</div></div></div>' +
         '<div class="drawer-scrim" id="bsr-scrim"></div>' +
@@ -263,7 +264,7 @@
         '<nav>' + NAV.map(function (n) {
           return '<a href="' + n.href + '">' + icon('arrow-right', 'ic-sm') + esc(n.label) + '</a>';
         }).join('') +
-        '<a href="/account/">' + icon('account', 'ic-sm') + 'Account</a>' +
+        '<a href="/account/" data-account-btn>' + icon('account', 'ic-sm') + 'Account</a>' +
         '<a href="/cart/">' + icon('cart', 'ic-sm') + 'Cart</a>' +
         '</nav></aside>' +
         '<div class="search-overlay" id="bsr-search"><div class="wrap">' +
@@ -275,6 +276,7 @@
       var scrim = document.getElementById('bsr-scrim');
       var searchOv = document.getElementById('bsr-search');
       function closeAll() { drawer.classList.remove('open'); scrim.classList.remove('open'); searchOv.classList.remove('open'); }
+      wireAccountButtons();
       document.getElementById('bsr-menu-btn').addEventListener('click', function () { drawer.classList.add('open'); scrim.classList.add('open'); });
       document.getElementById('bsr-drawer-close').addEventListener('click', closeAll);
       scrim.addEventListener('click', closeAll);
@@ -403,12 +405,55 @@
     return me().catch(function () { return null; });
   }
 
+  /* ---------------- login modal (lazy-loaded) ---------------- */
+  var loginModalLoading = null;
+  function ensureLoginModal() {
+    if (window.BSR.showLogin && !window.BSR.showLogin._stub) return Promise.resolve();
+    if (loginModalLoading) return loginModalLoading;
+    loginModalLoading = new Promise(function (resolve) {
+      var s = document.createElement('script');
+      s.src = '/assets/js/login-modal.js?v=20260925a';
+      s.onload = function () { resolve(); };
+      s.onerror = function () { resolve(); };
+      document.head.appendChild(s);
+    });
+    return loginModalLoading;
+  }
+  /* Stub: replaced by the real BSR.showLogin from login-modal.js once loaded. */
+  function showLogin(opts) {
+    return ensureLoginModal().then(function () {
+      if (window.BSR.showLogin && !window.BSR.showLogin._stub) {
+        return window.BSR.showLogin(opts);
+      }
+      window.location = '/account/login/';
+    });
+  }
+  showLogin._stub = true;
+  /* Account buttons: signed in → /account/, signed out → login modal. */
+  function wireAccountButtons() {
+    var btns = document.querySelectorAll('[data-account-btn]');
+    for (var i = 0; i < btns.length; i++) {
+      (function (btn) {
+        if (btn._bsrWired) return;
+        btn._bsrWired = true;
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          me().then(function (c) {
+            if (c) { window.location = '/account/'; }
+            else { showLogin(); }
+          }).catch(function () { showLogin(); });
+        });
+      })(btns[i]);
+    }
+  }
+
   window.BSR = {
     api: api, money: money, esc: esc, icon: icon,
     cart: cart, updateCartBadge: updateCartBadge,
     loadTheme: loadTheme, applyTheme: applyTheme, loadMenus: loadMenus,
     me: me, toast: toast, init: init,
     setConsent: setConsent, consentState: consentState,
+    showLogin: showLogin, wireAccountButtons: wireAccountButtons,
     API: API
   };
 })();
