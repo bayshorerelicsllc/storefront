@@ -35,8 +35,21 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '.bsr-login-close:hover{background:rgba(42,36,27,.08)}',
     /* Shared Logitech-style form */
     '.bsr-loginform{max-width:400px;margin:0 auto}',
-    '.bsr-brand{text-align:center;font-size:1.85rem;font-weight:800;color:#1e4d33;letter-spacing:-.01em;',
-    'margin:0 0 10px;line-height:1.2}',
+    '.bsr-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 8px;',
+    'font-family:var(--font-head,"Bitter",Georgia,"Times New Roman",serif);font-weight:800;font-size:1.7rem;',
+    'letter-spacing:.015em;line-height:1.05;color:#1e4d33}',
+    '.bsr-brand img{width:52px;height:52px;object-fit:contain;flex:none}',
+    '.bsr-welcome{font-family:var(--font-head,"Bitter",Georgia,"Times New Roman",serif);font-size:1.3rem;',
+    'font-weight:700;color:#1e4d33;text-align:center;margin:0 0 6px}',
+    '.bsr-email-line{text-align:center;font-size:.92rem;color:#2a241b;margin:0 0 20px}',
+    '.bsr-link-sm{background:none;border:none;color:#2a241b;font-size:.8rem;cursor:pointer;',
+    'text-decoration:underline;padding:0 4px;font-family:inherit}',
+    '.bsr-guest{text-align:center;margin:18px 0 0}',
+    '.bsr-passkey{text-align:center;margin:16px 0 2px}',
+    '.bsr-passkey-btn{background:none;border:none;color:#1e4d33;font-size:.85rem;font-weight:700;',
+    'letter-spacing:.05em;text-decoration:underline;cursor:pointer;padding:8px;font-family:inherit}',
+    '.bsr-passkey-btn:disabled{opacity:.5;cursor:wait}',
+    '.bsr-passkey-msg{font-size:.8rem;color:#8a6d3b;min-height:20px;margin-top:4px}',
     '.bsr-tagline{text-align:center;color:#8a8172;font-size:.96rem;margin:0 0 30px;line-height:1.5}',
     '.bsr-error{display:none;background:#fdecea;color:#9c2b1e;border:1px solid #f3c1b8;border-radius:10px;',
     'padding:10px 14px;font-size:.87rem;margin:0 0 20px;line-height:1.45}',
@@ -186,37 +199,71 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
   }
 
   /* ------------------------------------------------------------------ */
-  /* Shared login form (Logitech-style; used by modal and inline page)   */
   /* ------------------------------------------------------------------ */
+  /* Passkey helpers (WebAuthn). Backend is live; see hidden_files snippets. */
+  /* ------------------------------------------------------------------ */
+  function b64urlToBytes(s) {
+    s = String(s).replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function bytesToB64url(bytes) {
+    var bin = '', i;
+    for (i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function passkeySupported() {
+    return !!(window.PublicKeyCredential && window.isSecureContext !== false &&
+      navigator.credentials && navigator.credentials.get);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Shared login form: email-first unified sign in / sign up.           */
+  /* Step 1: email -> check-email. Step 2a: password + SIGN IN.           */
+  /* Step 2b: name + password + CREATE ACCOUNT. Used by modal + page.    */
+  /* ------------------------------------------------------------------ */
+  function validEmail(v) {
+    return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v || ''));
+  }
+
   function buildForm(container) {
     container.innerHTML =
       '<div class="bsr-loginform">' +
       '<div class="bsr-error" data-el="error" role="alert"></div>' +
-      /* ---- SIGN IN ---- */
-      '<div data-mode="login">' +
-      '<div class="bsr-brand">Bay Shore Relics LLC</div>' +
+      '<div class="bsr-brand"><img src="/assets/img/logo.png" alt="Bay Shore Relics logo"><span>Bay Shore Relics LLC</span></div>' +
       '<p class="bsr-tagline">Log in with your Bay Shore Relics account.</p>' +
+      circlesHtml() +
+      '<div class="bsr-or"><span>OR</span></div>' +
+      /* ---- STEP 1: email ---- */
+      '<div data-step="email">' +
       '<div class="bsr-field"><label for="bsr-li-email">Email address</label>' +
-      '<input type="email" data-el="email" id="bsr-li-email" autocomplete="email"></div>' +
+      '<input type="email" data-el="email" id="bsr-li-email" autocomplete="email" placeholder="you@example.com"></div>' +
+      '<p class="bsr-hint">Don\'t have an account yet? Enter your email and we\'ll help you create one!</p>' +
+      '<button type="button" class="bsr-loginbtn" data-el="continue">CONTINUE</button>' +
+      '<div data-el="passkey-mount-1"></div>' +
+      '<p class="bsr-guest"><button type="button" class="bsr-link" data-el="guest">Continue as guest</button></p>' +
+      '</div>' +
+      /* ---- STEP 2a: existing account -> sign in ---- */
+      '<div data-step="signin" hidden>' +
+      '<p class="bsr-welcome">Welcome back!</p>' +
+      '<p class="bsr-email-line"><span data-el="email-echo"></span> <button type="button" class="bsr-link-sm" data-el="edit">Edit</button></p>' +
       '<div class="bsr-field"><label for="bsr-li-pw">Password</label>' +
       '<div class="bsr-pw-wrap"><input type="password" data-el="password" id="bsr-li-pw" autocomplete="current-password">' +
-      '<button type="button" class="bsr-eye" data-el="eye-login" aria-label="Show password">' + EYE_SVG + '</button></div></div>' +
+      '<button type="button" class="bsr-eye" data-el="eye-signin" aria-label="Show password">' + EYE_SVG + '</button></div></div>' +
       '<p class="bsr-forgot"><button type="button" class="bsr-link" data-el="forgot">Forgot password?</button></p>' +
-      '<div class="bsr-turnstile-wrap" data-el="ts-login"></div>' +
+      '<div class="bsr-turnstile-wrap" data-el="ts-signin"></div>' +
       CAPTCHA_NOTE +
-      '<button type="button" class="bsr-loginbtn" data-el="signin">LOGIN</button>' +
-      '<div class="bsr-or"><span>OR</span></div>' +
-      circlesHtml() +
-      '<p class="bsr-switch"><button type="button" class="bsr-link-u" data-el="to-register">CREATE AN ACCOUNT</button></p>' +
+      '<button type="button" class="bsr-loginbtn" data-el="signin">SIGN IN</button>' +
+      '<div data-el="passkey-mount-2"></div>' +
       '</div>' +
-      /* ---- CREATE ACCOUNT ---- */
-      '<div data-mode="register" hidden>' +
-      '<div class="bsr-brand">Bay Shore Relics LLC</div>' +
-      '<p class="bsr-tagline">Create your Bay Shore Relics account.</p>' +
+      /* ---- STEP 2b: new account -> create ---- */
+      '<div data-step="register" hidden>' +
+      '<p class="bsr-welcome">Create your account</p>' +
+      '<p class="bsr-email-line"><span data-el="email-echo"></span> <button type="button" class="bsr-link-sm" data-el="edit">Edit</button></p>' +
       '<div class="bsr-field"><label for="bsr-rg-name">Full name</label>' +
       '<input type="text" data-el="name" id="bsr-rg-name" autocomplete="name"></div>' +
-      '<div class="bsr-field"><label for="bsr-rg-email">Email address</label>' +
-      '<input type="email" data-el="reg-email" id="bsr-rg-email" autocomplete="email"></div>' +
       '<div class="bsr-field"><label for="bsr-rg-pw">Password</label>' +
       '<div class="bsr-pw-wrap"><input type="password" data-el="password2" id="bsr-rg-pw" autocomplete="new-password">' +
       '<button type="button" class="bsr-eye" data-el="eye-register" aria-label="Show password">' + EYE_SVG + '</button></div>' +
@@ -224,17 +271,17 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       '<div class="bsr-turnstile-wrap" data-el="ts-register"></div>' +
       CAPTCHA_NOTE +
       '<button type="button" class="bsr-loginbtn" data-el="create">CREATE ACCOUNT</button>' +
-      '<div class="bsr-or"><span>OR</span></div>' +
-      circlesHtml() +
-      '<p class="bsr-switch"><button type="button" class="bsr-link-u" data-el="to-login">BACK TO SIGN IN</button></p>' +
       '</div>' +
       '</div>';
 
     var q = function (sel) { return container.querySelector('[data-el="' + sel + '"]'); };
-    var modeLogin = container.querySelector('[data-mode="login"]');
-    var modeRegister = container.querySelector('[data-mode="register"]');
+    var qa = function (sel) { return container.querySelectorAll('[data-el="' + sel + '"]'); };
+    var stepEmail = container.querySelector('[data-step="email"]');
+    var stepSignin = container.querySelector('[data-step="signin"]');
+    var stepRegister = container.querySelector('[data-step="register"]');
     var errBox = q('error');
-    var tsWidgets = { login: null, register: null };
+    var tsWidgets = { signin: null, register: null };
+    var currentEmail = '';
 
     function showError(msg) {
       errBox.textContent = msg;
@@ -245,13 +292,17 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       errBox.textContent = '';
       errBox.classList.remove('show');
     }
-
-    function goMode(name) {
-      modeLogin.hidden = (name !== 'login');
-      modeRegister.hidden = (name !== 'register');
+    function setEcho(email) {
+      var els = qa('email-echo');
+      for (var i = 0; i < els.length; i++) els[i].textContent = email;
+    }
+    function goStep(name) {
+      stepEmail.hidden = (name !== 'email');
+      stepSignin.hidden = (name !== 'signin');
+      stepRegister.hidden = (name !== 'register');
       clearError();
-      if (name === 'login') ensureTurnstile('login');
-      else ensureTurnstile('register');
+      if (name === 'signin') ensureTurnstile('signin');
+      else if (name === 'register') ensureTurnstile('register');
     }
 
     /* Password show/hide toggles. */
@@ -265,16 +316,16 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
         btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
       });
     }
-    wireEye('eye-login', 'password');
+    wireEye('eye-signin', 'password');
     wireEye('eye-register', 'password2');
 
-    /* Turnstile: one widget per mode, rendered lazily on first entry. */
+    /* Turnstile: one widget per step 2, rendered lazily on first entry. */
     function ensureTurnstile(which) {
       if (!TURNSTILE_SITE_KEY || TURNSTILE_SITE_KEY === 'TURNSTILE_SITE_KEY') return Promise.resolve(null);
       return loadTurnstile().then(function () {
         if (!window.turnstile) return null;
         if (tsWidgets[which] !== null) return tsWidgets[which];
-        var mount = q(which === 'login' ? 'ts-login' : 'ts-register');
+        var mount = q(which === 'signin' ? 'ts-signin' : 'ts-register');
         if (!mount) return null;
         try {
           tsWidgets[which] = window.turnstile.render(mount, { sitekey: TURNSTILE_SITE_KEY });
@@ -295,7 +346,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       try { window.turnstile.reset(id); } catch (e) {}
     }
 
-    /* OAuth circles → popup flow. */
+    /* OAuth circles -> popup flow. */
     var circles = container.querySelectorAll('[data-oauth]');
     for (var i = 0; i < circles.length; i++) {
       (function (btn) {
@@ -306,28 +357,66 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       })(circles[i]);
     }
 
-    /* Mode switching. */
-    q('to-register').addEventListener('click', function () { goMode('register'); });
-    q('to-login').addEventListener('click', function () { goMode('login'); });
+    /* Continue as guest -> straight to the cart, no account needed. */
+    function guestGo() {
+      closeModal();
+      window.location = '/cart/';
+    }
+    var guestBtns = qa('guest');
+    for (var gi = 0; gi < guestBtns.length; gi++) {
+      guestBtns[gi].addEventListener('click', guestGo);
+    }
+
+    /* Edit email -> back to step 1. */
+    var editBtns = qa('edit');
+    for (var ei = 0; ei < editBtns.length; ei++) {
+      editBtns[ei].addEventListener('click', function () { goStep('email'); });
+    }
+
     q('forgot').addEventListener('click', function () {
       showError('Password reset is coming soon — contact us if you need help signing in.');
     });
 
-    /* Sign in. */
-    q('signin').addEventListener('click', function () {
+    /* Step 1: CONTINUE -> check whether the email has an account. */
+    q('continue').addEventListener('click', function () {
       clearError();
       var email = q('email').value.trim().toLowerCase();
-      var pw = q('password').value;
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      if (!validEmail(email)) {
         showError('Please enter a valid email address.');
         return;
       }
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = 'CHECKING…';
+      BSR.api('/api/account/check-email', { method: 'POST', body: { email: email } })
+        .then(function (j) {
+          btn.disabled = false;
+          btn.textContent = 'CONTINUE';
+          if (j && j.ok) {
+            currentEmail = email;
+            setEcho(email);
+            goStep(j.exists ? 'signin' : 'register');
+          } else {
+            showError((j && j.error) || 'Could not continue. Please try again.');
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          btn.textContent = 'CONTINUE';
+          showError('Could not continue. Please try again.');
+        });
+    });
+
+    /* Step 2a: SIGN IN. */
+    q('signin').addEventListener('click', function () {
+      clearError();
+      var pw = q('password').value;
       if (!pw) { showError('Please enter your password.'); return; }
       var btn = this;
       btn.disabled = true;
       btn.textContent = 'SIGNING IN…';
-      var body = { email: email, password: pw };
-      var tok = turnstileToken('login');
+      var body = { email: currentEmail, password: pw };
+      var tok = turnstileToken('signin');
       if (tok) body.cf_turnstile_response = tok;
       BSR.api('/api/account/login', { method: 'POST', body: body })
         .then(function (j) {
@@ -337,37 +426,32 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
             if (j && j.error === 'captcha_failed') {
               showError('Please complete the CAPTCHA and try again.');
             } else {
-              showError((j && j.error) || 'Sign in failed. Please check your email and password.');
+              showError((j && j.error) || 'Sign in failed. Please check your password.');
             }
-            resetTurnstile('login');
+            resetTurnstile('signin');
             btn.disabled = false;
-            btn.textContent = 'LOGIN';
+            btn.textContent = 'SIGN IN';
           }
         })
         .catch(function () {
           showError('Sign in failed. Please try again.');
-          resetTurnstile('login');
+          resetTurnstile('signin');
           btn.disabled = false;
-          btn.textContent = 'LOGIN';
+          btn.textContent = 'SIGN IN';
         });
     });
 
-    /* Create account. */
+    /* Step 2b: CREATE ACCOUNT. */
     q('create').addEventListener('click', function () {
       clearError();
       var name = q('name').value.trim();
-      var email = q('reg-email').value.trim().toLowerCase();
       var pw = q('password2').value;
       if (!name) { showError('Please enter your name.'); return; }
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-        showError('Please enter a valid email address.');
-        return;
-      }
       if (pw.length < 8) { showError('Password must be at least 8 characters.'); return; }
       var btn = this;
       btn.disabled = true;
       btn.textContent = 'CREATING…';
-      var body = { name: name, email: email, password: pw };
+      var body = { name: name, email: currentEmail, password: pw };
       var tok = turnstileToken('register');
       if (tok) body.cf_turnstile_response = tok;
       BSR.api('/api/account/register', { method: 'POST', body: body })
@@ -380,8 +464,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
             btn.disabled = false;
             btn.textContent = 'CREATE ACCOUNT';
           } else if (j && j.error && /already exists/i.test(j.error)) {
-            goMode('login');
-            q('email').value = email;
+            goStep('signin');
             showError('That email already has an account — please sign in.');
             btn.disabled = false;
             btn.textContent = 'CREATE ACCOUNT';
@@ -400,16 +483,97 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
         });
     });
 
-    /* Enter key submits the visible mode. */
+    /* Passkey sign-in buttons (Logitech-style link). Mounted in steps 1 & 2a. */
+    function mountPasskeys() {
+      if (!passkeySupported()) return;
+      var mounts = [q('passkey-mount-1'), q('passkey-mount-2')];
+      for (var i = 0; i < mounts.length; i++) {
+        if (!mounts[i]) continue;
+        mounts[i].innerHTML =
+          '<div class="bsr-passkey"><button type="button" class="bsr-passkey-btn">' +
+          '&#x1F511; USE PASSKEY TO LOG IN</button>' +
+          '<div class="bsr-passkey-msg"></div></div>';
+      }
+      var btns = container.querySelectorAll('.bsr-passkey-btn');
+      for (var j = 0; j < btns.length; j++) {
+        btns[j].addEventListener('click', function () { doPasskeyLogin(this); });
+      }
+    }
+
+    function doPasskeyLogin(clickedBtn) {
+      var wrap = clickedBtn.parentNode;
+      var msgEl = wrap ? wrap.querySelector('.bsr-passkey-msg') : null;
+      function msg(t) { if (msgEl) msgEl.textContent = t || ''; }
+      msg('');
+      var btns = container.querySelectorAll('.bsr-passkey-btn');
+      for (var i = 0; i < btns.length; i++) btns[i].disabled = true;
+      var emailInput = q('email');
+      var email = currentEmail || (emailInput ? emailInput.value.trim().toLowerCase() : '');
+      var pkScoped = false;
+      BSR.api('/api/account/passkey/login/start', { method: 'POST', body: email ? { email: email } : {} })
+        .then(function (start) {
+          if (!start || !start.ok) throw new Error((start && start.error) || 'Could not start passkey sign-in.');
+          var allow = start.allowCredentials || [];
+          pkScoped = allow.length > 0;
+          var opts = {
+            challenge: b64urlToBytes(start.challenge),
+            rpId: start.rpId,
+            userVerification: start.userVerification || 'preferred',
+            timeout: 60000
+          };
+          if (pkScoped) {
+            opts.allowCredentials = allow.map(function (c) {
+              return { type: c.type || 'public-key', id: b64urlToBytes(c.id) };
+            });
+          }
+          return navigator.credentials.get({ publicKey: opts });
+        })
+        .then(function (cred) {
+          if (!cred) throw new Error('cancelled');
+          var resp = cred.response;
+          return BSR.api('/api/account/passkey/login/finish', { method: 'POST', body: {
+            id: cred.id,
+            rawId: bytesToB64url(new Uint8Array(cred.rawId)),
+            response: {
+              authenticatorData: bytesToB64url(new Uint8Array(resp.authenticatorData)),
+              clientDataJSON: bytesToB64url(new Uint8Array(resp.clientDataJSON)),
+              signature: bytesToB64url(new Uint8Array(resp.signature)),
+              userHandle: resp.userHandle ? bytesToB64url(new Uint8Array(resp.userHandle)) : null
+            }
+          }}).then(function (fin) {
+            if (fin && fin.ok) { onAuthSuccess(); return null; }
+            throw new Error((fin && fin.error) || 'Passkey sign-in failed.');
+          });
+        })
+        .catch(function (e) {
+          var m = String((e && e.message) || e || '');
+          if (/notallowederror|aborterror/i.test(m)) {
+            // Scoped to an account that HAS passkeys: the device prompt showed
+            // and the user dismissed it -> stay silent. Otherwise there was
+            // no passkey to offer -> say so.
+            msg(pkScoped ? '' : 'No passkey found for this device — sign in with password first.');
+          } else if (/notsupported/i.test(m)) {
+            msg('This device or browser does not support passkeys.');
+          } else if (/cancelled/i.test(m)) {
+            msg('');
+          } else {
+            msg(m);
+          }
+          for (var i = 0; i < btns.length; i++) btns[i].disabled = false;
+        });
+    }
+    mountPasskeys();
+
+    /* Enter key submits the visible step. */
     function onEnter(el, btnSel) {
+      if (!el) return;
       el.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); q(btnSel).click(); }
       });
     }
-    onEnter(q('email'), 'signin');
+    onEnter(q('email'), 'continue');
     onEnter(q('password'), 'signin');
     onEnter(q('name'), 'create');
-    onEnter(q('reg-email'), 'create');
     onEnter(q('password2'), 'create');
 
     /* Surface ?error= (e.g. from a failed OAuth redirect). */
@@ -418,8 +582,8 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       if (eq) showError(String(eq).replace(/_/g, ' '));
     } catch (e) {}
 
-    // Start in sign-in mode; render its Turnstile widget.
-    goMode('login');
+    // Start at the email step.
+    goStep('email');
   }
 
   /* Called after any successful auth (page, modal, or OAuth popup).
