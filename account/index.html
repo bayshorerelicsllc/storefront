@@ -6,34 +6,96 @@
 <title>Your account — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods4">
-<script src="/assets/js/bsr.js?v=northwoods1" defer></script>
+<script src="/assets/js/bsr.js?v=20260925k" defer></script>
 <script src="https://js.stripe.com/v3/" defer></script>
 <style>
 .acct-nav-btn { display:flex; align-items:center; gap:10px; padding:10px 12px; width:100%;
   border-radius:var(--radius-sm); color:var(--text); background:none; border:0; font:inherit;
   cursor:pointer; text-align:left; }
 .acct-nav-btn:hover { background:var(--bg-soft); }
-.order-item { display:flex; justify-content:space-between; gap:14px; padding:8px 0;
-  border-top:1px solid var(--line); }
-.order-item .oi-name { font-size:0.94rem; }
-.order-item .oi-price { white-space:nowrap; font-weight:600; }
-.order-track { display:flex; align-items:center; gap:8px; margin-top:10px;
-  font-size:0.9rem; color:var(--text-soft); }
-.order-track .ic { flex:none; }
+.acct-nav-btn.active { background:var(--bg-soft); font-weight:600; }
 .profile-head { display:flex; align-items:center; gap:16px; margin-bottom:22px; }
 .profile-head img { width:56px; height:56px; border-radius:50%; object-fit:cover;
   border:1px solid var(--line); }
+.profile-head .ph-avatar-fallback { width:56px; height:56px; border-radius:50%;
+  background:#1e4d33; color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; font-weight:700; }
 .profile-head .ph-name { font-size:1.25rem; font-weight:700; }
-.profile-head .ph-email { color:var(--text-soft); font-size:0.92rem; }
+.profile-head .ph-email { color:var(--text-soft); font-size:.92rem; }
 .card-row { display:flex; align-items:center; gap:14px; padding:14px 0;
   border-top:1px solid var(--line); }
 .card-row:first-child { border-top:0; }
-.card-brand { font-weight:700; text-transform:capitalize; min-width:90px; }
-.card-meta { color:var(--text-soft); font-size:0.92rem; }
 .card-row .spacer { flex:1; }
+.order-item { display:flex; justify-content:space-between; gap:14px; padding:8px 0;
+  border-top:1px solid var(--line); }
+.order-item .oi-name { font-size:.94rem; }
+.order-item .oi-price { white-space:nowrap; font-weight:600; }
+.order-track { display:flex; align-items:center; gap:8px; margin-top:10px;
+  font-size:.9rem; color:var(--text-soft); }
+.order-track .ic { flex:none; }
 #stripe-card-element { padding:12px 14px; border:1px solid var(--line);
   border-radius:var(--radius-sm); background:var(--bg); margin:12px 0; }
-.pm-error { color:var(--danger); font-size:0.88rem; margin:8px 0; }
+.pm-error { color:var(--danger); font-size:.88rem; margin:8px 0; }
+/* Forms */
+.acct-form { max-width:520px; }
+.acct-field { margin-bottom:16px; }
+.acct-field label { display:block; font-size:.78rem; font-weight:600; letter-spacing:.04em;
+  text-transform:uppercase; color:var(--text-soft); margin-bottom:6px; }
+.acct-field input, .acct-field select { width:100%; padding:11px 13px; font-size:1rem;
+  border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--bg);
+  color:var(--text); box-sizing:border-box; font-family:inherit; }
+.acct-field input:focus, .acct-field select:focus { outline:none; border-color:#1e4d33;
+  box-shadow:0 0 0 2px rgba(30,77,51,.12); }
+.acct-field input[readonly] { background:var(--bg-soft); color:var(--text-soft); }
+.acct-field .hint { font-size:.82rem; color:var(--text-soft); margin-top:5px; }
+.acct-actions { display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+.acct-msg { padding:11px 14px; border-radius:var(--radius-sm); font-size:.9rem; margin:0 0 16px; }
+.acct-msg.ok { background:#e8f3ec; color:#1e4d33; border:1px solid #bcd8c4; }
+.acct-msg.err { background:#fdecea; color:#9c2b1e; border:1px solid #f3c1b8; }
+/* Address cards */
+.addr-grid { display:grid; gap:12px; margin:0 0 8px; }
+@media (min-width:640px) { .addr-grid { grid-template-columns:1fr 1fr; } }
+.addr-card { border:1px solid var(--line); border-radius:var(--radius-sm);
+  padding:14px 15px; background:var(--bg); position:relative; }
+.addr-card.is-default { border-color:#1e4d33; border-width:2px; }
+.addr-card .addr-name { font-weight:700; margin-bottom:4px; }
+.addr-card .addr-lines { font-size:.92rem; color:var(--text); line-height:1.5; }
+.addr-card .addr-badge { display:inline-block; font-size:.72rem; font-weight:700;
+  letter-spacing:.05em; text-transform:uppercase; background:#1e4d33; color:#fff;
+  border-radius:999px; padding:3px 10px; margin-bottom:8px; }
+.addr-card .addr-actions { display:flex; gap:8px; margin-top:12px; }
+.addr-card .addr-actions button { font-size:.84rem; padding:6px 12px; }
+.addr-form-wrap { border:1px solid var(--line); border-radius:var(--radius-sm);
+  padding:18px; margin:14px 0; background:var(--bg-soft); }
+.addr-form-grid { display:grid; gap:0 12px; }
+@media (min-width:520px) {
+  .addr-form-grid.two-col { grid-template-columns:1fr 1fr; }
+}
+.checkbox-row { display:flex; align-items:center; gap:9px; margin:4px 0 12px;
+  font-size:.92rem; }
+.checkbox-row input { width:18px; height:18px; accent-color:#1e4d33; }
+/* Section headings */
+.acct-section { margin-bottom:34px; }
+.acct-section > h2 { font-family:var(--font-head); color:#1e4d33; font-size:1.15rem;
+  margin:0 0 4px; }
+.acct-section > .sec-desc { font-size:.9rem; color:var(--text-soft); margin:0 0 16px; }
+.acct-section > h3.sub { font-size:1rem; margin:22px 0 10px; color:var(--text); }
+/* Passkeys */
+.pk-list { list-style:none; margin:0 0 14px; padding:0; }
+.pk-list li { display:flex; align-items:center; justify-content:space-between; gap:12px;
+  border:1px solid var(--line); border-radius:var(--radius-sm);
+  padding:11px 14px; margin-bottom:8px; background:var(--bg); }
+.pk-list .pk-meta { font-size:.82rem; color:var(--text-soft); }
+/* Layout */
+.account-layout { display:block; }
+@media (min-width:860px) {
+  .account-layout { display:grid; grid-template-columns:220px 1fr; gap:32px; align-items:start; }
+  .account-nav { position:sticky; top:20px; }
+}
+.account-nav { margin-bottom:20px; }
+.empty { text-align:center; padding:36px 16px; color:var(--text-soft); }
+.empty .ic { opacity:.5; margin-bottom:10px; }
+.empty h2 { color:var(--text); margin:8px 0; }
 </style>
 </head>
 <body>
@@ -46,19 +108,431 @@
 document.addEventListener('DOMContentLoaded', function () {
   BSR.init({ active: 'account' });
   var root = document.getElementById('account-root');
-  var tab = 'orders';
+  var tab = 'profile';
+  var customer = null;
 
-  function shortId(id) {
-    id = String(id == null ? '' : id);
-    return id.length > 12 ? '\u2026' + id.slice(-8) : id;
+  function esc(s) { return BSR.esc(s); }
+
+  function showMsg(el, ok, text) {
+    el.innerHTML = '<div class="acct-msg ' + (ok ? 'ok' : 'err') + '">' + esc(text) + '</div>';
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function clearMsg(el) { el.innerHTML = ''; }
+
+  /* ---------------- shell ---------------- */
+  function shell(contentHtml) {
+    var avatar = customer.avatar_url
+      ? '<img src="' + esc(customer.avatar_url) + '" alt="">'
+      : '<div class="ph-avatar-fallback">' + esc((customer.name || '?').trim().charAt(0).toUpperCase()) + '</div>';
+    var tabs = [
+      ['profile', 'user', 'Profile'],
+      ['addresses', 'truck', 'Addresses'],
+      ['security', 'shield', 'Security'],
+      ['orders', 'package', 'Orders'],
+      ['cards', 'card', 'Payment methods'],
+    ];
+    var nav = tabs.map(function (t) {
+      return '<button type="button" class="acct-nav-btn' + (tab === t[0] ? ' active' : '') + '" data-tab="' + t[0] + '">' +
+        BSR.icon(t[1], 'ic-sm') + esc(t[2]) + '</button>';
+    }).join('') +
+      '<button type="button" class="acct-nav-btn" id="signout-btn">' + BSR.icon('logout', 'ic-sm') + 'Sign out</button>';
+    return '<div class="page-head"><div class="profile-head">' + avatar +
+      '<div><div class="ph-name">' + esc(customer.name || 'Your account') + '</div>' +
+      '<div class="ph-email">' + esc(customer.email || '') + '</div></div></div></div>' +
+      '<div class="account-layout">' +
+      '<nav class="account-nav" aria-label="Account">' + nav + '</nav>' +
+      '<section id="acct-col" aria-label="Account details">' + contentHtml + '</section>' +
+      '</div>';
+  }
+  function bindShell() {
+    root.querySelectorAll('[data-tab]').forEach(function (b) {
+      b.addEventListener('click', function () { tab = b.getAttribute('data-tab'); render(); });
+    });
+    document.getElementById('signout-btn').addEventListener('click', function () {
+      BSR.api('/api/account/logout', { method: 'POST' }).then(function () {
+        window.location = '/account/login/';
+      });
+    });
   }
 
+  /* ---------------- profile ---------------- */
+  function renderProfile() {
+    return '<div class="acct-section"><h2>Profile</h2>' +
+      '<p class="sec-desc">Your contact information. Your email is your login and can&rsquo;t be changed here.</p>' +
+      '<div id="profile-msg"></div>' +
+      '<form id="profile-form" class="acct-form" autocomplete="on">' +
+      '<div class="acct-field"><label for="pf-name">Full name</label>' +
+      '<input id="pf-name" name="name" type="text" required maxlength="120" autocomplete="name" value="' + esc(customer.name || '') + '"></div>' +
+      '<div class="acct-field"><label for="pf-email">Email</label>' +
+      '<input id="pf-email" type="email" readonly value="' + esc(customer.email || '') + '">' +
+      '<div class="hint">This is your sign-in email.</div></div>' +
+      '<div class="acct-field"><label for="pf-phone">Phone</label>' +
+      '<input id="pf-phone" name="phone" type="tel" maxlength="40" autocomplete="tel" placeholder="(555) 123-4567" value="' + esc(customer.phone || '') + '">' +
+      '<div class="hint">For order updates and delivery questions.</div></div>' +
+      '<div class="acct-actions"><button type="submit" class="btn btn-primary" id="pf-save">Save changes</button></div>' +
+      '</form></div>';
+  }
+  function bindProfile() {
+    var form = document.getElementById('profile-form');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var msg = document.getElementById('profile-msg');
+      clearMsg(msg);
+      var btn = document.getElementById('pf-save');
+      btn.disabled = true;
+      BSR.api('/api/account/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: form.name.value.trim(),
+          phone: form.phone.value.trim(),
+        }),
+      }).then(function (j) {
+        if (j && j._status === 401) { window.location = '/account/login/'; return; }
+        if (j && j.ok) {
+          customer.name = j.customer.name;
+          customer.phone = j.customer.phone;
+          showMsg(msg, true, 'Profile saved.');
+          render();
+        } else {
+          showMsg(msg, false, (j && j.error) || 'Could not save. Please try again.');
+        }
+      }).catch(function () {
+        showMsg(msg, false, 'Could not save. Check your connection and try again.');
+      }).finally(function () { btn.disabled = false; });
+    });
+  }
+
+  /* ---------------- addresses ---------------- */
+  function addrCard(a) {
+    var lines = esc(a.address1 || '');
+    if (a.address2) lines += '<br>' + esc(a.address2);
+    lines += '<br>' + esc(a.city || '') + ', ' + esc(a.state || '') + ' ' + esc(a.postal || '');
+    lines += '<br>' + esc(a.country || '');
+    return '<div class="addr-card' + (a.is_default ? ' is-default' : '') + '" data-addr="' + esc(a.id) + '">' +
+      (a.is_default ? '<span class="addr-badge">Default</span>' : '') +
+      '<div class="addr-lines">' + lines + '</div>' +
+      '<div class="addr-actions">' +
+      '<button type="button" class="btn btn-ghost btn-sm" data-addr-edit="' + esc(a.id) + '">Edit</button>' +
+      (a.is_default ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-addr-default="' + esc(a.id) + '">Set default</button>') +
+      '<button type="button" class="btn btn-ghost btn-sm" data-addr-del="' + esc(a.id) + '" style="color:#9c2b1e">Remove</button>' +
+      '</div></div>';
+  }
+  function addrFormHtml(a, type) {
+    a = a || {};
+    return '<div class="addr-form-wrap"><form class="addr-form" data-addr-form="' + (a.id || 'new') + '" data-type="' + type + '">' +
+      '<div class="addr-form-grid two-col">' +
+      '<div class="acct-field"><label>Street address</label><input name="address1" required maxlength="200" autocomplete="street-address" value="' + esc(a.address1 || '') + '"></div>' +
+      '<div class="acct-field"><label>Apt, suite, etc. (optional)</label><input name="address2" maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
+      '<div class="acct-field"><label>City</label><input name="city" required maxlength="100" autocomplete="address-level2" value="' + esc(a.city || '') + '"></div>' +
+      '<div class="acct-field"><label>State / Province</label><input name="state" maxlength="100" autocomplete="address-level1" value="' + esc(a.state || '') + '"></div>' +
+      '<div class="acct-field"><label>ZIP / Postal code</label><input name="postal" required maxlength="20" autocomplete="postal-code" value="' + esc(a.postal || '') + '"></div>' +
+      '<div class="acct-field"><label>Country</label><input name="country" maxlength="10" autocomplete="country-name" value="' + esc(a.country || 'US') + '"></div>' +
+      '</div>' +
+      '<label class="checkbox-row"><input type="checkbox" name="is_default"' + (a.is_default ? ' checked' : '') + '> Make this my default ' + type + ' address</label>' +
+      '<div class="acct-actions"><button type="submit" class="btn btn-primary btn-sm">Save address</button>' +
+      '<button type="button" class="btn btn-ghost btn-sm" data-addr-cancel>Cancel</button></div>' +
+      '</form></div>';
+  }
+  function renderAddresses() {
+    return '<div class="acct-section"><h2>Addresses</h2>' +
+      '<p class="sec-desc">Saved addresses for faster checkout. Your default is pre-filled at checkout.</p>' +
+      '<div id="addr-msg"></div>' +
+      '<h3 class="sub">Shipping addresses</h3>' +
+      '<div class="addr-grid" id="ship-list"><p>Loading&hellip;</p></div>' +
+      '<div id="ship-form-slot"></div>' +
+      '<div class="acct-actions"><button type="button" class="btn btn-secondary btn-sm" id="ship-add">Add shipping address</button></div>' +
+      '<h3 class="sub">Billing addresses</h3>' +
+      '<div class="addr-grid" id="bill-list"><p>Loading&hellip;</p></div>' +
+      '<div id="bill-form-slot"></div>' +
+      '<div class="acct-actions"><button type="button" class="btn btn-secondary btn-sm" id="bill-add">Add billing address</button></div>' +
+      '</div>';
+  }
+  var addrCache = [];
+  function loadAddresses() {
+    BSR.api('/api/account/addresses').then(function (j) {
+      if (j && j._status === 401) { window.location = '/account/login/'; return; }
+      addrCache = (j && j.ok && Array.isArray(j.addresses)) ? j.addresses : [];
+      paintAddrLists();
+    }).catch(function () {
+      document.getElementById('ship-list').innerHTML = '<p>Could not load addresses.</p>';
+      document.getElementById('bill-list').innerHTML = '';
+    });
+  }
+  function paintAddrLists() {
+    ['shipping', 'billing'].forEach(function (type) {
+      var list = addrCache.filter(function (a) { return (a.type || 'shipping') === type; });
+      var el = document.getElementById(type === 'shipping' ? 'ship-list' : 'bill-list');
+      if (!el) return;
+      el.innerHTML = list.length ? list.map(addrCard).join('')
+        : '<p style="color:var(--text-soft);font-size:.92rem">No ' + type + ' addresses saved yet.</p>';
+    });
+    bindAddrButtons();
+  }
+  function bindAddrButtons() {
+    root.querySelectorAll('[data-addr-edit]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var a = addrCache.find(function (x) { return x.id === b.getAttribute('data-addr-edit'); });
+        if (!a) return;
+        var slot = document.getElementById(a.type === 'billing' ? 'bill-form-slot' : 'ship-form-slot');
+        slot.innerHTML = addrFormHtml(a, a.type || 'shipping');
+        bindAddrForm(slot);
+        slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
+    root.querySelectorAll('[data-addr-del]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (!window.confirm('Remove this address?')) return;
+        var id = b.getAttribute('data-addr-del');
+        BSR.api('/api/account/addresses/' + encodeURIComponent(id), { method: 'DELETE' })
+          .then(function (j) {
+            if (j && j.ok) loadAddresses();
+            else showAddrMsg(false, (j && j.error) || 'Could not remove the address.');
+          });
+      });
+    });
+    root.querySelectorAll('[data-addr-default]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-addr-default');
+        var a = addrCache.find(function (x) { return x.id === id; });
+        if (!a) return;
+        BSR.api('/api/account/addresses/' + encodeURIComponent(id), {
+          method: 'PUT',
+          body: JSON.stringify({
+            type: a.type, address1: a.address1, address2: a.address2 || '',
+            city: a.city, state: a.state || '', postal: a.postal,
+            country: a.country || 'US', is_default: true,
+          }),
+        }).then(function (j) {
+          if (j && j.ok) loadAddresses();
+          else showAddrMsg(false, (j && j.error) || 'Could not set default.');
+        });
+      });
+    });
+  }
+  function showAddrMsg(ok, text) {
+    var el = document.getElementById('addr-msg');
+    if (el) showMsg(el, ok, text);
+  }
+  function bindAddrForm(slot) {
+    var form = slot.querySelector('[data-addr-form]');
+    if (!form) return;
+    form.querySelector('[data-addr-cancel]').addEventListener('click', function () { slot.innerHTML = ''; });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var id = form.getAttribute('data-addr-form');
+      var type = form.getAttribute('data-type');
+      var fd = new FormData(form);
+      var payload = {
+        type: type,
+        address1: (fd.get('address1') || '').toString().trim(),
+        address2: (fd.get('address2') || '').toString().trim(),
+        city: (fd.get('city') || '').toString().trim(),
+        state: (fd.get('state') || '').toString().trim(),
+        postal: (fd.get('postal') || '').toString().trim(),
+        country: (fd.get('country') || 'US').toString().trim() || 'US',
+        is_default: !!fd.get('is_default'),
+      };
+      var url = id === 'new' ? '/api/account/addresses' : '/api/account/addresses/' + encodeURIComponent(id);
+      BSR.api(url, { method: id === 'new' ? 'POST' : 'PUT', body: JSON.stringify(payload) })
+        .then(function (j) {
+          if (j && j.ok) { slot.innerHTML = ''; loadAddresses(); showAddrMsg(true, 'Address saved.'); }
+          else showAddrMsg(false, (j && j.error) || 'Could not save the address.');
+        })
+        .catch(function () { showAddrMsg(false, 'Could not save. Check your connection.'); });
+    });
+  }
+  function bindAddresses() {
+    document.getElementById('ship-add').addEventListener('click', function () {
+      var slot = document.getElementById('ship-form-slot');
+      slot.innerHTML = addrFormHtml(null, 'shipping');
+      bindAddrForm(slot);
+    });
+    document.getElementById('bill-add').addEventListener('click', function () {
+      var slot = document.getElementById('bill-form-slot');
+      slot.innerHTML = addrFormHtml(null, 'billing');
+      bindAddrForm(slot);
+    });
+    loadAddresses();
+  }
+
+  /* ---------------- security ---------------- */
+  function b64urlToBytes(s) {
+    s = String(s).replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function bytesToB64url(bytes) {
+    var bin = '', i;
+    for (i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function pkSupported() {
+    return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+  }
+  function renderSecurity() {
+    var pw = '';
+    if (customer.has_password) {
+      pw = '<h3 class="sub">Change password</h3>' +
+        '<div id="pw-msg"></div>' +
+        '<form id="pw-form" class="acct-form">' +
+        '<div class="acct-field"><label for="pw-cur">Current password</label>' +
+        '<input id="pw-cur" type="password" required autocomplete="current-password"></div>' +
+        '<div class="acct-field"><label for="pw-new">New password</label>' +
+        '<input id="pw-new" type="password" required minlength="8" autocomplete="new-password">' +
+        '<div class="hint">At least 8 characters.</div></div>' +
+        '<div class="acct-actions"><button type="submit" class="btn btn-primary btn-sm" id="pw-save">Update password</button></div>' +
+        '</form>';
+    } else {
+      pw = '<h3 class="sub">Password</h3>' +
+        '<p style="font-size:.92rem;color:var(--text-soft)">You sign in with ' +
+        esc(socialProviderLabel()) + ', so there&rsquo;s no password on this account.</p>';
+    }
+    return '<div class="acct-section"><h2>Security</h2>' +
+      '<p class="sec-desc">Manage how you sign in.</p>' + pw +
+      '<h3 class="sub">Passkeys</h3>' +
+      '<p style="font-size:.9rem;color:var(--text-soft);margin:0 0 12px">Sign in with your fingerprint, face, or security key — no password needed.</p>' +
+      '<div id="pk-msg"></div>' +
+      '<ul class="pk-list" id="pk-list"><li>Loading&hellip;</li></ul>' +
+      '<div id="pk-add-slot"></div>' +
+      '</div>';
+  }
+  function socialProviderLabel() {
+    return 'a social account';
+  }
+  function bindSecurity() {
+    var pwForm = document.getElementById('pw-form');
+    if (pwForm) {
+      pwForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var msg = document.getElementById('pw-msg');
+        clearMsg(msg);
+        var btn = document.getElementById('pw-save');
+        btn.disabled = true;
+        BSR.api('/api/account/change-password', {
+          method: 'POST',
+          body: JSON.stringify({
+            current_password: document.getElementById('pw-cur').value,
+            new_password: document.getElementById('pw-new').value,
+          }),
+        }).then(function (j) {
+          if (j && j.ok) {
+            showMsg(msg, true, 'Password updated.');
+            pwForm.reset();
+          } else {
+            showMsg(msg, false, (j && j.error) || 'Could not update password.');
+          }
+        }).catch(function () {
+          showMsg(msg, false, 'Could not update password. Check your connection.');
+        }).finally(function () { btn.disabled = false; });
+      });
+    }
+    loadPasskeys();
+  }
+  function loadPasskeys() {
+    var list = document.getElementById('pk-list');
+    var slot = document.getElementById('pk-add-slot');
+    BSR.api('/api/account/passkeys').then(function (j) {
+      if (j && j._status === 401) { window.location = '/account/login/'; return; }
+      var pks = (j && j.ok && Array.isArray(j.passkeys)) ? j.passkeys : [];
+      if (!pks.length) {
+        list.innerHTML = '<li><span style="color:var(--text-soft);font-size:.92rem">No passkeys yet.</span></li>';
+      } else {
+        list.innerHTML = pks.map(function (p) {
+          var d = '';
+          try { d = new Date(p.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch (e) {}
+          return '<li><span><strong>' + esc(p.name || 'Passkey') + '</strong><br>' +
+            '<span class="pk-meta">Added ' + esc(d) + '</span></span>' +
+            '<button type="button" class="btn btn-ghost btn-sm" data-pk-del="' + esc(p.id) + '" style="color:#9c2b1e">Remove</button></li>';
+        }).join('');
+        list.querySelectorAll('[data-pk-del]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            if (!window.confirm('Remove this passkey?')) return;
+            BSR.api('/api/account/passkeys/' + encodeURIComponent(b.getAttribute('data-pk-del')), { method: 'DELETE' })
+              .then(function (r) { if (r && r.ok) loadPasskeys(); });
+          });
+        });
+      }
+      if (pkSupported()) {
+        slot.innerHTML = '<button type="button" class="btn btn-secondary btn-sm" id="pk-add-btn">Add a passkey</button>' +
+          '<div id="pk-form-msg" style="font-size:.85rem;color:#8a6d3b;min-height:18px;margin-top:6px"></div>';
+        document.getElementById('pk-add-btn').addEventListener('click', addPasskey);
+      } else {
+        slot.innerHTML = '<p style="font-size:.85rem;color:var(--text-soft)">This browser does not support passkeys.</p>';
+      }
+    }).catch(function () {
+      list.innerHTML = '<li><span style="color:var(--text-soft)">Could not load passkeys.</span></li>';
+    });
+  }
+  function pkFormMsg(t) {
+    var el = document.getElementById('pk-form-msg');
+    if (el) el.textContent = t || '';
+  }
+  function addPasskey() {
+    pkFormMsg('');
+    var name = window.prompt('Name this passkey (e.g. "Pixel 9", "MacBook"):');
+    if (name === null) return;
+    name = String(name || '').trim().slice(0, 60) || 'Passkey';
+    pkFormMsg('Starting registration — follow your device prompt…');
+    BSR.api('/api/account/passkey/register/start', { method: 'POST', body: JSON.stringify({}) })
+      .then(function (start) {
+        if (!start || !start.ok) throw new Error((start && start.error) || 'Could not start registration.');
+        return navigator.credentials.create({
+          publicKey: {
+            challenge: b64urlToBytes(start.challenge),
+            rp: start.rp,
+            user: {
+              id: b64urlToBytes(start.user.id),
+              name: start.user.name,
+              displayName: start.user.displayName,
+            },
+            pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+            excludeCredentials: (start.excludeCredentials || []).map(function (c) {
+              return { type: c.type || 'public-key', id: b64urlToBytes(c.id) };
+            }),
+            authenticatorSelection: start.authenticatorSelection,
+            attestation: start.attestation || 'none',
+            timeout: 60000,
+          },
+        }).then(function (cred) {
+          if (!cred) throw new Error('cancelled');
+          var resp = cred.response;
+          return BSR.api('/api/account/passkey/register/finish', {
+            method: 'POST',
+            body: JSON.stringify({
+              id: cred.id,
+              rawId: bytesToB64url(new Uint8Array(cred.rawId)),
+              response: {
+                attestationObject: bytesToB64url(new Uint8Array(resp.attestationObject)),
+                clientDataJSON: bytesToB64url(new Uint8Array(resp.clientDataJSON)),
+              },
+              name: name,
+            }),
+          });
+        });
+      })
+      .then(function (fin) {
+        if (fin && fin.ok) { pkFormMsg(''); loadPasskeys(); }
+        else pkFormMsg((fin && fin.error) || 'Registration failed.');
+      })
+      .catch(function (e) {
+        var m = String((e && e.message) || e);
+        pkFormMsg(/notallowed|abort/i.test(m) ? 'Registration was cancelled.' : m);
+      });
+  }
+
+  /* ---------------- orders (existing) ---------------- */
+  function shortId(id) {
+    id = String(id == null ? '' : id);
+    return id.length > 12 ? '…' + id.slice(-8) : id;
+  }
   function fmtDate(d) {
     if (!d) return '';
     var t = new Date(d);
     return isNaN(t.getTime()) ? String(d) : t.toLocaleDateString();
   }
-
   function orderCard(o) {
     var paid = String(o.payment_status || '').toLowerCase() === 'paid';
     var shipped = String(o.fulfillment_status || '').toLowerCase() === 'shipped';
@@ -68,88 +542,34 @@ document.addEventListener('DOMContentLoaded', function () {
     var items = '';
     (o.items || []).forEach(function (it) {
       var title = it.title || it.name || 'Item';
-      items += '<div class="order-item"><span class="oi-name">' + BSR.esc(title) + '</span>' +
-        '<span class="oi-price">' + BSR.money(it.price_cents || 0) + '</span></div>';
+      items += '<div class="order-item"><span class="oi-name">' + esc(title) + '</span>' +
+        '<span class="oi-price">' + BSR.money((it.price_cents || 0)) + '</span></div>';
     });
     var track = '';
     if (o.tracking_number) {
-      track = '<div class="order-track">' + BSR.icon('truck') +
-        '<span>Tracking: ' + BSR.esc((o.carrier || '') + ' ' + o.tracking_number).trim() + '</span></div>';
+      track = '<div class="order-track">' + BSR.icon('truck', 'ic-sm') +
+        '<span>Tracking: ' + esc((o.carrier || '') + ' ' + o.tracking_number).trim() + '</span></div>';
     }
     return '<div class="order-card">' +
-      '<div class="oh"><strong>Order ' + BSR.esc(shortId(o.id)) + '</strong>' +
-      '<span>' + BSR.esc(fmtDate(o.date)) + '</span>' +
-      '<span>' + BSR.money((o.total || 0) * 100) + '</span>' + pills + '</div>' +
+      '<div class="oh"><strong>Order ' + esc(shortId(o.id)) + '</strong>' +
+      '<span>' + esc(fmtDate(o.date)) + '</span>' +
+      '<span>' + BSR.money(o.total || 0) + '</span>' + pills + '</div>' +
       items + track + '</div>';
   }
-
-  function brandName(b) {
-    b = String(b || '').toLowerCase();
-    var names = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex',
-      discover: 'Discover', diners: 'Diners', jcb: 'JCB', unionpay: 'UnionPay' };
-    return names[b] || (b ? b.charAt(0).toUpperCase() + b.slice(1) : 'Card');
+  function renderOrders() {
+    return '<div class="acct-section"><h2>Orders</h2>' +
+      '<p class="sec-desc">Your purchase history.</p>' +
+      '<div id="orders-list"><p>Loading orders&hellip;</p></div></div>';
   }
-
-  function cardRow(c) {
-    var exp = (c.exp_month && c.exp_year)
-      ? 'Expires ' + String(c.exp_month).padStart(2, '0') + '/' + String(c.exp_year).slice(-2) : '';
-    return '<div class="card-row" data-pm="' + BSR.esc(c.id) + '">' +
-      '<span class="card-brand">' + BSR.esc(brandName(c.brand)) + '</span>' +
-      '<span class="card-meta">&bull;&bull;&bull;&bull; ' + BSR.esc(c.last4) + '</span>' +
-      '<span class="card-meta">' + BSR.esc(exp) + '</span>' +
-      '<span class="spacer"></span>' +
-      '<button type="button" class="btn btn-secondary btn-sm pm-delete">Remove</button>' +
-      '</div>';
-  }
-
-  function shell(customer, contentHtml) {
-    var avatar = customer.avatar_url
-      ? '<img src="' + BSR.esc(customer.avatar_url) + '" alt="">' : '';
-    var name = BSR.esc(customer.name || 'Your account');
-    var email = BSR.esc(customer.email || '');
-    return '<div class="page-head"><div class="profile-head">' + avatar +
-      '<div><div class="ph-name">' + name + '</div>' +
-      '<div class="ph-email">' + email + '</div></div></div></div>' +
-      '<div class="account-layout">' +
-      '<nav class="account-nav" aria-label="Account">' +
-      '<button type="button" class="acct-nav-btn' + (tab === 'orders' ? ' active' : '') + '" data-tab="orders">' +
-        BSR.icon('package', 'ic-sm') + 'Orders</button>' +
-      '<button type="button" class="acct-nav-btn' + (tab === 'cards' ? ' active' : '') + '" data-tab="cards">' +
-        BSR.icon('shield', 'ic-sm') + 'Payment methods</button>' +
-      '<button type="button" class="acct-nav-btn" id="signout-btn">' +
-        BSR.icon('logout', 'ic-sm') + 'Sign out</button>' +
-      '</nav>' +
-      '<section id="acct-col" aria-label="Account details">' + contentHtml + '</section>' +
-      '</div>';
-  }
-
-  function bindShell(customer) {
-    root.querySelectorAll('[data-tab]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        tab = b.getAttribute('data-tab');
-        render(customer);
-      });
-    });
-    document.getElementById('signout-btn').addEventListener('click', function () {
-      BSR.api('/api/account/logout', { method: 'POST' }).then(function () {
-        window.location = '/account/login/';
-      });
-    });
-  }
-
-  function renderOrders(customer) {
-    root.innerHTML = shell(customer, '<p>Loading orders&hellip;</p>');
-    bindShell(customer);
+  function bindOrders() {
     BSR.api('/api/account/orders').then(function (j) {
       if (j && j._status === 401) { window.location = '/account/login/'; return; }
-      var col = document.getElementById('acct-col');
+      var col = document.getElementById('orders-list');
       if (!col) return;
       var orders = (j && j.ok && Array.isArray(j.orders)) ? j.orders : [];
       if (!orders.length) {
-        col.innerHTML =
-          '<div class="empty">' + BSR.icon('package') +
-          '<h2>No orders yet</h2>' +
-          '<p>When you buy a slide, it will show up here.</p>' +
+        col.innerHTML = '<div class="empty">' + BSR.icon('package') +
+          '<h2>No orders yet</h2><p>When you buy a slide, it will show up here.</p>' +
           '<a class="btn btn-primary" href="/shop/" style="margin-top:14px">Start shopping</a></div>';
         return;
       }
@@ -157,8 +577,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  /* ---------------- payment methods (existing Stripe) ---------------- */
   var stripe = null, cardEl = null, addingCard = false;
-
+  function renderCards() {
+    return '<div class="acct-section"><h2>Payment methods</h2>' +
+      '<p class="sec-desc">Saved cards for faster checkout. Cards are stored securely by our payment processor — we never see your full card number.</p>' +
+      '<div id="pm-list"><p>Loading saved cards&hellip;</p></div>' +
+      '<div id="pm-add" style="margin-top:18px">' +
+      '<button type="button" class="btn btn-secondary" id="pm-add-btn">Add a card</button>' +
+      '<div id="pm-form" style="display:none">' +
+      '<div id="stripe-card-element"></div>' +
+      '<div class="pm-error" id="pm-error" role="alert" style="display:none"></div>' +
+      '<button type="button" class="btn btn-primary" id="pm-save-btn">Save card</button> ' +
+      '<button type="button" class="btn btn-ghost" id="pm-cancel-btn">Cancel</button>' +
+      '</div></div></div>';
+  }
   function loadStripe() {
     if (stripe) return Promise.resolve(stripe);
     return BSR.api('/api/catalog/config').then(function (j) {
@@ -169,47 +602,12 @@ document.addEventListener('DOMContentLoaded', function () {
       return stripe;
     });
   }
-
-  function renderCards(customer) {
-    root.innerHTML = shell(customer,
-      '<div id="pm-list"><p>Loading saved cards&hellip;</p></div>' +
-      '<div id="pm-add" style="margin-top:18px">' +
-      '<button type="button" class="btn btn-secondary" id="pm-add-btn">Add a card</button>' +
-      '<div id="pm-form" style="display:none">' +
-      '<div id="stripe-card-element"></div>' +
-      '<div class="pm-error" id="pm-error" role="alert" style="display:none"></div>' +
-      '<button type="button" class="btn btn-primary" id="pm-save-btn">Save card</button> ' +
-      '<button type="button" class="btn btn-ghost" id="pm-cancel-btn">Cancel</button>' +
-      '</div></div>' +
-      '<p style="margin-top:16px;font-size:0.85rem;color:var(--text-soft)">Cards are stored securely by our payment processor. We never see your full card number.</p>');
-    bindShell(customer);
-    refreshCards();
-
-    document.getElementById('pm-add-btn').addEventListener('click', function () {
-      if (addingCard) return;
-      addingCard = true;
-      var form = document.getElementById('pm-form');
-      form.style.display = 'block';
-      this.style.display = 'none';
-      loadStripe().then(function (st) {
-        var elements = st.elements();
-        cardEl = elements.create('card');
-        cardEl.mount('#stripe-card-element');
-      }).catch(function (e) {
-        showPmError(e.message || 'Could not load the card form.');
-      });
-    });
-    document.getElementById('pm-cancel-btn').addEventListener('click', resetAddForm);
-    document.getElementById('pm-save-btn').addEventListener('click', saveCard);
-  }
-
   function showPmError(msg) {
     var box = document.getElementById('pm-error');
     if (!box) return;
     box.textContent = msg;
     box.style.display = 'block';
   }
-
   function resetAddForm() {
     addingCard = false;
     if (cardEl) { try { cardEl.destroy(); } catch (e) {} cardEl = null; }
@@ -222,14 +620,13 @@ document.addEventListener('DOMContentLoaded', function () {
     var saveBtn = document.getElementById('pm-save-btn');
     if (saveBtn) saveBtn.disabled = false;
   }
-
   function refreshCards() {
     var list = document.getElementById('pm-list');
     BSR.api('/api/account/payment-methods').then(function (j) {
       if (j && j._status === 401) { window.location = '/account/login/'; return; }
       if (!list) return;
       if (!j || !j.ok) {
-        list.innerHTML = '<p>' + BSR.esc((j && j.error) || 'Could not load saved cards.') + '</p>';
+        list.innerHTML = '<p>' + esc((j && j.error) || 'Could not load saved cards.') + '</p>';
         return;
       }
       var cards = Array.isArray(j.cards) ? j.cards : [];
@@ -237,7 +634,21 @@ document.addEventListener('DOMContentLoaded', function () {
         list.innerHTML = '<p style="color:var(--text-soft)">No saved cards yet. Add one for faster checkout.</p>';
         return;
       }
-      list.innerHTML = cards.map(cardRow).join('');
+      list.innerHTML = cards.map(function (c) {
+        var brand = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex',
+          discover: 'Discover', diners: 'Diners', jcb: 'JCB', unionpay: 'UnionPay' }
+          [String(c.brand || '').toLowerCase()] ||
+          (c.brand ? c.brand.charAt(0).toUpperCase() + c.brand.slice(1) : 'Card');
+        var exp = (c.exp_month && c.exp_year)
+          ? 'Expires ' + String(c.exp_month).padStart(2, '0') + '/' + String(c.exp_year).slice(-2) : '';
+        return '<div class="card-row" data-pm="' + esc(c.id) + '">' +
+          '<span class="card-brand">' + esc(brand) + '</span>' +
+          '<span class="card-meta">&bull;&bull;&bull;&bull; ' + esc(c.last4) + '</span>' +
+          '<span class="card-meta">' + esc(exp) + '</span>' +
+          '<span class="spacer"></span>' +
+          '<button type="button" class="btn btn-secondary btn-sm pm-delete">Remove</button>' +
+          '</div>';
+      }).join('');
       list.querySelectorAll('.pm-delete').forEach(function (b) {
         b.addEventListener('click', function () {
           var row = b.closest('.card-row');
@@ -257,7 +668,6 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
   }
-
   function saveCard() {
     var errBox = document.getElementById('pm-error');
     if (errBox) errBox.style.display = 'none';
@@ -278,16 +688,47 @@ document.addEventListener('DOMContentLoaded', function () {
       showPmError(e.message || 'Could not save the card.');
     });
   }
-
-  function render(customer) {
-    if (tab === 'cards') renderCards(customer);
-    else renderOrders(customer);
+  function bindCards() {
+    refreshCards();
+    document.getElementById('pm-add-btn').addEventListener('click', function () {
+      if (addingCard) return;
+      addingCard = true;
+      var form = document.getElementById('pm-form');
+      form.style.display = 'block';
+      this.style.display = 'none';
+      loadStripe().then(function (st) {
+        var elements = st.elements();
+        cardEl = elements.create('card');
+        cardEl.mount('#stripe-card-element');
+      }).catch(function (e) {
+        showPmError(e.message || 'Could not load the card form. Check your connection and try again.');
+      });
+    });
+    document.getElementById('pm-cancel-btn').addEventListener('click', resetAddForm);
+    document.getElementById('pm-save-btn').addEventListener('click', saveCard);
   }
 
-  // Boot: 401 from /api/account/me -> login page.
+  /* ---------------- render dispatch ---------------- */
+  function render() {
+    var html = '';
+    if (tab === 'profile') html = renderProfile();
+    else if (tab === 'addresses') html = renderAddresses();
+    else if (tab === 'security') html = renderSecurity();
+    else if (tab === 'orders') html = renderOrders();
+    else if (tab === 'cards') html = renderCards();
+    root.innerHTML = shell(html);
+    bindShell();
+    if (tab === 'profile') bindProfile();
+    else if (tab === 'addresses') bindAddresses();
+    else if (tab === 'security') bindSecurity();
+    else if (tab === 'orders') bindOrders();
+    else if (tab === 'cards') bindCards();
+  }
+
+  /* ---------------- boot ---------------- */
   BSR.api('/api/account/me').then(function (j) {
     if (j && j._status === 401) { window.location = '/account/login/'; return; }
-    if (j && j.ok && j.customer) { render(j.customer); }
+    if (j && j.ok && j.customer) { customer = j.customer; render(); }
     else { window.location = '/account/login/'; }
   });
 });
