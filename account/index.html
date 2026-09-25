@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods4">
 <script src="/assets/js/bsr.js?v=20260925k" defer></script>
-<script src="/assets/js/addr-validate.js?v=20260925j"></script>
+<script src="/assets/js/addr-validate.js?v=20260925k"></script>
 <script src="https://js.stripe.com/v3/" defer></script>
 <style>
 .acct-nav-btn { display:flex; align-items:center; gap:10px; padding:10px 12px; width:100%;
@@ -664,16 +664,15 @@ document.addEventListener('DOMContentLoaded', function () {
         /* Keep the billing role if this address already doubles as bill-to. */
         payload.is_default_billing = !!(addrBill && addrShip && String(addrBill.id) === String(addrShip.id));
       }
-      /* Validate the address before saving when the validator is available. */
-      var btn = form.querySelector('[type="submit"]');
-      if (btn) btn.disabled = true;
+      /* Validate the address before saving when the validator is available.
+         checkAndConfirm owns the submit button and asks before applying a
+         Shippo correction. */
       var finish = function (p, info) {
-        if (btn) btn.disabled = false;
         verifiedNote = (info && info.validated) ? ' \u2713 Address verified' : '';
         doSave(p);
       };
-      if (window.BSRAddrValidate && BSRAddrValidate.silentCheck) {
-        BSRAddrValidate.silentCheck(form, payload, finish);
+      if (window.BSRAddrValidate && BSRAddrValidate.checkAndConfirm) {
+        BSRAddrValidate.checkAndConfirm(form, payload, finish);
       } else {
         finish(payload);
       }
