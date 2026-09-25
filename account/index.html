@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods4">
 <script src="/assets/js/bsr.js?v=20260925k" defer></script>
-<script src="/assets/js/addr-validate.js?v=20260925c"></script>
+<script src="/assets/js/addr-validate.js?v=20260925d"></script>
 <script src="https://js.stripe.com/v3/" defer></script>
 <style>
 .acct-nav-btn { display:flex; align-items:center; gap:10px; padding:10px 12px; width:100%;
@@ -667,10 +667,13 @@ document.addEventListener('DOMContentLoaded', function () {
           .catch(function () { showAddrMsg(false, 'Could not save. Check your connection.'); toast('Could not save. Check your connection.', false); });
       };
       /* Validate the address before saving when the validator is available. */
-      if (window.BSRAddrValidate && BSRAddrValidate.checkAndConfirm) {
-        BSRAddrValidate.checkAndConfirm(form, payload, doSave);
+      var btn = form.querySelector('[type="submit"]');
+      if (btn) btn.disabled = true;
+      var finish = function (p) { if (btn) btn.disabled = false; doSave(p); };
+      if (window.BSRAddrValidate && BSRAddrValidate.silentCheck) {
+        BSRAddrValidate.silentCheck(form, payload, finish);
       } else {
-        doSave(payload);
+        finish(payload);
       }
     });
   }
