@@ -233,6 +233,8 @@
     [streetEl, cityEl, zipEl].forEach(function (el) {
       if (el) el.addEventListener('input', schedule);
     });
+    /* Validate pre-filled values right away (e.g. editing a saved address). */
+    if (ready()) timer = setTimeout(run, 600);
   }
 
   window.BSRAddrValidate = { validate: validate, checkAndConfirm: checkAndConfirm, attachLive: attachLive };
