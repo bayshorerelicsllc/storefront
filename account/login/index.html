@@ -1,6 +1,26 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
+<script>
+// Apply cached theme instantly to avoid flash of default styling
+(function() {
+  try {
+    var cached = localStorage.getItem('bsr-theme-cache');
+    if (cached) {
+      var t = JSON.parse(cached);
+      var root = document.documentElement.style;
+      if (t.color_accent) root.setProperty('--accent', t.color_accent);
+      if (t.color_bg) root.setProperty('--bg', t.color_bg);
+      if (t.color_text) root.setProperty('--text', t.color_text);
+      if (t.color_bg_soft) root.setProperty('--bg-soft', t.color_bg_soft);
+      if (t.color_line) root.setProperty('--line', t.color_line);
+      if (t.color_text_faint) root.setProperty('--text-faint', t.color_text_faint);
+      if (t.font_heading && t.font_heading !== 'system') root.setProperty('--font-head', t.font_heading);
+      if (t.font_body && t.font_body !== 'system') root.setProperty('--font-body', t.font_body);
+    }
+  } catch(e) {}
+})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sign in — Bay Shore Relics LLC</title>
@@ -94,6 +114,19 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   BSR.init({ active: 'account' });
+  // Cache theme for instant application on next page load
+  BSR.init({ active: 'account' }).then(function() {
+    try {
+      // Theme is applied by BSR.init, cache the CSS variable values
+      var cs = getComputedStyle(document.documentElement);
+      var theme = {
+        color_accent: cs.getPropertyValue('--accent').trim(),
+        color_bg: cs.getPropertyValue('--bg').trim(),
+        color_text: cs.getPropertyValue('--text').trim()
+      };
+      if (theme.color_bg) localStorage.setItem('bsr-theme-cache', JSON.stringify(theme));
+    } catch(e) {}
+  });
   // Already signed in? Go straight to the account page.
   BSR.me().then(function (c) { if (c) window.location = '/account/'; });
   // Surface OAuth failures (?error=... set by the worker's failure page redirect).
