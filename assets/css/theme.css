@@ -463,4 +463,4 @@ html.a11y-motion *, html.a11y-motion *::before, html.a11y-motion *::after {
 /* Accept badge: rectangular white strip with all payment logos (footer bottom) */
 .accept-badge{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 12px;background:#fff;border-radius:10px;padding:10px 14px;max-width:100%;box-shadow:0 1px 3px rgba(0,0,0,.25);box-sizing:border-box}
 .accept-badge img{height:16px;width:auto;max-width:68px;object-fit:contain;display:block;flex:0 1 auto;min-width:0}
-@media(max-width:560px){.accept-badge{gap:8px 10px;padding:10px 12px}.accept-badge img{height:14px;max-width:60px}}
+@media(max-width:560px){.accept-badge{flex-wrap:nowrap;gap:6px 8px;padding:8px 10px}.accept-badge img{height:12px;max-width:52px}}
