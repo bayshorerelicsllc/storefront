@@ -258,7 +258,7 @@
         '</div></div></div>' +
         '<div class="drawer-scrim" id="bsr-scrim"></div>' +
         '<aside class="drawer" id="bsr-drawer" aria-label="Menu"><div class="drawer-head">' +
-        '<span class="brand"><img src="/assets/img/logo.png" alt="" style="width:30px;height:30px"><span data-store-name>Bay Shore Relics LLC</span></span>' +
+        '<span class="brand drawer-brand"><img src="/assets/img/logo.png" alt="Bay Shore Relics logo"><span class="name" data-store-name>Bay Shore Relics LLC</span></span>' +
         '<button class="icon-btn" id="bsr-drawer-close" aria-label="Close menu">' + icon('close') + '</button></div>' +
         '<nav>' + NAV.map(function (n) {
           return '<a href="' + n.href + '">' + icon('arrow-right', 'ic-sm') + esc(n.label) + '</a>';
