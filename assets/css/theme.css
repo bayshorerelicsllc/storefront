@@ -394,3 +394,42 @@ html.a11y-motion *, html.a11y-motion *::before, html.a11y-motion *::after {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Northwoods showcase sections */
+.hero-kicker { font-family: var(--font-head); font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; font-size: 0.78rem; color: var(--gold-soft); margin: 0 0 10px; }
+.hero .btn-ghost.hero-ghost { margin-top: 8px; margin-left: 10px; color: #fdf8ea;
+  border-color: rgba(253, 248, 234, 0.5); }
+.hero .btn-ghost.hero-ghost:hover { background: rgba(253, 248, 234, 0.12); text-decoration: none; }
+
+.cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.cat-card { position: relative; display: block; border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--line); aspect-ratio: 4/3; color: #fff; }
+.cat-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.cat-card:hover img { transform: scale(1.04); }
+.cat-card:hover { text-decoration: none; }
+.cat-card span { position: absolute; left: 0; right: 0; bottom: 0; padding: 34px 18px 16px;
+  background: linear-gradient(transparent, rgba(12, 24, 17, 0.88)); }
+.cat-card strong { display: block; font-family: var(--font-head); font-size: 1.25rem; font-weight: 700; }
+.cat-card em { font-style: normal; font-size: 0.85rem; color: #e8dcc0; }
+
+.story { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: center;
+  margin: 20px 0 10px; padding: 34px; background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: var(--radius); }
+.story-img img { border-radius: var(--radius-sm); box-shadow: var(--shadow); }
+.story-body .hero-kicker { color: var(--gold); }
+.story-body h2 { margin-top: 0; }
+.story-body p { color: var(--text-soft); }
+
+.stats-band { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin: 26px 0 8px; background: var(--accent-deep); border-radius: var(--radius);
+  border-bottom: 3px solid var(--gold); padding: 26px 20px; text-align: center; }
+.stats-band strong { display: block; font-family: var(--font-head); font-size: 1.9rem;
+  font-weight: 800; color: #f4eedd; }
+.stats-band span { font-size: 0.85rem; color: #c9b98f; letter-spacing: 0.04em; }
+
+@media (max-width: 900px) {
+  .cat-grid { grid-template-columns: 1fr; }
+  .story { grid-template-columns: 1fr; padding: 22px; }
+  .stats-band { grid-template-columns: 1fr; gap: 18px; }
+}
