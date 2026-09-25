@@ -34,7 +34,7 @@
 .order-track { display:flex; align-items:center; gap:8px; margin-top:10px;
   font-size:.9rem; color:var(--text-soft); }
 .order-track .ic { flex:none; }
-#stripe-card-element { padding:12px 14px; border:1px solid var(--line);
+.stripe-field { padding:12px 14px; border:1px solid var(--line);
   border-radius:var(--radius-sm); background:var(--bg); margin:12px 0; }
 .pm-error { color:var(--danger); font-size:.88rem; margin:8px 0; }
 /* Forms */
@@ -781,7 +781,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ---------------- payment methods (existing Stripe) ---------------- */
-  var stripe = null, cardEl = null, addingCard = false;
+  var stripe = null, cardEl = null, cardNumEl = null, cardExpEl = null, cardCvcEl = null, addingCard = false;
   function renderCards() {
     return '<div class="acct-section"><h2>Payment methods</h2>' +
       '<p class="sec-desc">Saved cards for faster checkout. Cards are stored securely by our payment processor — we never see your full card number.</p>' +
@@ -789,7 +789,11 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div id="pm-add" style="margin-top:18px">' +
       '<button type="button" class="btn btn-secondary" id="pm-add-btn">Add a card</button>' +
       '<div id="pm-form" style="display:none">' +
-      '<div id="stripe-card-element"></div>' +
+      '<div class="acct-field"><label>Card number</label><div id="stripe-card-number" class="stripe-field"></div></div>' +
+      '<div class="addr-form-grid two-col">' +
+      '<div class="acct-field"><label>Expiry</label><div id="stripe-card-expiry" class="stripe-field"></div></div>' +
+      '<div class="acct-field"><label>CVC</label><div id="stripe-card-cvc" class="stripe-field"></div></div>' +
+      '</div>' +
       '<div class="pm-error" id="pm-error" role="alert" style="display:none"></div>' +
       '<button type="button" class="btn btn-primary" id="pm-save-btn">Save card</button> ' +
       '<button type="button" class="btn btn-ghost" id="pm-cancel-btn">Cancel</button>' +
@@ -813,7 +817,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function resetAddForm() {
     addingCard = false;
-    if (cardEl) { try { cardEl.destroy(); } catch (e) {} cardEl = null; }
+    if (cardNumEl) { try { cardNumEl.destroy(); } catch (e) {} cardNumEl = null; } if (cardExpEl) { try { cardExpEl.destroy(); } catch (e) {} cardExpEl = null; } if (cardCvcEl) { try { cardCvcEl.destroy(); } catch (e) {} cardCvcEl = null; } cardEl = null;
     var form = document.getElementById('pm-form');
     var addBtn = document.getElementById('pm-add-btn');
     var errBox = document.getElementById('pm-error');
