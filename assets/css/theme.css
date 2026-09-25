@@ -1,45 +1,57 @@
 /* ==========================================================================
- * Bay Shore Relics — storefront theme.
- * Fresh original design, Shopify-Dawn-inspired look and feel (no Shopify
- * assets, names, or logos). Light theme default; [data-theme="dark"] on
- * <html> switches to dark. --accent / --bg / --text are overridden at
- * runtime by BSR.loadTheme() from /api/catalog/theme.
+ * Bay Shore Relics — Northwoods lakehouse heritage theme.
+ * Deep pine, lake teal, birch cream, and cabin-amber. Headings in Bitter
+ * (slab serif, lodge-sign feel); body in the system stack.
+ * Light theme default; [data-theme="dark"] on <html> switches to night.
+ * --accent / --bg / --text are overridden at runtime by BSR.loadTheme()
+ * from /api/catalog/theme.
  * ========================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap");
+
 :root {
-  --accent: #6d5cff;
-  --accent-ink: #ffffff;
-  --bg: #ffffff;
-  --bg-soft: #f6f6f8;
-  --bg-card: #ffffff;
-  --text: #1a1a1a;
-  --text-soft: #5c5c66;
-  --text-faint: #8a8a94;
-  --line: #e6e6ea;
-  --line-soft: #f0f0f3;
-  --danger: #c0392b;
-  --success: #1e7e34;
-  --warn: #b7791f;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 8px 30px rgba(20, 20, 40, 0.08);
-  --shadow-sm: 0 2px 10px rgba(20, 20, 40, 0.06);
-  --font-head: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --accent: #1e4d33;
+  --accent-deep: #143423;
+  --accent-ink: #f8f4e9;
+  --gold: #b97f2f;
+  --gold-soft: #e8d5ae;
+  --lake: #175263;
+  --bg: #f8f4e9;
+  --bg-soft: #efe7d3;
+  --bg-card: #fffdf6;
+  --text: #2a241b;
+  --text-soft: #5c5344;
+  --text-faint: #8a7d64;
+  --line: #ddd2b8;
+  --line-soft: #e9e0c9;
+  --danger: #a83a2a;
+  --success: #2e6b3a;
+  --warn: #96660f;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow: 0 8px 30px rgba(42, 36, 27, 0.10);
+  --shadow-sm: 0 2px 10px rgba(42, 36, 27, 0.08);
+  --font-head: "Bitter", Georgia, "Times New Roman", serif;
   --font-body: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
   --maxw: 1200px;
   --header-h: 68px;
 }
 html[data-theme="dark"] {
-  --bg: #141419;
-  --bg-soft: #1d1d24;
-  --bg-card: #1d1d24;
-  --text: #f2f2f5;
-  --text-soft: #b9b9c4;
-  --text-faint: #7d7d89;
-  --line: #2c2c35;
-  --line-soft: #232329;
-  --accent-ink: #ffffff;
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --bg: #101a14;
+  --bg-soft: #16241b;
+  --bg-card: #16241b;
+  --text: #ece4d0;
+  --text-soft: #c4b897;
+  --text-faint: #8f8468;
+  --line: #2c3a2c;
+  --line-soft: #223026;
+  --accent: #4d8a5f;
+  --accent-deep: #2c5a3a;
+  --accent-ink: #f4eedd;
+  --gold: #d09a45;
+  --gold-soft: #5a4a24;
+  --lake: #4d8fa3;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -51,12 +63,13 @@ body {
   font-size: 16px;
   line-height: 1.55;
 }
-h1, h2, h3, h4 { font-family: var(--font-head); line-height: 1.25; margin: 0 0 0.6em; letter-spacing: -0.01em; }
-h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
-h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); }
+h1, h2, h3, h4 { font-family: var(--font-head); line-height: 1.25; margin: 0 0 0.6em; letter-spacing: 0; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; }
+h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 700; }
 h3 { font-size: 1.2rem; }
 p { margin: 0 0 1em; }
 a { color: var(--accent); text-decoration: none; }
+html[data-theme="dark"] a { color: var(--gold); }
 a:hover { text-decoration: underline; }
 img { max-width: 100%; height: auto; display: block; }
 .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
@@ -70,31 +83,31 @@ main { min-height: 60vh; }
 .ic-sm { width: 16px; height: 16px; }
 .ic-lg { width: 30px; height: 30px; }
 
-/* Announcement bar */
-.announce { background: var(--accent); color: var(--accent-ink); text-align: center;
-  font-size: 0.85rem; padding: 9px 16px; }
-.announce a { color: inherit; text-decoration: underline; font-weight: 600; }
+/* Announcement bar — cabin amber */
+.announce { background: var(--gold); color: #2a241b; text-align: center;
+  font-size: 0.85rem; padding: 9px 16px; font-weight: 600; }
+.announce a { color: inherit; text-decoration: underline; font-weight: 700; }
 .announce:empty { display: none; }
 
-/* Header */
-.site-header { position: sticky; top: 0; z-index: 60; background: var(--bg);
-  border-bottom: 1px solid var(--line); height: var(--header-h); }
+/* Header — deep pine lodge sign */
+.site-header { position: sticky; top: 0; z-index: 60; background: var(--accent-deep);
+  border-bottom: 3px solid var(--gold); height: var(--header-h); }
 .site-header .wrap { height: var(--header-h); display: flex; align-items: center; gap: 14px; }
-.brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 700;
+.brand { display: flex; align-items: center; gap: 10px; color: #f4eedd; font-weight: 700;
   font-size: 1.1rem; font-family: var(--font-head); }
 .brand:hover { text-decoration: none; }
 .brand img { width: 38px; height: 38px; object-fit: contain; }
 .main-nav { display: flex; gap: 4px; margin-left: 12px; }
-.main-nav a { color: var(--text); padding: 8px 12px; border-radius: var(--radius-sm);
+.main-nav a { color: #f4eedd; padding: 8px 12px; border-radius: var(--radius-sm);
   font-size: 0.95rem; }
-.main-nav a:hover, .main-nav a.active { background: var(--bg-soft); text-decoration: none; }
+.main-nav a:hover, .main-nav a.active { background: rgba(244, 238, 221, 0.14); text-decoration: none; }
 .header-icons { margin-left: auto; display: flex; align-items: center; gap: 2px; }
 .icon-btn { position: relative; display: inline-flex; align-items: center; justify-content: center;
-  width: 42px; height: 42px; border: 0; background: none; color: var(--text);
+  width: 42px; height: 42px; border: 0; background: none; color: #f4eedd;
   border-radius: 50%; cursor: pointer; }
-.icon-btn:hover { background: var(--bg-soft); }
+.icon-btn:hover { background: rgba(244, 238, 221, 0.14); }
 .cart-count { position: absolute; top: 4px; right: 2px; min-width: 19px; height: 19px;
-  padding: 0 5px; border-radius: 999px; background: var(--accent); color: var(--accent-ink);
+  padding: 0 5px; border-radius: 999px; background: var(--gold); color: #2a241b;
   font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .cart-count:empty { display: none; }
 .hamburger { display: none; }
@@ -129,7 +142,8 @@ main { min-height: 60vh; }
   transition: transform 0.08s, box-shadow 0.15s, background 0.15s; }
 .btn:active { transform: scale(0.98); }
 .btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow-sm); }
-.btn-primary:hover { filter: brightness(1.07); text-decoration: none; }
+.btn-primary:hover { background: var(--accent-deep); text-decoration: none; }
+html[data-theme="dark"] .btn-primary:hover { filter: brightness(1.15); }
 .btn-secondary { background: var(--bg-soft); color: var(--text); border-color: var(--line); }
 .btn-secondary:hover { background: var(--line-soft); text-decoration: none; }
 .btn-ghost { background: none; color: var(--text); border-color: var(--line); }
@@ -174,10 +188,10 @@ main { min-height: 60vh; }
 .badge { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
   text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
   background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--line); }
-.badge-sale { background: #fdeceb; color: var(--danger); border-color: #f5c6c0; }
-.badge-one { background: #eef0ff; color: var(--accent); border-color: #d5d9ff; }
+.badge-sale { background: #f9e2dc; color: var(--danger); border-color: #eec0b4; }
+.badge-one { background: #e3ecdf; color: var(--accent); border-color: #c3d4b8; }
 html[data-theme="dark"] .badge-sale { background: #3a1f1c; }
-html[data-theme="dark"] .badge-one { background: #26264a; }
+html[data-theme="dark"] .badge-one { background: #1e3325; color: #9dc49a; border-color: #2c4a33; }
 
 /* Shop toolbar */
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 18px 0 22px; }
@@ -261,35 +275,41 @@ html[data-theme="dark"] .badge-one { background: #26264a; }
 .order-card .oh { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; margin-bottom: 8px; }
 .status-pill { font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px;
   background: var(--bg-soft); border: 1px solid var(--line); }
-.status-pill.paid { background: #e9f7ee; color: var(--success); border-color: #bfe6cc; }
-.status-pill.shipped { background: #eef0ff; color: var(--accent); border-color: #d5d9ff; }
+.status-pill.paid { background: #e2f0e4; color: var(--success); border-color: #bcd9c0; }
+.status-pill.shipped { background: #dcebf0; color: var(--lake); border-color: #b8d4dd; }
 
-/* Footer */
-.site-footer { border-top: 1px solid var(--line); margin-top: 60px; background: var(--bg-soft); }
+/* Footer — deep pine with cream text */
+.site-footer { border-top: 3px solid var(--gold); margin-top: 60px; background: var(--accent-deep);
+  color: #d9cfb4; }
 .footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 30px; padding: 44px 0 30px; }
-.footer-grid h4 { font-size: 0.95rem; margin-bottom: 12px; }
+.footer-grid h4 { font-size: 0.95rem; margin-bottom: 12px; color: #f4eedd; font-family: var(--font-head); }
 .footer-grid ul { list-style: none; margin: 0; padding: 0; }
 .footer-grid li { margin-bottom: 8px; }
-.footer-grid a { color: var(--text-soft); font-size: 0.92rem; }
-.newsletter p { font-size: 0.9rem; color: var(--text-soft); }
+.footer-grid a { color: #d9cfb4; font-size: 0.92rem; }
+.footer-grid a:hover { color: var(--gold-soft); }
+.newsletter p { font-size: 0.9rem; color: #d9cfb4; }
 .newsletter .promo-row { margin-top: 10px; }
-.footer-bottom { border-top: 1px solid var(--line); padding: 18px 0; display: flex;
+.newsletter .promo-row input { background: rgba(244, 238, 221, 0.1); border-color: rgba(244, 238, 221, 0.3); color: #f4eedd; }
+.footer-bottom { border-top: 1px solid rgba(244, 238, 221, 0.2); padding: 18px 0; display: flex;
   flex-wrap: wrap; gap: 10px 24px; align-items: center; justify-content: space-between;
-  font-size: 0.85rem; color: var(--text-faint); }
+  font-size: 0.85rem; color: #a89a78; }
 .pay-badges { display: flex; gap: 8px; align-items: center; }
 
-/* Hero */
+/* Hero — Northwoods lakehouse */
 .hero { border-radius: var(--radius); overflow: hidden; margin: 26px 0 40px;
-  background: linear-gradient(135deg, #23232e, #3b3b52); color: #fff; position: relative; }
+  background: linear-gradient(135deg, rgba(20, 52, 35, 0.55), rgba(20, 52, 35, 0.25)),
+    url("/assets/img/northwoods-hero.jpg") center 60% / cover no-repeat #143423;
+  color: #fff; position: relative; border: 1px solid var(--line); }
 .hero-inner { padding: clamp(36px, 6vw, 80px) clamp(24px, 5vw, 64px); max-width: 640px; position: relative; z-index: 1; }
-.hero h1 { color: #fff; }
-.hero p { color: #d7d7e2; font-size: 1.08rem; }
-.hero .btn-primary { margin-top: 8px; }
-.hero-art { position: absolute; right: 0; top: 0; bottom: 0; width: 46%; opacity: 0.35;
-  object-fit: cover; mask-image: linear-gradient(to right, transparent, black 55%); }
+.hero h1 { color: #fdf8ea; text-shadow: 0 2px 14px rgba(10, 20, 14, 0.6); }
+.hero p { color: #f0e8d2; font-size: 1.08rem; text-shadow: 0 1px 8px rgba(10, 20, 14, 0.6); }
+.hero .btn-primary { margin-top: 8px; background: var(--gold); color: #2a241b; }
+.hero .btn-primary:hover { background: #c9963f; }
+.hero-art { display: none; }
 .section { padding: 34px 0; }
 .section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px; }
 .section-head h2 { margin: 0; }
+.section-head a { font-weight: 600; }
 .feature-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 8px; }
 .feature { display: flex; gap: 14px; align-items: flex-start; padding: 18px;
   border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-card); }
@@ -315,7 +335,8 @@ html[data-theme="dark"] .badge-one { background: #26264a; }
 
 /* A11y toolbar */
 .a11y-bar { position: fixed; right: 14px; bottom: 14px; z-index: 110; display: flex; gap: 6px; }
-.a11y-bar .icon-btn { background: var(--bg-card); border: 1px solid var(--line); box-shadow: var(--shadow-sm); }
+.a11y-bar .icon-btn { background: var(--bg-card); border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+  color: var(--text); }
 html.a11y-large { font-size: 19px; }
 html.a11y-contrast { --text: #000; --bg: #fff; --text-soft: #222; --line: #666; }
 html[data-theme="dark"].a11y-contrast { --text: #fff; --bg: #000; --text-soft: #eee; --line: #aaa; }
@@ -362,7 +383,6 @@ html.a11y-motion *, html.a11y-motion *::before, html.a11y-motion *::after {
   .account-layout { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .feature-strip { grid-template-columns: 1fr; }
-  .hero-art { display: none; }
 }
 @media (max-width: 560px) {
   .form-row { grid-template-columns: 1fr; }
