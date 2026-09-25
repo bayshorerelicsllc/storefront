@@ -233,7 +233,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       '<div class="bsr-loginform">' +
       '<div class="bsr-error" data-el="error" role="alert"></div>' +
       '<div class="bsr-brand"><img src="/assets/img/logo.png" alt="Bay Shore Relics logo"><span>Bay Shore Relics LLC</span></div>' +
-      '<p class="bsr-tagline">Log in with your Bay Shore Relics account.</p>' +
+      '<p class="bsr-tagline">Express login using one of the methods below.</p>' +
       circlesHtml() +
       '<div class="bsr-or"><span>OR</span></div>' +
       /* ---- STEP 1: email ---- */
