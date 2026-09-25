@@ -139,5 +139,101 @@
     });
   }
 
-  window.BSRAddrValidate = { validate: validate, checkAndConfirm: checkAndConfirm };
+
+  /* Live as-you-type validation. Attaches debounced listeners to the
+     street/city/ZIP fields: shows a live status and offers one-tap
+     fill-in of the corrected address. Never blocks typing or saving. */
+  function attachLive(form) {
+    var box = msgEl(form);
+    if (!box || form._bsrLiveAttached) return;
+    form._bsrLiveAttached = true;
+    var streetEl = form.querySelector('input[name="address1"]');
+    var cityEl = form.querySelector('input[name="city"]');
+    var zipEl = form.querySelector('input[name="postal"]');
+    if (!streetEl) return;
+    var timer = null, lastSig = '';
+
+    function sig() {
+      return [streetEl.value, cityEl ? cityEl.value : '', zipEl ? zipEl.value : ''].join('|').toLowerCase();
+    }
+    function ready() {
+      var st = streetEl.value.trim();
+      var zp = zipEl ? zipEl.value.trim() : '';
+      var ct = cityEl ? cityEl.value.trim() : '';
+      return st.length >= 5 && (zp.length >= 3 || ct.length >= 2);
+    }
+    function fieldVal(name) {
+      var el = form.querySelector('[name="' + name + '"]');
+      return el ? el.value : '';
+    }
+    function setField(name, val) {
+      var el = form.querySelector('[name="' + name + '"]');
+      if (!el || val == null) return;
+      el.value = val;
+      var ev;
+      try { ev = new Event('change', { bubbles: true }); }
+      catch (e) { ev = document.createEvent('HTMLEvents'); ev.initEvent('change', true, false); }
+      el.dispatchEvent(ev);
+    }
+    function run() {
+      var s = sig();
+      if (s === lastSig) return;
+      lastSig = s;
+      if (!ready()) {
+        if (box.querySelector('.addr-val-ok,.addr-val-note')) box.innerHTML = '';
+        return;
+      }
+      box.innerHTML = '<p class="addr-val-note">Checking address&hellip;</p>';
+      var payload = {
+        address1: streetEl.value.trim(),
+        address2: fieldVal('address2'),
+        city: cityEl ? cityEl.value.trim() : '',
+        state: fieldVal('state'),
+        postal: zipEl ? zipEl.value.trim() : '',
+        country: fieldVal('country') || 'US',
+      };
+      validate(payload).then(function (j) {
+        if (sig() !== s) return; /* user kept typing; stale result */
+        if (!j || !j.ok) { box.innerHTML = ''; return; }
+        var corrected = j.address || null;
+        var suggested = (j.corrected || (j.corrections && j.corrections.length)) && differs(corrected, payload);
+        if (j.deliverable && !suggested) {
+          box.innerHTML = '<p class="addr-val-ok">&#10003; Address looks good.</p>';
+          return;
+        }
+        if (suggested) {
+          box.innerHTML =
+            '<div class="addr-val-suggest"><p><strong>Did you mean:</strong><br>' + fmtAddr({
+              address1: corrected.street, address2: corrected.street2,
+              city: corrected.city, state: corrected.state,
+              postal: corrected.zip, country: corrected.country || payload.country,
+            }) + '</p>' +
+            '<div class="addr-val-actions">' +
+            '<button type="button" class="btn btn-primary btn-sm" data-live-use>Use this address</button>' +
+            '</div></div>';
+          var useBtn = box.querySelector('[data-live-use]');
+          if (useBtn) useBtn.addEventListener('click', function () {
+            setField('address1', corrected.street || payload.address1);
+            setField('address2', corrected.street2 || '');
+            setField('city', corrected.city || payload.city);
+            setField('state', corrected.state || payload.state);
+            setField('postal', corrected.zip || payload.postal);
+            box.innerHTML = '<p class="addr-val-ok">&#10003; Address updated.</p>';
+            lastSig = sig();
+          });
+          return;
+        }
+        box.innerHTML = '';
+      }).catch(function () { /* stay silent; the submit-time check still runs */ });
+    }
+    function schedule() {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(run, 800);
+    }
+    [streetEl, cityEl, zipEl].forEach(function (el) {
+      if (el) el.addEventListener('input', schedule);
+    });
+  }
+
+  window.BSRAddrValidate = { validate: validate, checkAndConfirm: checkAndConfirm, attachLive: attachLive };
 })();
