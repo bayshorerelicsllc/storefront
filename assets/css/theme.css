@@ -389,7 +389,10 @@ html.a11y-motion *, html.a11y-motion *::before, html.a11y-motion *::after {
 }
 @media (max-width: 560px) {
   .form-row { grid-template-columns: 1fr; }
-  .footer-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .footer-grid .newsletter { grid-column: 1 / -1; }
+  .footer-grid h4 { font-size: 0.88rem; }
+  .footer-grid a { font-size: 0.85rem; }
   .brand img { width: 44px; height: 44px; }
   .brand .name { font-size: 1.08rem; }
   .cart-line { grid-template-columns: 64px 1fr; }
