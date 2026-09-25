@@ -71,16 +71,17 @@ document.addEventListener('DOMContentLoaded', function () {
   root.innerHTML =
     '<div class="checkout-layout">' +
     '<div class="checkout-main">' +
-    '<section class="card" id="express-checkout-card"><h2>Express checkout</h2>' +
+    '<style>@media (max-width:640px){.pay-options-grid{grid-template-columns:1fr !important}}</style>' +
+    '<div class="pay-options-grid"  style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">' +
+    '<section class="card" id="express-checkout-card" style="margin:0"><h2>Express checkout</h2>' +
     '<p class="hint" style="margin-bottom:12px">Pay instantly — your wallet fills in shipping and billing.</p>' +
     '<div style="max-width:250px;margin:0 auto"><div id="pay-paypal-top"><div id="paypal-buttons"></div><div id="venmo-buttons" style="margin-top:8px"></div><div id="paylater-buttons" style="margin-top:8px"></div><div class="hint" id="paypal-msg"></div></div>' +
     '<div id="pay-wallets-top" style="margin-top:8px"><div id="express-checkout-element"><div id="wallets-loading" style="display:flex;gap:8px;justify-content:center;padding:12px;color:#8a7d5f;font-size:.85rem">Loading payment options…</div></div></div></div>' +
     '</section>' +
-    '<div class="pay-divider" style="margin:4px 0 16px"><span>or</span></div>' +
-    '<section class="card" style="margin-bottom:16px"><h2>Credit or debit card</h2>' +
+    '<section class="card" style="margin:0"><h2>Credit or debit card</h2>' +
     '<p class="hint" style="margin-bottom:12px">Prefer to pay with a card? Click below to enter your details securely.</p>' +
-    '<div style="max-width:320px;margin:0 auto">' +
-    '<button id="show-card-form" type="button" style="display:block;width:100%;background:#1e4d33;color:#fff;border:none;border-radius:8px;height:48px;box-sizing:border-box;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(30,77,51,.35)">Pay with credit or debit<br><span id="stripe-btn-price" style="font-weight:800;font-size:.95rem">$0.00</span></button></div></section>' +
+    '<div style="max-width:280px;margin:0 auto">' +
+    '<button id="show-card-form" type="button" style="display:block;width:100%;background:#1e4d33;color:#fff;border:none;border-radius:8px;height:48px;box-sizing:border-box;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(30,77,51,.35)">Pay with credit or debit<br><span id="stripe-btn-price" style="font-weight:800;font-size:.95rem">$0.00</span></button></div></section></div>' +
     '<div id="manual-form-wrap" style="display:none">' +
     '<section class="card"><h2><span class="step-num">1</span> Contact</h2>' +
     '<div class="field"><label for="f-email">Email</label>' +
