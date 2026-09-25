@@ -217,12 +217,14 @@
       dd.style.display = 'block';
       dd.querySelector('[data-pick]').addEventListener('click', function () {
         applyCorrection(form, corrected, payload);
+        form._bsrValDismissed = '';
         dd.innerHTML = '<div class="addr-live-ok">&#10003; Address filled in.</div>';
         setTimeout(hideDd, 1300);
         lastSig = sig();
       });
       dd.querySelector('[data-dismiss]').addEventListener('click', function () {
         dismissedSig = sig();
+        form._bsrValDismissed = dismissedSig; /* override: save keeps your version */
         hideDd();
       });
     }
@@ -262,6 +264,8 @@
   /* Silent submit-time check: validate, fold any corrections into the
      payload, then save. No confirmation dialog. Never blocks saving. */
   function silentCheck(form, payload, doSave) {
+    var psig = [payload.address1, payload.city, payload.postal].join('|').toLowerCase();
+    if (form._bsrValDismissed && form._bsrValDismissed === psig) { doSave(payload); return; }
     validate(payload).then(function (j) {
       var out = payload;
       if (j && j.ok && j.address &&
