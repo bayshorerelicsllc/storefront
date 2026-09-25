@@ -1,0 +1,51 @@
+name: Sync storefront to Cloudflare KV
+on:
+  push:
+    branches: [main]
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync files to KV
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          python3 - << 'PYEOF'
+          import os, json, mimetypes, urllib.request, urllib.parse
+          ACCT = "f7eca0dddbb0dd02a142c2cc172ef5bd"
+          NS = "c6eace3c5d524db3a3b0d2b603353dd4"
+          BASE = f"https://api.cloudflare.com/client/v4/accounts/{ACCT}/storage/kv/namespaces/{NS}"
+          TOKEN = os.environ["CF_TOKEN"]
+          def call(method, url, data=None, ctype=None):
+              h = {"Authorization": f"Bearer {TOKEN}"}
+              if ctype: h["Content-Type"] = ctype
+              req = urllib.request.Request(url, data=data, method=method, headers=h)
+              with urllib.request.urlopen(req, timeout=120) as r:
+                  return json.load(r)
+          new_keys = set()
+          for root, _d, files in os.walk("."):
+              if "/.git/" in root or root.startswith("./.git") or "/.github/" in root or root.startswith("./.github"):
+                  continue
+              for fn in files:
+                  full = os.path.join(root, fn)
+                  key = os.path.relpath(full, ".").replace(os.sep, "/")
+                  new_keys.add(key)
+                  with open(full, "rb") as f: data = f.read()
+                  ctype = mimetypes.guess_type(fn)[0] or "application/octet-stream"
+                  if key.endswith(".html"): ctype = "text/html;charset=utf-8"
+                  call("PUT", f"{BASE}/values/{urllib.parse.quote(key, safe='')}", data=data, ctype=ctype)
+                  print("up", key)
+          existing, cursor = [], None
+          while True:
+              u = f"{BASE}/keys?limit=1000" + (f"&cursor={cursor}" if cursor else "")
+              r = call("GET", u)
+              existing += [k["name"] for k in r["result"]]
+              cursor = r.get("result_info", {}).get("cursor")
+              if not cursor: break
+          for k in existing:
+              if k not in new_keys:
+                  call("DELETE", f"{BASE}/values/{urllib.parse.quote(k, safe='')}")
+                  print("del", k)
+          print("sync done")
+          PYEOF
