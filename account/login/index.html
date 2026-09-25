@@ -27,7 +27,7 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=20260925b">
 <script src="/assets/js/bsr.js?v=20260925k" defer></script>
-<script src="/assets/js/login-modal.js?v=20260925i" defer></script>
+<script src="/assets/js/login-modal.js?v=20260925j" defer></script>
 <style>
 /* Bay Shore Relics sign-in: warm, inviting, railroad-inspired. */
 html, body { margin: 0; padding: 0; }
@@ -55,21 +55,13 @@ body::before {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(30,77,51,0.1);
   border-radius: 20px;
-  padding: 40px 32px;
+  padding: 56px 40px 48px;
   box-shadow: 0 8px 32px rgba(30,77,51,0.08), 0 2px 8px rgba(0,0,0,0.04);
 }
 .logi-page-inner { width: 100%; max-width: 400px; overflow-y: auto;
   scrollbar-width: none; }
 .logi-page-inner::-webkit-scrollbar { display: none; }
-/* Compact spacing so the full form fits without scrolling */
-.logi-page .bsr-tagline { margin: 0 0 36px; }
-.logi-page .bsr-field { margin-bottom: 32px; }
-.logi-page .bsr-or { margin: 36px 0 32px; }
-.logi-page .bsr-social { margin: 0 0 32px; }
-.logi-page .bsr-passkey { margin: 28px 0 20px; }
-.logi-page .bsr-guest { margin: 24px 0 0; }
-.logi-page .bsr-captcha-note { margin: 0 0 12px; }
-.logi-page .bsr-forgot { margin: 0 0 20px; }
+/* Spacing comes from the shared login form styles (airy, Logitech-like). */
 .logi-loading { text-align: center; color: #8a8172; font-size: .95rem; }
 </style>
 </head>
