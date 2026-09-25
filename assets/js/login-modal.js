@@ -65,8 +65,8 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     'background:#fff8e6;border:1px solid #e8d48b;border-radius:10px;padding:12px 14px;margin-bottom:18px}',
     '.bsr-pk-help.show{display:block}',
     '.bsr-tagline{text-align:center;color:#2a241b;font-size:1.04rem;font-weight:700;margin:0 0 30px;line-height:1.55}',
-    '.bsr-express{display:flex;flex-direction:column;align-items:center;gap:16px;margin:20px 0 0;padding:6px 0 2px}',
-    '.bsr-express-label{font-size:.78rem;font-weight:700;color:#8a8172;letter-spacing:.1em;text-transform:uppercase}',
+    '.bsr-express{display:flex;flex-direction:column;align-items:stretch;gap:14px;margin:20px 0 0;padding:6px 0 2px}',
+    '.bsr-express-label{font-size:.78rem;font-weight:700;color:#8a8172;letter-spacing:.1em;text-transform:uppercase;text-align:center}',
     '.bsr-error{display:none;background:#fdecea;color:#9c2b1e;border:1px solid #f3c1b8;border-radius:10px;',
     'padding:10px 14px;font-size:.87rem;margin:0 0 20px;line-height:1.45}',
     '.bsr-error.show{display:block}',
@@ -97,13 +97,14 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '.bsr-or{display:flex;align-items:center;gap:14px;margin:32px 0 28px;color:#8a8172;',
     'font-size:.8rem;letter-spacing:.12em;font-weight:600}',
     '.bsr-or::before,.bsr-or::after{content:"";flex:1;height:1px;background:#d8d0b8}',
-    '.bsr-circles{display:flex;justify-content:center;gap:28px;margin:0}',
-    '.bsr-circle{width:58px;height:58px;border-radius:50%;background:#fff;border:2px solid #1e4d33;',
-    'display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;',
-    'box-shadow:0 1px 2px rgba(0,0,0,.06);transition:box-shadow .15s,transform .15s}',
-    '.bsr-circle:hover{box-shadow:0 3px 10px rgba(0,0,0,.12);transform:translateY(-1px)}',
-    '.bsr-circle:active{transform:translateY(0);box-shadow:0 1px 2px rgba(0,0,0,.08)}',
-    '.bsr-circle svg{width:26px;height:26px;display:block}',
+    '.bsr-provider-btns{display:flex;flex-direction:column;gap:12px;margin:0}',
+    '.bsr-provider-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;',
+    'min-height:50px;background:#fff;border:1px solid #d8d0b8;border-radius:10px;cursor:pointer;',
+    'font-size:.95rem;font-weight:600;color:#2a241b;font-family:inherit;padding:10px 16px;',
+    'box-shadow:0 1px 2px rgba(0,0,0,.05);transition:box-shadow .15s,border-color .15s}',
+    '.bsr-provider-btn:hover{border-color:#1e4d33;box-shadow:0 3px 10px rgba(0,0,0,.1)}',
+    '.bsr-provider-btn:active{transform:translateY(1px)}',
+    '.bsr-provider-btn svg{width:22px;height:22px;display:block;flex:none}',
     '.bsr-switch{text-align:center;margin:0}',
     '.bsr-link-u{background:none;border:none;color:#2a241b;font-size:.87rem;font-weight:700;',
     'letter-spacing:.05em;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit}',
@@ -210,9 +211,9 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
 
   function circlesHtml() {
     return '' +
-      '<div class="bsr-circles">' +
-      '<button type="button" class="bsr-circle" data-oauth="google" aria-label="Continue with Google">' + GOOGLE_SVG + '</button>' +
-      '<button type="button" class="bsr-circle" data-oauth="amazon" aria-label="Continue with Amazon">' + AMAZON_SVG + '</button>' +
+      '<div class="bsr-provider-btns">' +
+      '<button type="button" class="bsr-provider-btn" data-oauth="google">' + GOOGLE_SVG + '<span>Continue with Google</span></button>' +
+      '<button type="button" class="bsr-provider-btn" data-oauth="amazon">' + AMAZON_SVG + '<span>Continue with Amazon</span></button>' +
       /* PayPal login hidden 2026-09-25: 'Log in with PayPal' approval pending at PayPal */
       '</div>';
   }
@@ -252,7 +253,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       '<div class="bsr-loginform">' +
       '<div class="bsr-error" data-el="error" role="alert"></div>' +
       '<div class="bsr-brand"><img src="/assets/img/logo.png" alt="Bay Shore Relics logo"><span>Bay Shore Relics LLC</span></div>' +
-      '<div class="bsr-express"><span class="bsr-express-label">Express login</span>' +
+      '<div class="bsr-express"><span class="bsr-express-label">Continue with</span>' +
       circlesHtml() + '</div>' +
       '<div class="bsr-or"><span>OR</span></div>' +
       /* ---- STEP 1: email ---- */
