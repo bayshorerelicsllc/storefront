@@ -179,9 +179,9 @@ document.addEventListener('DOMContentLoaded', function () {
         BSR.icon(t[1], 'ic-sm') + esc(t[2]) + '</button>';
     }).join('') +
       '<button type="button" class="acct-nav-btn" id="signout-btn">' + BSR.icon('logout', 'ic-sm') + 'Sign out</button>';
+    var firstName = (customer.name || '').trim().split(/\s+/)[0] || 'there';
     return '<div class="page-head"><div class="profile-head">' + avatar +
-      '<div><div class="ph-name">' + esc(customer.name || 'Your account') + '</div>' +
-      '<div class="ph-email">' + esc(customer.email || '') + '</div></div></div></div>' +
+      '<div><div class="ph-name">Hello, ' + esc(firstName) + '</div></div></div></div>' +
       '<div class="account-layout">' +
       '<nav class="account-nav" aria-label="Account">' + nav + '</nav>' +
       '<section id="acct-col" aria-label="Account details">' + contentHtml + '</section>' +
