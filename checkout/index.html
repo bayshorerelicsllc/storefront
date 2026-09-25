@@ -93,6 +93,8 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="hint" id="promo-ok" style="display:none"></div>' +
     '<div class="error" id="promo-err" style="display:none"></div></section>' +
     '<section class="card"><h2><span class="step-num">5</span> Payment</h2>' +
+    '<div id="wallet-wrap"><div id="express-checkout-element"></div>' +
+    '<div class="pay-divider" id="wallet-divider" style="display:none"><span>or pay with</span></div></div>' +
     '<div class="pay-tabs" role="tablist">' +
     '<button class="pay-tab" id="tab-paypal" type="button" role="tab" aria-selected="true" data-tab="paypal">PayPal</button>' +
     '<button class="pay-tab" id="tab-card" type="button" role="tab" aria-selected="false" data-tab="card">Card</button></div>' +
@@ -135,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
       products.push((j && j.ok && j.product) ? j.product : { slug: slug, title: slug, price_cents: 0, image: '' });
       if (--pending === 0) {
         products.sort(function (a, b) { return slugs.indexOf(a.slug) - slugs.indexOf(b.slug); });
-        sumLines.innerHTML = products.map(function (p) {
+        initExpressCheckout();        sumLines.innerHTML = products.map(function (p) {
           var img = p.image
             ? '<img src="' + BSR.esc(p.image) + '" alt="' + BSR.esc(p.title) + '" loading="lazy">'
             : '<div class="empty-icon">' + BSR.icon('box') + '</div>';
@@ -367,6 +369,69 @@ document.addEventListener('DOMContentLoaded', function () {
     }).render('#paypal-buttons');
   }
 
+  /* ---------- Stripe Express Checkout (Apple Pay / Google Pay / Link) ---------- */
+  var expressElements = null, expressCheckoutEl = null;
+  function initExpressCheckout() {
+    if (!stripe || expressCheckoutEl) return;
+    try {
+      var subtotal = products.reduce(function (a, p) { return a + (p.price_cents || 0); }, 0);
+      expressElements = stripe.elements({
+        mode: 'payment',
+        amount: Math.max(50, subtotal),
+        currency: 'usd'
+      });
+      expressCheckoutEl = expressElements.create('expressCheckout', {
+        paymentMethods: { applePay: 'auto', googlePay: 'auto', link: 'auto' }
+      });
+      expressCheckoutEl.on('ready', function (e) {
+        var avail = (e && e.availablePaymentMethods) || {};
+        if (avail.applePay || avail.googlePay || avail.link) {
+          document.getElementById('wallet-divider').style.display = '';
+        }
+      });
+      expressCheckoutEl.on('confirm', onExpressConfirm);
+      expressCheckoutEl.mount('#express-checkout-element');
+    } catch (e) { /* wallets unavailable — tabs remain */ }
+  }
+  function onExpressConfirm(event) {
+    var errEl = document.getElementById('stripe-err');
+    errEl.style.display = 'none';
+    var ship = collectShipping();
+    if (!ship) { event.paymentFailed({ reason: 'fail' }); return; }
+    expressElements.submit().then(function (submitResult) {
+      if (submitResult && submitResult.error) { event.paymentFailed({ reason: 'fail' }); return; }
+      return BSR.api('/api/stripe/create-intent', {
+        method: 'POST',
+        body: { slugs: slugs, promo_code: promoCode(), shipping: ship }
+      });
+    }).then(function (j) {
+      if (!j || !j.ok) throw new Error((j && j.error) || 'Could not start the wallet payment.');
+      stripeIntent = j;
+      stripeBreakdown = j.breakdown || { total_cents: j.amount_cents };
+      renderTotals(stripeBreakdown);
+      return stripe.confirmPayment({
+        elements: expressElements,
+        clientSecret: j.client_secret,
+        confirmParams: { return_url: window.location.origin + '/thank-you/' },
+        redirect: 'if_required'
+      });
+    }).then(function (result) {
+      var err = result && result.error;
+      if (err) { event.paymentFailed({ reason: 'fail' }); return; }
+      var pi = result && result.paymentIntent;
+      if (pi && pi.status === 'succeeded') {
+        event.paymentSucceeded();
+        try { sessionStorage.setItem('bsr-last-order', stripeIntent.order_token || pi.id); } catch (e) {}
+        finishOrder(stripeIntent.order_token || pi.id);
+      } else {
+        event.paymentFailed({ reason: 'fail' });
+      }
+    }).catch(function (e) {
+      event.paymentFailed({ reason: 'fail' });
+      errEl.textContent = (e && e.message) || 'The wallet payment failed.';
+      errEl.style.display = '';
+    });
+  }
   /* ---------- Stripe ---------- */
   var stripe = null, elements = null, stripeMounted = false, stripeIntent = null;
   function initStripe(pk) {
