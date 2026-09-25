@@ -381,6 +381,20 @@ document.addEventListener('DOMContentLoaded', function () {
     return '<input name="state" maxlength="100" autocomplete="address-level1" placeholder="State / Province" value="' + esc(currentState || '') + '">';
   }
 
+  /* Country dropdown -> refresh state/province options. Delegated so it works for dynamically added forms. */
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.name === 'country' && e.target.closest && e.target.closest('.addr-form')) {
+      var form = e.target.closest('.addr-form');
+      var stateEl = form.querySelector('[name="state"]');
+      if (stateEl) {
+        var current = stateEl.value || '';
+        var tmp = document.createElement('div');
+        tmp.innerHTML = bsrStateFieldHtml(e.target.value, current);
+        stateEl.replaceWith(tmp.firstChild);
+      }
+    }
+  });
+
   function addrFormHtml(a) {
     a = a || {};
     var isNew = !a.id;
