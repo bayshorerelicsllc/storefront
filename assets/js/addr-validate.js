@@ -230,9 +230,21 @@
      it is lifted the moment the field is focused. */
   function blockBrowserAutofill(form) {
     form.setAttribute('autocomplete', 'off');
-    ['address1', 'address2', 'city', 'postal'].forEach(function (n) {
+    /* Chrome deliberately ignores autocomplete="off"; per the Chromium
+       team's own guidance an unrecognized token is what it will not
+       autofill. Apply it to every field -- the old code only covered four
+       and left name/phone/email inviting the keyboard's suggestions.
+       readonly stays on the address fields only: a readonly required field
+       is exempt from native validation, so name/phone keep the token alone
+       and stay validating. */
+    ['name', 'company', 'phone', 'email',
+     'address1', 'address2', 'city', 'state', 'postal', 'country'].forEach(function (n) {
       var el = form.querySelector('input[name="' + n + '"]');
-      if (el) { el.setAttribute('autocomplete', 'off'); el.setAttribute('readonly', 'readonly'); }
+      if (!el) return;
+      el.setAttribute('autocomplete', 'bsr-no-autofill');
+      if (n !== 'name' && n !== 'company' && n !== 'phone' && n !== 'email') {
+        el.setAttribute('readonly', 'readonly');
+      }
     });
     if (!window._bsrAutofillBlockWired) {
       window._bsrAutofillBlockWired = true;
