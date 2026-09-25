@@ -18,9 +18,6 @@
   padding:12px 14px; margin:10px 0; background:var(--bg, #fff); font-size:.9rem; }
 .addr-val-warn { border-color:#b98a2f; background:#fdf6e8; }
 .addr-val-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-.checkout-saved-note { margin:0 0 10px; font-size:.85rem; }
-.checkout-saved-note .nick { display:inline-block; background:#efe8d5; border-radius:10px;
-  padding:1px 8px; font-size:.75rem; font-weight:700; margin-right:6px; }
 </style>
 </head>
 <body>
@@ -94,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
     '<input type="email" id="f-email" autocomplete="email" placeholder="you@example.com">' +
     '<div class="error" id="e-email" style="display:none"></div></div></section>' +
     '<section class="card"><h2><span class="step-num">2</span> Shipping address</h2>' +
-    '<div class="hint checkout-saved-note" id="ship-saved-note" style="display:none"></div>' +
+    '<div id="ship-addr-picker"></div>' +
     '<div class="field"><label for="f-name">Full name</label>' +
     '<input type="text" id="f-name" autocomplete="name">' +
     '<div class="error" id="e-name" style="display:none"></div></div>' +
@@ -130,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="error" id="e-ship" style="display:none;margin-top:8px"></div>' +
     '<div id="ship-options" style="margin-top:12px"></div></div></section>' +
     '<section class="card"><h2><span class="step-num">4</span> Billing address</h2>' +
-    '<div class="hint checkout-saved-note" id="bill-saved-note" style="display:none"></div>' +
+    '<div id="bill-addr-picker"></div>' +
     '<div class="field"><label class="mkt-toggle"><input type="checkbox" id="f-bill-same" checked>' +
     '<span>Same as shipping address</span></label></div>' +
     '<div id="bill-fields" style="display:none">' +
@@ -275,43 +272,89 @@ document.addEventListener('DOMContentLoaded', function () {
     var el = document.getElementById(id);
     if (el && v) el.value = v;
   }
-  function savedAddrNote(which, a) {
-    var el = document.getElementById(which === 'bill' ? 'bill-saved-note' : 'ship-saved-note');
-    if (!el) return;
-    var nick = (a.nickname || '').trim();
-    el.innerHTML = (nick ? '<span class="nick">' + BSR.esc(nick) + '</span>' : '') +
-      'Filled from your saved address — you can edit it.';
-    el.style.display = '';
+  function addrLabel(a) {
+    var street = [a.address1, a.address2].filter(Boolean).join(', ');
+    var city = [a.city, a.state].filter(Boolean).join(', ');
+    if (a.postal) city += (city ? ' ' : '') + a.postal;
+    var loc = [street, city].filter(Boolean).join(', ');
+    var who = ((a.nickname || '').trim()) || ((a.name || '').trim());
+    return (who ? who + ' \u2014 ' : '') + loc;
   }
-  /* Prefill the forms from the signed-in user's saved address defaults. */
-  function prefillFromAddressBook() {
+  function fillShipForm(a) {
+    setV('f-name', a.name); setV('f-company', a.company);
+    setV('f-ship-phone', a.phone); setV('f-ship-email', a.email);
+    setV('f-line1', a.address1); setV('f-city', a.city);
+    setV('f-state', a.state); setV('f-postal', a.postal);
+    setSel('f-country', a.country || 'US');
+  }
+  function clearShipForm() {
+    ['f-name', 'f-company', 'f-ship-phone', 'f-ship-email',
+     'f-line1', 'f-city', 'f-state', 'f-postal'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    setSel('f-country', 'US');
+  }
+  function fillBillForm(a) {
+    setV('f-bill-name', a.name); setV('f-bill-company', a.company);
+    setV('f-bill-line1', a.address1); setV('f-bill-city', a.city);
+    setV('f-bill-state', a.state); setV('f-bill-postal', a.postal);
+    setSel('f-bill-country', a.country || 'US');
+    setV('f-bill-phone', a.phone); setV('f-bill-email', a.email);
+  }
+  function clearBillForm() {
+    ['f-bill-name', 'f-bill-company', 'f-bill-line1', 'f-bill-city',
+     'f-bill-state', 'f-bill-postal', 'f-bill-phone', 'f-bill-email'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    setSel('f-bill-country', 'US');
+  }
+  /* Saved-address dropdowns on the ship-to and bill-to sections (signed-in only).
+     Guests see no picker and get the blank form as before. */
+  function initAddressPickers() {
     if (!window.BSR || !BSR.api) return;
     BSR.api('/api/account/addresses').then(function (j) {
       if (!(j && j.ok && Array.isArray(j.addresses) && j.addresses.length)) return;
-      var ship = null, bill = null;
-      j.addresses.forEach(function (a) {
-        if (a.is_default_shipping && !ship) ship = a;
-        if (a.is_default_billing && !bill) bill = a;
+      var list = j.addresses;
+      var byId = {};
+      list.forEach(function (a) { byId[String(a.id)] = a; });
+      var defShip = null, defBill = null;
+      list.forEach(function (a) {
+        if (a.is_default_shipping && !defShip) defShip = a;
+        if (a.is_default_billing && !defBill) defBill = a;
       });
-      if (ship) {
-        setV('f-name', ship.name); setV('f-company', ship.company);
-        setV('f-ship-phone', ship.phone); setV('f-ship-email', ship.email);
-        setV('f-line1', ship.address1); setV('f-city', ship.city);
-        setV('f-state', ship.state); setV('f-postal', ship.postal);
-        setSel('f-country', ship.country);
-        savedAddrNote('ship', ship);
+      var opts = function (selId) {
+        return '<option value="">Use a new address\u2026</option>' + list.map(function (a) {
+          return '<option value="' + BSR.esc(String(a.id)) + '"' +
+            (selId && String(a.id) === String(selId) ? ' selected' : '') + '>' +
+            BSR.esc(addrLabel(a)) + '</option>';
+        }).join('');
+      };
+      document.getElementById('ship-addr-picker').innerHTML =
+        '<div class="field"><label for="ship-saved">Saved addresses</label>' +
+        '<select id="ship-saved">' + opts(defShip && defShip.id) + '</select></div>';
+      document.getElementById('bill-addr-picker').innerHTML =
+        '<div class="field"><label for="bill-saved">Saved addresses</label>' +
+        '<select id="bill-saved">' + opts(defBill && defBill.id) + '</select></div>';
+      if (defShip) fillShipForm(defShip);
+      var sameRec = !!(defBill && defShip && String(defBill.id) === String(defShip.id));
+      if (defBill) {
+        fillBillForm(defBill);
+        if (!sameRec) {
+          document.getElementById('f-bill-same').checked = false;
+          document.getElementById('bill-fields').style.display = '';
+        }
       }
-      if (bill && (!ship || String(bill.id) !== String(ship.id))) {
-        document.getElementById('f-bill-same').checked = false;
-        document.getElementById('bill-fields').style.display = '';
-        setV('f-bill-name', bill.name); setV('f-bill-company', bill.company);
-        setV('f-bill-line1', bill.address1); setV('f-bill-city', bill.city);
-        setV('f-bill-state', bill.state); setV('f-bill-postal', bill.postal);
-        setSel('f-bill-country', bill.country);
-        setV('f-bill-phone', bill.phone); setV('f-bill-email', bill.email);
-        savedAddrNote('bill', bill);
-      }
-    }).catch(function () { /* guest or unreachable: leave the form blank */ });
+      document.getElementById('ship-saved').addEventListener('change', function () {
+        var a = byId[String(this.value)];
+        clearShipForm();
+        if (a) fillShipForm(a);
+      });
+      document.getElementById('bill-saved').addEventListener('change', function () {
+        var a = byId[String(this.value)];
+        clearBillForm();
+        if (a) fillBillForm(a);
+      });
+    }).catch(function () { /* guest or unreachable: no pickers */ });
   }
   function fieldErr(id, msg) {
     var el = document.getElementById(id);
@@ -393,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('f-bill-same').addEventListener('change', function () {
     document.getElementById('bill-fields').style.display = this.checked ? 'none' : '';
   });
-  prefillFromAddressBook();
+  initAddressPickers();
   document.getElementById('show-card-form').addEventListener('click', function () {
     document.getElementById('manual-form-wrap').style.display = '';
     document.getElementById('card-payment-section').style.display = '';
