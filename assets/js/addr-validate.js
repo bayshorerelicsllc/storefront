@@ -248,6 +248,12 @@
     var timer = null, lastQ = '', dismissedQ = '', seq = 0;
 
     function hideDd() { dd.style.display = 'none'; dd.innerHTML = ''; }
+    /* Tapping anywhere outside the dropdown dismisses it (no save override). */
+    document.addEventListener('pointerdown', function (e) {
+      if (dd.style.display === 'none') return;
+      if (dd.contains(e.target) || streetEl.contains(e.target)) return;
+      hideDd();
+    });
     function contextQuery() {
       var q = streetEl.value.trim();
       var ct = cityEl ? cityEl.value.trim() : '';
