@@ -911,8 +911,8 @@ document.addEventListener('DOMContentLoaded', function () {
       this.style.display = 'none';
       loadStripe().then(function (st) {
         var elements = st.elements();
-        cardEl = elements.create('card', { disableLink: true });
-        cardEl.mount('#stripe-card-element');
+        var _st = { base: { fontSize: '16px' } }; cardNumEl = elements.create('cardNumber', { style: _st });
+        cardNumEl.mount('#stripe-card-number');\n        cardExpEl = elements.create('cardExpiry', { style: _st });\n        cardExpEl.mount('#stripe-card-expiry');\n        cardCvcEl = elements.create('cardCvc', { style: _st });\n        cardCvcEl.mount('#stripe-card-cvc');\n        cardEl = cardNumEl;
       }).catch(function (e) {
         showPmError(e.message || 'Could not load the card form. Check your connection and try again.');
       });
