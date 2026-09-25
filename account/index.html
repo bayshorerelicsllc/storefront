@@ -15,6 +15,11 @@
   cursor:pointer; text-align:left; }
 .acct-nav-btn:hover { background:var(--bg-soft); }
 .acct-nav-btn.active { background:var(--bg-soft); font-weight:600; }
+.mkt-toggle { display:flex; align-items:center; gap:10px; font-size:.95rem; cursor:pointer; margin:4px 0; }
+.mkt-toggle input { width:18px; height:18px; accent-color:#2a5c2a; cursor:pointer; }
+.btn-danger { background:#fff; color:#b3261e; border:1px solid #b3261e; padding:10px 18px; border-radius:8px; font-size:.95rem; cursor:pointer; }
+.btn-danger:hover { background:#b3261e; color:#fff; }
+.btn-danger:disabled { opacity:.5; cursor:default; }
 .profile-head { display:flex; align-items:center; gap:16px; margin-bottom:22px; }
 .profile-head img { width:56px; height:56px; border-radius:50%; object-fit:cover;
   border:1px solid var(--line); }
@@ -208,9 +213,37 @@ document.addEventListener('DOMContentLoaded', function () {
       '<input id="pf-phone" name="phone" type="tel" inputmode="numeric" maxlength="40" autocomplete="tel" required value="' + esc(customer.phone || '') + '">' +
       '<div class="hint">For order updates and delivery questions.</div></div>' +
       '<div class="acct-actions"><button type="submit" class="btn btn-primary" id="pf-save">Save changes</button></div>' +
-      '</form></div>';
+      '</form>' +
+      '<h3 class="sub" style="margin-top:28px">Email preferences</h3>' +
+      '<div id="mkt-msg"></div>' +
+      '<label class="mkt-toggle"><input type="checkbox" id="mkt-opt" ' + (customer.accepts_marketing ? 'checked' : '') + '>' +
+      '<span>Send me new arrivals, restocks, and store news</span></label>' +
+      '<div class="hint">You can unsubscribe anytime. We never sell your information.</div>' +
+      '</div>';
   }
   function bindProfile() {
+    var mkt = document.getElementById('mkt-opt');
+    if (mkt) {
+      mkt.addEventListener('change', function () {
+        var msg = document.getElementById('mkt-msg');
+        clearMsg(msg);
+        mkt.disabled = true;
+        BSR.api('/api/account/marketing', {
+          method: 'PUT',
+          body: { accepts_marketing: mkt.checked },
+        }).then(function (j) {
+          mkt.disabled = false;
+          if (j && j._status === 401) { window.location = '/account/login/'; return; }
+          if (j && j.ok) {
+            customer.accepts_marketing = mkt.checked;
+            showMsg(msg, true, mkt.checked ? 'You are on the list.' : 'You are unsubscribed.');
+          } else {
+            mkt.checked = !mkt.checked;
+            showMsg(msg, false, 'Could not update preference. Try again.');
+          }
+        });
+      });
+    }
     var form = document.getElementById('profile-form');
     if (!form) return;
     form.addEventListener('submit', function (e) {
@@ -499,12 +532,31 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div id="pk-msg"></div>' +
       '<ul class="pk-list" id="pk-list"><li>Loading&hellip;</li></ul>' +
       '<div id="pk-add-slot"></div>' +
+      '<h3 class="sub" style="margin-top:28px">Sessions</h3>' +
+      '<p style="font-size:.9rem;color:var(--text-soft);margin:0 0 12px">Signed in on another phone, tablet, or computer? End every session except this one.</p>' +
+      '<div id="sess-msg"></div>' +
+      '<button type="button" class="btn btn-danger" id="logout-all-btn">Sign out of all other devices</button>' +
       '</div>';
   }
   function socialProviderLabel() {
     return 'a social account';
   }
   function bindSecurity() {
+    var logoutAll = document.getElementById('logout-all-btn');
+    if (logoutAll) {
+      logoutAll.addEventListener('click', function () {
+        if (!confirm('Sign out of all other devices? This device stays signed in.')) return;
+        var msg = document.getElementById('sess-msg');
+        clearMsg(msg);
+        logoutAll.disabled = true;
+        BSR.api('/api/account/logout-all', { method: 'POST' }).then(function (j) {
+          logoutAll.disabled = false;
+          if (j && j._status === 401) { window.location = '/account/login/'; return; }
+          if (j && j.ok) showMsg(msg, true, 'All other devices signed out.');
+          else showMsg(msg, false, 'Could not sign out other devices. Try again.');
+        });
+      });
+    }
     var pwForm = document.getElementById('pw-form');
     if (pwForm) {
       pwForm.addEventListener('submit', function (e) {
