@@ -435,13 +435,17 @@
     if (wireAccountButtons._done) return;
     wireAccountButtons._done = true;
     document.addEventListener('click', function (e) {
-      var btn = e.target && e.target.closest ? e.target.closest('[data-account-btn]') : null;
+      var t = e.target;
+      var btn = null;
+      /* Walk up manually for maximum compatibility. */
+      while (t && t !== document) {
+        if (t.hasAttribute && t.hasAttribute('data-account-btn')) { btn = t; break; }
+        t = t.parentNode;
+      }
       if (!btn) return;
       e.preventDefault();
-      me().then(function (c) {
-        if (c) { window.location = '/account/'; }
-        else { window.location = '/account/login/'; }
-      }).catch(function () { window.location = '/account/login/'; });
+      /* Login page redirects to /account/ if already signed in. */
+      window.location = '/account/login/';
     });
   }
 
