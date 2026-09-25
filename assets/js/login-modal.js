@@ -251,7 +251,6 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       '<p class="bsr-hint">Don\'t have an account yet? Enter your email and we\'ll help you create one!</p>' +
       '<button type="button" class="bsr-loginbtn" data-el="continue">CONTINUE</button>' +
       '<div data-el="passkey-mount-1"></div>' +
-      '<p class="bsr-guest"><button type="button" class="bsr-link" data-el="guest">Continue as guest</button></p>' +
       '</div>' +
       /* ---- STEP 2a: existing account -> sign in ---- */
       '<div data-step="signin" hidden>' +
@@ -277,6 +276,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       '<div class="bsr-hint">8+ characters</div></div>' +
       '<div class="bsr-turnstile-wrap" data-el="ts-register"></div>' +
       '<button type="button" class="bsr-loginbtn" data-el="create">CREATE ACCOUNT</button>' +
+      '<p class="bsr-guest"><button type="button" class="bsr-link" data-el="guest">Continue as guest</button></p>' +
       '</div>' +
       CAPTCHA_NOTE +
       '</div>';
