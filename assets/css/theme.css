@@ -450,3 +450,9 @@ html.a11y-motion *, html.a11y-motion *::before, html.a11y-motion *::after {
 .drawer-brand img { width: 48px; height: 48px; object-fit: contain; }
 .drawer-brand .name { font-size: 1.12rem; font-weight: 800; font-family: var(--font-head);
   letter-spacing: 0.015em; color: var(--text); white-space: normal; line-height: 1.15; }
+
+/* Branded payment logos row */
+.pay-brands{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:12px 14px;margin:0 0 16px;background:rgba(255,255,255,.7);border:1px solid #e4dcc8;border-radius:10px}
+.pay-brands-label{font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#6b5d43;margin-right:2px}
+.pay-brands img{height:26px;width:auto;max-width:64px;object-fit:contain;background:#fff;border:1px solid #eee4cd;border-radius:6px;padding:3px 6px}
+@media(max-width:640px){.pay-brands{gap:8px 10px;padding:10px}.pay-brands img{height:22px}}
