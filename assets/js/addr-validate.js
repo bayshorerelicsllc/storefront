@@ -59,7 +59,7 @@
      doSave receives (payload, info); info.validated says whether the
      validator confirmed the address, info.corrected whether a Shippo
      correction was applied. */
-  function checkAndConfirm(form, payload, doSave) {
+  function checkAndConfirm(form, payload, doSave, onEdit) {
     var box = msgEl(form);
     var btn = form.querySelector('[type="submit"]');
     if (btn) btn.disabled = true;
@@ -144,6 +144,7 @@
         done();
         var first = form.querySelector('input[name="address1"]');
         if (first) first.focus();
+        if (onEdit) onEdit();
       });
     }).catch(function () {
       done();
