@@ -76,7 +76,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     'text-decoration:underline;padding:0;font-family:inherit}',
     '.bsr-captcha-note{text-align:center;font-size:.74rem;color:#8a8172;margin:28px 0 0;line-height:1.6}',
     '.bsr-captcha-note a{color:#2a241b}',
-    '.bsr-cf-word{background:url(/assets/img/cloudflare-cloud.svg) left center/auto 0.85em no-repeat;padding-left:1.7em}',
+    '.bsr-cf-word{background:url(/assets/img/cloudflare-cloud.svg) right center/auto 0.85em no-repeat;padding-right:1.7em}',
     '.bsr-loginbtn{width:100%;min-height:58px;background:#1e4d33;color:#fff;border:none;border-radius:4px;',
     'font-size:.98rem;font-weight:700;letter-spacing:.07em;cursor:pointer;font-family:inherit;margin-top:6px;',
     'transition:background .15s}',
@@ -193,7 +193,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
   var EYE_OFF_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 
   var CAPTCHA_NOTE = '<p class="bsr-captcha-note">This site is protected by ' +
-    '<span class="bsr-cf-word">Cloudflare</span> and our ' +
+    '<span class="bsr-cf-word">Cloudflare</span><br>and our ' +
     '<a href="/privacy/">Privacy Policy</a> and ' +
     '<a href="/terms/">Terms of Service</a> apply.</p>';
 
