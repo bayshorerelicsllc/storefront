@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Checkout — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
-<link rel="stylesheet" href="/assets/css/theme.css?v=northwoods3">
+<link rel="stylesheet" href="/assets/css/theme.css">
 <script src="/assets/js/bsr.js" defer></script>
 </head>
 <body>
@@ -93,13 +93,11 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="hint" id="promo-ok" style="display:none"></div>' +
     '<div class="error" id="promo-err" style="display:none"></div></section>' +
     '<section class="card"><h2><span class="step-num">5</span> Payment</h2>' +
-    '<div id="wallet-wrap"><div id="express-checkout-element"></div>' +
-    '<div class="pay-divider" id="wallet-divider" style="display:none"><span>or pay with</span></div></div>' +
-    '<div class="pay-tabs" role="tablist">' +
-    '<button class="pay-tab" id="tab-paypal" type="button" role="tab" aria-selected="true" data-tab="paypal">PayPal</button>' +
-    '<button class="pay-tab" id="tab-card" type="button" role="tab" aria-selected="false" data-tab="card">Card</button></div>' +
-    '<div id="pay-paypal" role="tabpanel"><div id="paypal-buttons"></div><div class="hint" id="paypal-msg"></div></div>' +
-    '<div id="pay-card" role="tabpanel" style="display:none"><div id="stripe-element"></div>' +
+    '<div id="pay-wallets"><div id="express-checkout-element"></div></div>' +
+    '<div class="pay-divider" id="wallet-divider" style="display:none"><span>or</span></div>' +
+    '<div id="pay-paypal"><div id="paypal-buttons"></div><div class="hint" id="paypal-msg"></div></div>' +
+    '<div class="pay-divider" id="card-divider"><span>or pay with card</span></div>' +
+    '<div id="pay-card"><div id="stripe-element"></div>' +
     '<div class="error" id="stripe-err" style="display:none"></div>' +
     '<button class="btn btn-primary btn-block" id="stripe-pay" type="button">Pay securely</button></div>' +
     '<div class="secure-note">' + BSR.icon('lock', 'ic-sm') + '<span>Payments are encrypted. We never see your card number.</span></div>' +
@@ -270,31 +268,29 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  /* ---------- payment tabs ---------- */
-  var currentTab = 'paypal';
-  var tabs = document.querySelectorAll('.pay-tab');
-  tabs.forEach(function (t) {
-    t.addEventListener('click', function () {
-      if (t.disabled) return;
-      currentTab = t.getAttribute('data-tab');
-      tabs.forEach(function (x) {
-        var on = x === t;
-        x.classList.toggle('active', on);
-        x.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      document.getElementById('pay-paypal').style.display = currentTab === 'paypal' ? '' : 'none';
-      document.getElementById('pay-card').style.display = currentTab === 'card' ? '' : 'none';
-    });
-  });
-  function setTabEnabled(which, enabled, msg) {
-    var tab = document.getElementById(which === 'paypal' ? 'tab-paypal' : 'tab-card');
-    tab.disabled = !enabled;
-    tab.classList.toggle('disabled', !enabled);
-    if (!enabled && msg) {
+  /* ---------- payment sections ---------- */
+  function setPayEnabled(which, enabled, msg) {
+    var sec = document.getElementById(which === 'paypal' ? 'pay-paypal' : 'pay-card');
+    if (sec) sec.style.display = enabled ? '' : 'none';
+    var div = document.getElementById(which === 'paypal' ? 'wallet-divider' : 'card-divider');
+    if (!enabled) {
       var msgEl = document.getElementById(which === 'paypal' ? 'paypal-msg' : 'stripe-err');
-      msgEl.textContent = msg;
-      msgEl.style.display = '';
+      if (msgEl && msg) { msgEl.textContent = msg; msgEl.style.display = ''; }
     }
+    updateDividers();
+  }
+  function updateDividers() {
+    var wallets = document.getElementById('pay-wallets');
+    var pp = document.getElementById('pay-paypal');
+    var card = document.getElementById('pay-card');
+    var wVis = wallets && wallets.style.display !== 'none' && wallets.innerHTML.trim() !== '';
+    var ppVis = pp && pp.style.display !== 'none';
+    var cardVis = card && card.style.display !== 'none';
+    var wd = document.getElementById('wallet-divider');
+    var cd = document.getElementById('card-divider');
+    if (wd) wd.style.display = (wVis && (ppVis || cardVis)) ? '' : 'none';
+    if (cd) cd.style.display = ((wVis || ppVis) && cardVis) ? '' : 'none';
+    if (cd && !wVis && !ppVis && cardVis) cd.style.display = 'none';
   }
 
   function promoCode() {
@@ -313,10 +309,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var paypalKey = cfg && cfg.ok ? cfg.paypal_client_id : null;
     var stripeKey = cfg && cfg.ok ? cfg.stripe_publishable_key : null;
     if (!paypalKey) {
-      setTabEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
+      setPayEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
     } else {
       var s = document.createElement('script');
-      s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(paypalKey) + '&currency=USD&intent=capture';
+      s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(paypalKey) + '&currency=USD&intent=capture&enable-funding=paylater,venmo';
       s.onload = renderPayPalButtons;
       s.onerror = function () {
         document.getElementById('paypal-msg').textContent = 'PayPal could not load. Please try the card option.';
@@ -324,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
       document.head.appendChild(s);
     }
     if (!stripeKey) {
-      setTabEnabled('card', false, "Card payments aren't connected yet — please check back soon.");
+      setPayEnabled('card', false, "Card payments aren't connected yet — please check back soon.");
     } else {
       initStripe(stripeKey);
     }
@@ -334,8 +330,8 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('tab-card').click();
     }
   }).catch(function () {
-    setTabEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
-    setTabEnabled('card', false, "Card payments aren't connected yet — please check back soon.");
+    setPayEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
+    setPayEnabled('card', false, "Card payments aren't connected yet — please check back soon.");
   });
 
   function renderPayPalButtons() {
@@ -385,9 +381,10 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       expressCheckoutEl.on('ready', function (e) {
         var avail = (e && e.availablePaymentMethods) || {};
-        if (avail.applePay || avail.googlePay || avail.link) {
-          document.getElementById('wallet-divider').style.display = '';
+        if (!(avail.applePay || avail.googlePay || avail.link)) {
+          document.getElementById('pay-wallets').style.display = 'none';
         }
+        updateDividers();
       });
       expressCheckoutEl.on('confirm', onExpressConfirm);
       expressCheckoutEl.mount('#express-checkout-element');
@@ -442,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('stripe-pay').addEventListener('click', onStripePay);
     };
     s.onerror = function () {
-      setTabEnabled('card', false, 'Card payments could not load — please try PayPal.');
+      setPayEnabled('card', false, 'Card payments could not load — please try PayPal.');
     };
     document.head.appendChild(s);
   }
