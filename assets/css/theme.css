@@ -459,3 +459,8 @@ html.a11y-motion *, html.a11y-motion *::before, html.a11y-motion *::after {
 .pay-brands-label{font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#6b5d43;margin-right:2px}
 .pay-brands img{height:26px;width:auto;max-width:64px;object-fit:contain;background:#fff;border:1px solid #eee4cd;border-radius:6px;padding:3px 6px}
 @media(max-width:640px){.pay-brands{gap:8px 10px;padding:10px}.pay-brands img{height:22px}}
+
+/* Accept badge: rectangular white strip with all payment logos (footer bottom) */
+.accept-badge{display:inline-flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px 14px;background:#fff;border-radius:8px;padding:8px 16px;max-width:100%;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.accept-badge img{height:18px;width:auto;display:block}
+@media(max-width:560px){.accept-badge{gap:8px 10px;padding:8px 12px}.accept-badge img{height:16px}}
