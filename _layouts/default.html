@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Third-party analytics (Google Analytics 4 + Microsoft Clarity) load ONLY
+       after the visitor accepts cookies. See /cookies/ and assets/js/consent.js.
+       First-party stats use localStorage, never cookies. -->
+  <script>
+    (function () {
+      var consent = null;
+      try { consent = localStorage.getItem('bsr-consent'); } catch (e) {}
+      if (!consent || consent.indexOf('accepted') !== 0) return;
+      var g = document.createElement('script');
+      g.async = true;
+      g.src = 'https://www.googletagmanager.com/gtag/js?id=G-D1BV6KQNMD';
+      document.head.appendChild(g);
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', 'G-D1BV6KQNMD');
+      (function (c, l, a, r, i, t, y) {
+        c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
+        t = l.createElement(r); t.async = 1; t.src = 'https://www.clarity.ms/tag/' + i;
+        y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+      })(window, document, 'clarity', 'script', 'yn53meg966');
+    })();
+  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% seo title=false %}
+  <title>{% if page.seo_title %}{{ page.seo_title | escape }}{% elsif page.title %}{{ page.title | escape }} | {{ site.title | escape }}{% else %}{{ site.title | escape }}{% endif %}</title>
+  <meta name="theme-color" content="#26211c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2326211c'/%3E%3Crect x='7' y='13' width='18' height='6' rx='1' fill='%23b03a2a'/%3E%3Ccircle cx='11' cy='22' r='3' fill='%23faf7ef'/%3E%3Ccircle cx='21' cy='22' r='3' fill='%23faf7ef'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/open-dyslexic" rel="stylesheet">
+  {% comment %} Cloudflare Turnstile loader (abuse-prone forms). Only loaded when
+       site.turnstile_site_key is configured; forms work without it. {% endcomment %}
+  {% if site.turnstile_site_key != "" and site.turnstile_site_key %}
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  {% endif %}
+  <script>
+    // Set the theme before first paint to avoid a flash of the wrong theme.
+    (function () {
+      try {
+        var t = localStorage.getItem('bsr-theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ '/assets/css/theme.css?v=20260924' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/css/chat.css?v=20260924' | relative_url }}">
+  <script src="{{ '/assets/js/shipping.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/witax.js' | relative_url }}"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  {% assign ann = site.data.announcement %}
+  {% if ann and ann.enabled and ann.text != "" %}
+  {% assign alink = ann.link | default: "" | strip %}
+  <div class="promo-bar announce">
+    <p data-bsr="announcement">{% if alink != "" %}<a href="{{ alink }}"><strong>{{ ann.text | escape }}</strong></a>{% else %}<strong>{{ ann.text | escape }}</strong>{% endif %}</p>
+  </div>
+  {% else %}
+  <div class="promo-bar">
+    <p data-bsr="announcement"><strong>Second-hand slides, sold one at a time.</strong><span class="dot">◆</span>One flat-rate USPS shipping charge per order<span class="dot">◆</span>No restocks — when it's gone, it's gone</p>
+  </div>
+  {% endif %}
+
+  <header class="masthead">
+    <div class="wrap masthead-inner">
+      <div class="brand-lockup">
+        <a class="brand-mark" href="{{ '/' | relative_url }}" aria-label="Bay Shore Relics LLC — home">
+          <img class="mark-main" src="{{ '/assets/img/logo.png' | relative_url }}" width="44" height="44" alt="Bay Shore Relics LLC">
+          <span class="brand-word">Bay Shore Relics<small>Vintage 35mm Slides</small></span>
+        </a>
+        <h1 class="sr-only">Bay Shore Relics LLC — vintage 35mm railroad slides</h1>
+      </div>
+
+      <nav class="masthead-nav" aria-label="Main navigation">
+        <a class="nav-link" href="{{ '/' | relative_url }}" {% if page.url == '/' %}aria-current="page"{% endif %}>All Slides</a>
+        <a class="nav-link" href="{{ '/sold/' | relative_url }}" {% if page.url == '/sold/' %}aria-current="page"{% endif %}>Sold Archive</a>
+        <a class="nav-link" href="{{ '/about/' | relative_url }}" {% if page.url == '/about/' %}aria-current="page"{% endif %}>About</a>
+        <a class="nav-link" href="{{ '/shipping/' | relative_url }}" {% if page.url == '/shipping/' %}aria-current="page"{% endif %}>Shipping &amp; Policies</a>
+        <a class="nav-link" href="{{ '/contact/' | relative_url }}" {% if page.url == '/contact/' %}aria-current="page"{% endif %}>Contact</a>
+      </nav>
+
+      <div class="masthead-actions">
+        <div class="search-wrap">
+          <button type="button" class="icon-btn" id="search-toggle" aria-expanded="false" aria-controls="search-pop" aria-label="Search slides">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          </button>
+          <div class="search-pop" id="search-pop" hidden>
+            <form action="{{ '/search/' | relative_url }}" method="get" role="search">
+              <input type="search" name="q" placeholder="Search railroad, place, year…" aria-label="Search slides">
+              <button type="submit" class="btn btn-brass btn-sm">Go</button>
+            </form>
+          </div>
+        </div>
+        <a class="acct-link" id="acct-link" href="{{ '/account/' | relative_url }}" aria-label="Your account">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+          <span id="acct-label">Sign in</span>
+        </a>
+        <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+        <div class="a11y-wrap">
+          <button type="button" class="icon-btn" id="a11y-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="a11y-panel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M4 8.5c2.7.7 5.3 1 8 1s5.3-.3 8-1M12 9.5v5l-2.8 6M12 14.5l2.8 6"/></svg>
+            <span class="icon-btn-label">Accessibility</span>
+          </button>
+          <div class="a11y-panel" id="a11y-panel" role="dialog" aria-label="Accessibility options" hidden>
+            <h2>Display options</h2>
+            <button type="button" class="a11y-row" role="switch" aria-checked="false" data-a11y="text-large">
+              <span>Larger text<span class="a11y-desc">Bigger type across the whole site</span></span>
+              <span class="switch" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="a11y-row" role="switch" aria-checked="false" data-a11y="contrast">
+              <span>High contrast<span class="a11y-desc">Stronger text and border contrast</span></span>
+              <span class="switch" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="a11y-row" role="switch" aria-checked="false" data-a11y="dyslexia">
+              <span>Dyslexia-friendly font<span class="a11y-desc">Easier-to-read letter shapes</span></span>
+              <span class="switch" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="a11y-row" role="switch" aria-checked="false" data-a11y="motion">
+              <span>Reduce motion<span class="a11y-desc">Turns off animations and transitions</span></span>
+              <span class="switch" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="a11y-row" role="switch" aria-checked="false" data-a11y="links">
+              <span>Underline links<span class="a11y-desc">Always show underlines on links</span></span>
+              <span class="switch" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="a11y-row" id="a11y-reset">
+              <span>Reset all<span class="a11y-desc">Back to the standard look</span></span>
+            </button>
+          </div>
+        </div>
+        <button type="button" class="cart-btn" id="cart-open" aria-haspopup="dialog" aria-expanded="false" aria-controls="cart-drawer" aria-label="Open your cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h15l-1.5 9h-12z"/><path d="M6 7L5 3H2"/><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/></svg>
+          <span class="sr-only">Cart</span>
+          <span id="cart-count" class="cart-badge" style="display:none" aria-hidden="true">0</span>
+        </button>
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="mobile-nav-overlay" id="mobile-nav-overlay" hidden></div>
+  <div class="mobile-nav" id="mobile-nav" role="dialog" aria-modal="true" aria-label="Menu" hidden>
+    <div class="mobile-nav-head">
+      <span class="brand-word">Bay Shore Relics</span>
+      <button type="button" class="icon-btn" id="mobile-nav-close" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <nav aria-label="Mobile navigation">
+      <a class="nav-link" href="{{ '/' | relative_url }}" {% if page.url == '/' %}aria-current="page"{% endif %}>All Slides</a>
+      <a class="nav-link" href="{{ '/sold/' | relative_url }}" {% if page.url == '/sold/' %}aria-current="page"{% endif %}>Sold Archive</a>
+      <a class="nav-link" href="{{ '/about/' | relative_url }}" {% if page.url == '/about/' %}aria-current="page"{% endif %}>About</a>
+      <a class="nav-link" href="{{ '/shipping/' | relative_url }}" {% if page.url == '/shipping/' %}aria-current="page"{% endif %}>Shipping &amp; Policies</a>
+      <a class="nav-link" href="{{ '/contact/' | relative_url }}" {% if page.url == '/contact/' %}aria-current="page"{% endif %}>Contact</a>
+      <a class="nav-link" href="{{ '/account/' | relative_url }}">Account</a>
+      <a class="nav-link" href="{{ '/search/' | relative_url }}">Search</a>
+    </nav>
+  </div>
+
+  <main id="main" class="content wrap">
+    {{ content }}
+  </main>
+
+  <div class="wave-divider" aria-hidden="true">
+    <svg viewBox="0 0 1440 64" preserveAspectRatio="none"><path d="M0,36 C240,62 480,8 720,30 C960,52 1200,12 1440,34 L1440,64 L0,64 Z"/></svg>
+  </div>
+
+  <footer class="footer">
+    <div class="wrap footer-grid">
+      <div class="newsletter">
+        <h3>Launch List</h3>
+        <p>New slides land here first. One email when fresh stock arrives — no spam, ever.</p>
+        <form class="email-form" id="newsletter-form" novalidate>
+          <input type="email" name="email" placeholder="you@example.com" aria-label="Email address" required autocomplete="email">
+          <input type="text" name="company" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          {% include turnstile.html %}
+          <button type="submit" class="btn btn-brass btn-sm">Join</button>
+        </form>
+        <p class="email-note" id="newsletter-msg" role="status" hidden></p>
+      </div>
+      <nav aria-label="Shop">
+        <h3>Shop</h3>
+        <ul>
+          <li><a href="{{ '/' | relative_url }}">All Slides</a></li>
+          <li><a href="{{ '/sold/' | relative_url }}">Sold Archive</a></li>
+          <li><a href="{{ '/about/' | relative_url }}">About Us</a></li>
+          <li><a href="{{ '/cart.html' | relative_url }}">Your Cart</a></li>
+          <li><a href="{{ '/track.html' | relative_url }}">Track Your Order</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Help">
+        <h3>Help</h3>
+        <ul>
+          <li><a href="{{ '/shipping/' | relative_url }}" data-bsr-policy="shipping">Shipping &amp; Policies</a></li>
+          <li><a href="{{ '/returns/' | relative_url }}" data-bsr-policy="returns">Returns &amp; Refunds</a></li>
+          <li><a href="{{ '/terms/' | relative_url }}" data-bsr-policy="terms">Terms of Service</a></li>
+          <li><a href="{{ '/privacy/' | relative_url }}" data-bsr-policy="privacy">Privacy Policy</a></li>
+          <li><a href="{{ '/cookies/' | relative_url }}">Cookie Policy</a></li>
+          <li><a href="{{ '/accessibility/' | relative_url }}">Accessibility</a></li>
+          <li><a href="{{ '/contact/' | relative_url }}">Contact Us</a></li>
+        </ul>
+      </nav>
+      <div class="contact-col">
+        <h3>Get in Touch</h3>
+        <address>
+          <a href="https://www.google.com/maps/search/?api=1&query={{ site.address_lines | join: ', ' | url_encode }}" target="_blank" rel="noopener">
+            <span data-bsr="address">{{ site.address_lines[0] }}<br>
+            {{ site.address_lines[1] }}<br>
+            {{ site.address_lines[2] }}</span>
+          </a>
+        </address>
+        <p><a href="tel:{{ site.phone_tel }}" data-bsr="phone">{{ site.phone_display }}</a></p>
+        <p><a href="mailto:{{ site.email }}" data-bsr="email">{{ site.email }}</a></p>
+        <p data-bsr="hours" hidden style="margin:4px 0 0"></p>
+      </div>
+      <div class="trust">
+        <h3>Why Bay Shore Relics</h3>
+        <p><strong>One of a kind, always.</strong> Every slide is a single physical item — sold once, never restocked. We're a second-hand shop: a slide's history isn't guaranteed, and we never make reproductions ourselves.</p>
+        <p><strong>Flat-rate shipping.</strong> One USPS charge per order, figured from your address at checkout.</p>
+        <p><strong>Secure checkout.</strong> PayPal handles every payment. We never see your card details.</p>
+      </div>
+    </div>
+    <div class="footer-legal">
+      <div class="wrap">
+        <p style="margin:0">&copy; 2025&ndash;{{ site.time | date: '%Y' }} <span data-bsr="site_name">Bay Shore Relics LLC</span>. All rights reserved.</p>
+        <p data-bsr="footer_note" hidden style="margin:4px 0 0"></p>
+        <p class="credit-row" style="margin:0">
+          <span><img src="{{ '/assets/img/muse-icon.png' | relative_url }}" width="14" height="14" alt=""> Built with <a href="https://muse.ai">Muse</a></span>
+          <span><img src="{{ '/assets/img/cloudflare-mark.svg' | relative_url }}" width="14" height="14" alt=""> Hosted on <a href="https://www.cloudflare.com">Cloudflare</a></span>
+          <span><img src="{{ '/assets/img/paypal-icon.png' | relative_url }}" width="14" height="14" alt=""> Secure checkout powered by <a href="https://www.paypal.com">PayPal</a></span>
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <p class="sr-only" role="status" id="a11y-announcer"></p>
+
+  {% include cart-drawer.html %}
+
+  <script>
+    window.BSR = window.BSR || {};
+    window.BSR.ROOT = {{ '/' | relative_url | jsonify }};
+  </script>
+  <script src="{{ '/assets/js/account.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/bsr-sync.js' | relative_url }}" defer></script>
+  <script src="{{ '/assets/js/a11y.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/cart.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/cart-drawer.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/chat.js?v=20260924' | relative_url }}" defer></script>
+  <script src="{{ '/assets/js/analytics.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/consent.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/login-modal.js?v=20260925aw' | relative_url }}" defer></script>
+  <script>
+    // Open login as a popup modal over the page when ?login=1
+    (function () {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (q.get('login') === '1') {
+          history.replaceState(null, '', location.pathname);
+          var tries = 0;
+          var iv = setInterval(function () {
+            tries++;
+            if (window.BSR && window.BSR.showLogin) {
+              clearInterval(iv);
+              window.BSR.showLogin();
+            } else if (tries > 50) { clearInterval(iv); }
+          }, 100);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <script>
+    // Header chrome: search toggle, mobile nav, account label, newsletter.
+    (function () {
+      var ROOT = (window.BSR && window.BSR.ROOT) || '/';
+
+      // Search toggle
+      var sBtn = document.getElementById('search-toggle');
+      var sPop = document.getElementById('search-pop');
+      if (sBtn && sPop) {
+        sBtn.addEventListener('click', function () {
+          var open = sPop.hidden;
+          sPop.hidden = !open;
+          sBtn.setAttribute('aria-expanded', String(open));
+          if (open) { var i = sPop.querySelector('input'); if (i) i.focus(); }
+        });
+        document.addEventListener('click', function (e) {
+          if (!sPop.hidden && !sPop.contains(e.target) && e.target !== sBtn && !sBtn.contains(e.target)) {
+            sPop.hidden = true; sBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+
+      // Mobile nav drawer
+      var nToggle = document.getElementById('nav-toggle');
+      var mNav = document.getElementById('mobile-nav');
+      var mOverlay = document.getElementById('mobile-nav-overlay');
+      var mClose = document.getElementById('mobile-nav-close');
+      function setNav(open) {
+        if (!mNav || !mOverlay) return;
+        mNav.hidden = !open; mOverlay.hidden = !open;
+        requestAnimationFrame(function () {
+          mNav.classList.toggle('open', open);
+          mOverlay.classList.toggle('open', open);
+        });
+        if (nToggle) nToggle.setAttribute('aria-expanded', String(open));
+        document.body.style.overflow = open ? 'hidden' : '';
+        if (open && mClose) mClose.focus();
+        else if (!open && nToggle) nToggle.focus();
+      }
+      if (nToggle) nToggle.addEventListener('click', function () { setNav(mNav.hidden); });
+      if (mClose) mClose.addEventListener('click', function () { setNav(false); });
+      if (mOverlay) mOverlay.addEventListener('click', function () { setNav(false); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && mNav && !mNav.hidden) setNav(false);
+      });
+
+      // Account label: "Account" when signed in, "Sign in" otherwise.
+      function paintAcct() {
+        var label = document.getElementById('acct-label');
+        if (!label) return;
+        var signed = !!(window.BSR_ACCT && typeof BSR_ACCT.signedIn === 'function' && BSR_ACCT.signedIn());
+        label.textContent = signed ? 'Account' : 'Sign in';
+      }
+      document.addEventListener('DOMContentLoaded', paintAcct);
+      paintAcct();
+
+      // Newsletter: POST JSON {email, company} (honeypot) to the worker.
+      var form = document.getElementById('newsletter-form');
+      var msg = document.getElementById('newsletter-msg');
+      if (form && msg) {
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var email = (form.email.value || '').trim();
+          var company = (form.company.value || '').trim();
+          msg.hidden = false;
+          msg.className = 'email-note';
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            msg.textContent = 'Please enter a valid email address.';
+            msg.classList.add('error');
+            return;
+          }
+          msg.textContent = 'Joining…';
+          var tsToken = '';
+          try {
+            if (window.turnstile) {
+              tsToken = turnstile.getResponse() || '';
+              if (!tsToken) {
+                msg.textContent = 'Please complete the security check.';
+                msg.classList.add('error');
+                return;
+              }
+            }
+          } catch (e) { /* Turnstile unavailable — submit without a token */ }
+          fetch('https://admin.bayshorerelicsllc.com/api/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, company: company, turnstile_token: tsToken })
+          }).then(function (r) { return r.json().catch(function () { return {}; }); })
+          .then(function (d) {
+            if (d && d.ok === false) throw new Error(d.error || 'signup failed');
+            msg.className = 'email-note email-done';
+            msg.textContent = 'You\u2019re on the list! Watch your inbox for new slides.';
+            form.reset();
+            try { if (window.turnstile) turnstile.reset(); } catch (e) {}
+          }).catch(function () {
+            msg.className = 'email-note error';
+            msg.textContent = 'Something went wrong — please try again, or email us directly.';
+          });
+        });
+      }
+    })();
+  </script>
+
+  <div id="cookie-note" class="cookie-note" hidden>
+    <p><strong>Your call on cookies.</strong> Your cart and display settings stay in your browser — no consent needed for those. Google Analytics and Microsoft Clarity only load if you accept; they help us understand visits in aggregate. <a href="{{ '/cookies/' | relative_url }}">Cookie policy</a></p>
+    <div class="cookie-actions">
+      <button type="button" data-consent="accepted" class="btn-brass btn-sm">Accept</button>
+      <button type="button" data-consent="rejected" class="btn-ghost btn-sm">Reject</button>
+    </div>
+  </div>
+</body>
+</html>
