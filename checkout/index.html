@@ -82,13 +82,17 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="field"><label for="f-country">Country</label>' +
     '<select id="f-country">' + COUNTRIES.map(function (c) {
       return '<option value="' + c[0] + '"' + (c[0] === 'US' ? ' selected' : '') + '>' + BSR.esc(c[1]) + '</option>';
-    }).join('') + '</select></div></div></section>' +
-    '<section class="card"><h2><span class="step-num">3</span> Promo code</h2>' +
+    }).join('') + '</select></div></div>' +
+    '<div id="ship-method-wrap" style="margin-top:16px">' +
+    '<button class="btn btn-secondary" id="ship-find" type="button">Show shipping options</button>' +
+    '<div class="error" id="e-ship" style="display:none;margin-top:8px"></div>' +
+    '<div id="ship-options" style="margin-top:12px"></div></div></section>' +
+    '<section class="card"><h2><span class="step-num">4</span> Promo code</h2>' +
     '<div class="promo-row"><input type="text" id="f-promo" class="field" placeholder="Promo code" aria-label="Promo code" value="' + BSR.esc(savedPromo() ? savedPromo().code : '') + '">' +
     '<button class="btn btn-secondary btn-sm" id="promo-apply" type="button">Apply</button></div>' +
     '<div class="hint" id="promo-ok" style="display:none"></div>' +
     '<div class="error" id="promo-err" style="display:none"></div></section>' +
-    '<section class="card"><h2><span class="step-num">4</span> Payment</h2>' +
+    '<section class="card"><h2><span class="step-num">5</span> Payment</h2>' +
     '<div class="pay-tabs" role="tablist">' +
     '<button class="pay-tab" id="tab-paypal" type="button" role="tab" aria-selected="true" data-tab="paypal">PayPal</button>' +
     '<button class="pay-tab" id="tab-card" type="button" role="tab" aria-selected="false" data-tab="card">Card</button></div>' +
@@ -199,11 +203,70 @@ document.addEventListener('DOMContentLoaded', function () {
     bad = fieldErr('e-state', !state ? 'State / province is required.' : '') || bad;
     bad = fieldErr('e-postal', !postal ? 'Postal code is required.' : '') || bad;
     if (bad) return null;
+    if (!shipChoice) {
+      fieldErr('e-ship', 'Choose a shipping option above.');
+      return null;
+    }
     return {
       name: name, email: email,
-      address: { line1: line1, city: city, state: state, postal: postal, country: country }
+      address: { line1: line1, city: city, state: state, postal: postal, country: country },
+      rate_ref: shipChoice.ref, provider: shipChoice.provider,
+      carrier: shipChoice.carrier, service: shipChoice.service
     };
   }
+
+  /* ---------- live shipping rates ---------- */
+  var shipChoice = null;
+  var shipOptions = [];
+  var WORKER = 'https://cm.bayshorerelicsllc.com';
+  document.getElementById('ship-find').addEventListener('click', function () {
+    var errEl = document.getElementById('e-ship');
+    errEl.style.display = 'none';
+    var country = document.getElementById('f-country').value;
+    var postal = document.getElementById('f-postal').value.trim();
+    var city = document.getElementById('f-city').value.trim();
+    var state = document.getElementById('f-state').value.trim();
+    var line1 = document.getElementById('f-line1').value.trim();
+    if (!postal) { errEl.textContent = 'Enter the postal code first.'; errEl.style.display = ''; return; }
+    var btn = document.getElementById('ship-find');
+    btn.disabled = true; btn.textContent = 'Finding rates…';
+    var url = WORKER + '/api/shipping/rates?country=' + encodeURIComponent(country) +
+      '&postal=' + encodeURIComponent(postal) +
+      '&city=' + encodeURIComponent(city) +
+      '&state=' + encodeURIComponent(state) +
+      '&street=' + encodeURIComponent(line1);
+    fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+      btn.disabled = false; btn.textContent = 'Show shipping options';
+      if (!d.ok || !d.options || !d.options.length) {
+        errEl.textContent = (d && d.error) || 'Could not load shipping rates.';
+        errEl.style.display = '';
+        return;
+      }
+      shipOptions = d.options;
+      shipChoice = { ref: d.options[0].ref, provider: d.options[0].provider, carrier: d.options[0].carrier, service: d.options[0].service };
+      var h = '<div role="radiogroup" aria-label="Shipping options">';
+      d.options.forEach(function (o, i) {
+        var label = (o.carrier ? BSR.esc(o.carrier) + ' — ' : '') + BSR.esc(o.service || 'Standard');
+        h += '<label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer">' +
+          '<input type="radio" name="ship-opt" value="' + BSR.esc(o.ref) + '" data-i="' + i + '"' + (i === 0 ? ' checked' : '') + '>' +
+          '<span style="flex:1">' + label +
+          (o.eta ? '<br><small class="hint">' + BSR.esc(o.eta) + '</small>' : '') + '</span>' +
+          '<strong>' + BSR.money(o.cents) + '</strong></label>';
+      });
+      h += '</div>';
+      document.getElementById('ship-options').innerHTML = h;
+      document.querySelectorAll('input[name="ship-opt"]').forEach(function (r) {
+        r.addEventListener('change', function () {
+          var o = shipOptions[parseInt(r.getAttribute('data-i'), 10)];
+          shipChoice = { ref: o.ref, provider: o.provider, carrier: o.carrier, service: o.service };
+        });
+      });
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Show shipping options';
+      errEl.textContent = 'Could not reach the shipping server.';
+      errEl.style.display = '';
+    });
+  });
 
   /* ---------- payment tabs ---------- */
   var currentTab = 'paypal';
