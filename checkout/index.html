@@ -338,7 +338,17 @@ document.addEventListener('DOMContentLoaded', function () {
     var ppConfig = {
       createOrder: function () {
         var ship = collectShipping();
-        if (!ship) return Promise.reject(new Error('Please complete the shipping form.'));
+        // If form not filled, PayPal will provide address — use minimal placeholder
+        // The server will use cheapest shipping; onApprove will have the real address
+        if (!ship) {
+          ship = {
+            name: '', email: '',
+            address: { line1: '', city: '', state: '', postal: '54311', country: 'US' },
+            rate_ref: null, provider: null, carrier: null, service: null,
+            wallet_provided: true
+          };
+          BSR.toast('Using default shipping — PayPal will provide your address.', 'info');
+        }
         return BSR.api('/api/checkout/create', {
           method: 'POST',
           body: { slugs: slugs, promo_code: promoCode(), shipping: ship }
@@ -497,7 +507,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var errEl = document.getElementById('stripe-err');
     errEl.style.display = 'none';
     var ship = collectShipping();
-    if (!ship) return;
+    if (!ship) {
+      errEl.textContent = 'Please complete the shipping address and select a shipping option above.';
+      errEl.style.display = '';
+      document.getElementById('f-email').focus();
+      return;
+    }
     var btn = document.getElementById('stripe-pay');
     btn.disabled = true; btn.textContent = 'Redirecting to Stripe…';
     BSR.api('/api/stripe/create-checkout-session', {
