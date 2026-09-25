@@ -648,10 +648,13 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!isBook && !!fd.get('same_as_other')) {
         /* Point both roles at the one source record, so the address book
            shows a single entry carrying both badges. The backend clears the
-           default flags from every other record automatically, so the
-           previous destination record simply stays in the book as a regular
-           saved address -- nothing is ever deleted. */
+           default flags from every other record automatically. If the
+           previous destination record is byte-identical to the source, it is
+           a pure duplicate -- its flags have moved, so removing it loses
+           nothing. A destination with different content stays in the book
+           as a regular saved address. */
         var src = isBill ? addrShip : addrBill;
+        var dest = isBill ? addrBill : addrShip;
         var needLabel = isBill ? 'ship-to' : 'bill-to';
         if (!src || !src.id) {
           showAddrMsg(false, 'Save a ' + needLabel + ' address first.');
@@ -668,12 +671,26 @@ document.addEventListener('DOMContentLoaded', function () {
         verifiedNote = '';
         BSR.api('/api/account/addresses/' + encodeURIComponent(src.id), { method: 'PUT', body: linkBody })
           .then(function (j) {
-            if (j && j.ok) {
+            if (!(j && j.ok)) {
+              showAddrMsg(false, (j && j.error) || 'Could not link the address.');
+              return;
+            }
+            var dup = dest && dest.id && String(dest.id) !== String(src.id) &&
+              ['name', 'company', 'phone', 'email', 'address1', 'address2', 'city', 'state', 'postal', 'country']
+                .every(function (k) {
+                  return (dest[k] || '').toString().trim().toLowerCase() ===
+                         (src[k] || '').toString().trim().toLowerCase();
+                });
+            var finish = function () {
               loadAddresses();
               showAddrMsg(true, (isBill ? 'Bill-to' : 'Ship-to') + ' now uses your ' + needLabel + ' address.');
               toast('Same as ' + needLabel + ' \u2713');
+            };
+            if (dup) {
+              BSR.api('/api/account/addresses/' + encodeURIComponent(dest.id), { method: 'DELETE' })
+                .then(finish).catch(finish);
             } else {
-              showAddrMsg(false, (j && j.error) || 'Could not link the address.');
+              finish();
             }
           })
           .catch(function () { showAddrMsg(false, 'Could not link. Check your connection.'); });
