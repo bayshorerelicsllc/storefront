@@ -29,13 +29,35 @@
 <script src="/assets/js/bsr.js?v=20260925k" defer></script>
 <script src="/assets/js/login-modal.js?v=20260925i" defer></script>
 <style>
-/* Standalone Logitech-style sign-in page: minimal, centered, no site chrome. */
+/* Bay Shore Relics sign-in: warm, inviting, railroad-inspired. */
 html, body { margin: 0; padding: 0; }
-body { background: var(--bg, #f8f4e9); color: var(--text, #2a241b);
-  font-family: var(--font-body, system-ui, -apple-system, "Segoe UI", sans-serif); }
-.logi-page { height: 100dvh; display: flex; flex-direction: column;
+body {
+  background: linear-gradient(135deg, #f8f4e9 0%, #efe8d3 50%, #e8ddc0 100%);
+  color: var(--text, #2a241b);
+  font-family: var(--font-body, system-ui, -apple-system, "Segoe UI", sans-serif);
+  min-height: 100dvh;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(circle at 20% 80%, rgba(30,77,51,0.04) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(30,77,51,0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+.logi-page { min-height: 100dvh; display: flex; flex-direction: column;
   align-items: center; justify-content: flex-start; padding: 48px 24px 32px;
-  box-sizing: border-box; overflow: hidden; }
+  box-sizing: border-box; overflow-y: auto; position: relative; z-index: 1; }
+.logi-page-inner {
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(30,77,51,0.1);
+  border-radius: 20px;
+  padding: 40px 32px;
+  box-shadow: 0 8px 32px rgba(30,77,51,0.08), 0 2px 8px rgba(0,0,0,0.04);
+}
 .logi-page-inner { width: 100%; max-width: 400px; overflow-y: auto;
   scrollbar-width: none; }
 .logi-page-inner::-webkit-scrollbar { display: none; }
