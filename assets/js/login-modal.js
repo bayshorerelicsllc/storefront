@@ -194,7 +194,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       '<div class="bsr-circles">' +
       '<button type="button" class="bsr-circle" data-oauth="google" aria-label="Continue with Google">' + GOOGLE_SVG + '</button>' +
       '<button type="button" class="bsr-circle" data-oauth="amazon" aria-label="Continue with Amazon">' + AMAZON_SVG + '</button>' +
-      '<button type="button" class="bsr-circle" data-oauth="paypal" aria-label="Continue with PayPal">' + PAYPAL_SVG + '</button>' +
+      /* PayPal login hidden 2026-09-25: 'Log in with PayPal' approval pending at PayPal */
       '</div>';
   }
 
