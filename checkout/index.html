@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Checkout — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
-<link rel="stylesheet" href="/assets/css/theme.css?v=northwoods4">
-<script src="/assets/js/bsr.js?v=northwoods1" defer></script>
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -324,11 +324,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       initStripe(stripeKey);
     }
-    // If the first tab is disabled, switch to the other one.
-    var ppTab = document.getElementById('tab-paypal');
-    if (ppTab.disabled && !document.getElementById('tab-card').disabled) {
-      document.getElementById('tab-card').click();
-    }
+    updateDividers();
   }).catch(function () {
     setPayEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
     setPayEnabled('card', false, "Card payments aren't connected yet — please check back soon.");
@@ -377,11 +373,11 @@ document.addEventListener('DOMContentLoaded', function () {
         currency: 'usd'
       });
       expressCheckoutEl = expressElements.create('expressCheckout', {
-        paymentMethods: { applePay: 'auto', googlePay: 'auto', link: 'auto' }
+        paymentMethods: { applePay: 'auto', googlePay: 'auto', link: 'auto', amazonPay: 'auto' }
       });
       expressCheckoutEl.on('ready', function (e) {
         var avail = (e && e.availablePaymentMethods) || {};
-        if (!(avail.applePay || avail.googlePay || avail.link)) {
+        if (!(avail.applePay || avail.googlePay || avail.link || avail.amazonPay)) {
           document.getElementById('pay-wallets').style.display = 'none';
         }
         updateDividers();
