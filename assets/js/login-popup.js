@@ -23,7 +23,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '[hidden]{display:none!important}',
     /* Modal chrome */
     '.bsr-login-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;',
-    'background:rgba(42,36,27,.55);backdrop-filter:blur(2px);padding:20px;box-sizing:border-box;',
+    'background:rgba(42,36,27,.55);backdrop-filter:blur(2px);padding:20px;box-sizing:border-box;overscroll-behavior:contain;',
     'animation:bsrLoginFade .18s ease}',
     '@keyframes bsrLoginFade{from{opacity:0}to{opacity:1}}',
     '.bsr-login-card{background:#f8f4e9;color:#2a241b;border-radius:14px;max-width:430px;width:100%;',
@@ -637,6 +637,10 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
     overlay = null;
     document.removeEventListener('keydown', onEsc);
+    if (document.body.dataset.bsrScrollLock !== undefined) {
+      document.body.style.overflow = document.body.dataset.bsrScrollLock;
+      delete document.body.dataset.bsrScrollLock;
+    }
   }
   function onEsc(e) {
     if (e.key === 'Escape') closeModal();
@@ -657,6 +661,10 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       if (e.target === overlay) closeModal();
     });
     document.addEventListener('keydown', onEsc);
+    if (!document.body.dataset.bsrScrollLock) {
+      document.body.dataset.bsrScrollLock = document.body.style.overflow || '';
+      document.body.style.overflow = 'hidden';
+    }
     document.body.appendChild(overlay);
     buildForm(overlay.querySelector('[data-el="form"]'));
     overlay._bsrLoginModal = true;
