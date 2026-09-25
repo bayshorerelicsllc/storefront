@@ -140,24 +140,6 @@
   }
 
 
-  /* Write a validator correction straight into the form fields. */
-  function applyCorrection(form, corrected, payload) {
-    function setField(name, val) {
-      var el = form.querySelector('[name="' + name + '"]');
-      if (!el || val == null) return;
-      el.value = val;
-      var ev;
-      try { ev = new Event('change', { bubbles: true }); }
-      catch (e) { ev = document.createEvent('HTMLEvents'); ev.initEvent('change', true, false); }
-      el.dispatchEvent(ev);
-    }
-    setField('address1', corrected.street || payload.address1);
-    setField('address2', corrected.street2 || '');
-    setField('city', corrected.city || payload.city);
-    setField('state', corrected.state || payload.state);
-    setField('postal', corrected.zip || payload.postal);
-  }
-
   function ensureLiveCss() {
     if (document.getElementById('bsr-addr-live-css')) return;
     var st = document.createElement('style');
@@ -166,7 +148,9 @@
       '.addr-live-dd{position:relative;margin-top:6px;background:#fff;border:1px solid #d8cdb4;' +
       'border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.12);overflow:hidden}' +
       '.addr-live-item{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;' +
-      'text-align:left;background:#fff;border:0;padding:10px 12px;cursor:pointer;font:inherit;color:#222}' +
+      'text-align:left;background:#fff;border:0;border-bottom:1px solid #eee7d3;padding:10px 12px;' +
+      'cursor:pointer;font:inherit;color:#222}' +
+      '.addr-live-item:last-of-type{border-bottom:0}' +
       '.addr-live-item:active{background:#f4efe2}' +
       '.addr-live-addr{line-height:1.4;font-size:14px}' +
       '.addr-live-use{flex:none;background:#1d4d2b;color:#fff;border-radius:999px;padding:5px 14px;font-size:13px}' +
@@ -176,13 +160,61 @@
     document.head.appendChild(st);
   }
 
-  /* Live as-you-type suggestions. A dropdown appears directly under the
-     street field with the verified address as a tappable choice; tapping
-     it fills the whole form. No popups, no end-of-form confirmation. */
+  /* US state name -> abbreviation, for suggestion fills. */
+  var US_ST_ABBR = { alabama: 'AL', alaska: 'AK', arizona: 'AZ', arkansas: 'AR', california: 'CA',
+    colorado: 'CO', connecticut: 'CT', delaware: 'DE', 'district of columbia': 'DC', florida: 'FL',
+    georgia: 'GA', hawaii: 'HI', idaho: 'ID', illinois: 'IL', indiana: 'IN', iowa: 'IA', kansas: 'KS',
+    kentucky: 'KY', louisiana: 'LA', maine: 'ME', maryland: 'MD', massachusetts: 'MA', michigan: 'MI',
+    minnesota: 'MN', mississippi: 'MS', missouri: 'MO', montana: 'MT', nebraska: 'NE', nevada: 'NV',
+    'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM', 'new york': 'NY',
+    'north carolina': 'NC', 'north dakota': 'ND', ohio: 'OH', oklahoma: 'OK', oregon: 'OR',
+    pennsylvania: 'PA', 'rhode island': 'RI', 'south carolina': 'SC', 'south dakota': 'SD',
+    tennessee: 'TN', texas: 'TX', utah: 'UT', vermont: 'VT', virginia: 'VA', washington: 'WA',
+    'west virginia': 'WV', wisconsin: 'WI', wyoming: 'WY' };
+
+  function fireChange(el) {
+    var ev;
+    try { ev = new Event('change', { bubbles: true }); }
+    catch (e) { ev = document.createEvent('HTMLEvents'); ev.initEvent('change', true, false); }
+    el.dispatchEvent(ev);
+  }
+
+  /* Fill the form from a tapped autocomplete suggestion. */
+  function fillChoice(form, s) {
+    function set(name, val) {
+      var el = form.querySelector('[name="' + name + '"]');
+      if (!el || val == null || val === '') return;
+      if (el.tagName === 'SELECT') {
+        el.value = val;
+        if (!el.value) {
+          for (var i = 0; i < el.options.length; i++) {
+            if (el.options[i].text.toLowerCase() === String(val).toLowerCase()) { el.selectedIndex = i; break; }
+          }
+        }
+      } else { el.value = val; }
+      fireChange(el);
+    }
+    set('address1', s.street);
+    set('city', s.city);
+    var st = s.state || '';
+    if (st.length !== 2) st = US_ST_ABBR[String(st).toLowerCase()] || st;
+    set('state', st.toUpperCase());
+    set('postal', (s.zip || '').split(' ')[0]);
+    if (s.country) set('country', s.country);
+  }
+
+  function fetchSuggestions(q, country) {
+    if (!window.BSR || !BSR.api) return Promise.resolve(null);
+    return BSR.api('/api/shipping/autocomplete?q=' + encodeURIComponent(q) +
+      '&country=' + encodeURIComponent(country || 'US'));
+  }
+
+  /* Live as-you-type address autocomplete. A dropdown under the street
+     field shows up to 5 matching addresses; tapping one fills the form.
+     Shippo still does the final validation silently at save time. */
   function attachLive(form) {
     var streetEl = form.querySelector('input[name="address1"]');
     var cityEl = form.querySelector('input[name="city"]');
-    var zipEl = form.querySelector('input[name="postal"]');
     if (!streetEl || form._bsrLiveAttached) return;
     form._bsrLiveAttached = true;
     ensureLiveCss();
@@ -193,77 +225,68 @@
     dd.style.display = 'none';
     anchor.appendChild(dd);
 
-    var timer = null, lastSig = '', dismissedSig = '';
+    var timer = null, lastQ = '', dismissedQ = '', seq = 0;
 
-    function sig() {
-      return [streetEl.value, cityEl ? cityEl.value : '', zipEl ? zipEl.value : ''].join('|').toLowerCase();
-    }
-    function ready() { return streetEl.value.trim().length >= 5; }
-    function fieldVal(name) {
-      var el = form.querySelector('[name="' + name + '"]');
-      return el ? el.value : '';
-    }
     function hideDd() { dd.style.display = 'none'; dd.innerHTML = ''; }
-    function showDd(corrected, payload) {
-      dd.innerHTML =
-        '<button type="button" class="addr-live-item" data-pick>' +
-          '<span class="addr-live-addr">' + fmtAddr({
-            address1: corrected.street, address2: corrected.street2,
-            city: corrected.city, state: corrected.state,
-            postal: corrected.zip, country: corrected.country || payload.country,
-          }) + '</span><span class="addr-live-use">Use</span>' +
-        '</button>' +
-        '<button type="button" class="addr-live-x" data-dismiss aria-label="Dismiss">&times;</button>';
+    function contextQuery() {
+      var q = streetEl.value.trim();
+      var ct = cityEl ? cityEl.value.trim() : '';
+      return ct ? q + ', ' + ct : q;
+    }
+    function showChoices(list) {
+      var html = '';
+      list.forEach(function (s, i) {
+        html += '<button type="button" class="addr-live-item" data-pick="' + i + '">' +
+          '<span class="addr-live-addr">' + esc(s.label || [s.street, s.city, s.state, s.zip].filter(Boolean).join(', ')) + '</span>' +
+          '<span class="addr-live-use">Use</span></button>';
+      });
+      html += '<button type="button" class="addr-live-x" data-dismiss aria-label="Dismiss">&times;</button>';
+      dd.innerHTML = html;
       dd.style.display = 'block';
-      dd.querySelector('[data-pick]').addEventListener('click', function () {
-        applyCorrection(form, corrected, payload);
-        form._bsrValDismissed = '';
-        dd.innerHTML = '<div class="addr-live-ok">&#10003; Address filled in.</div>';
-        setTimeout(hideDd, 1300);
-        lastSig = sig();
+      dd.querySelectorAll('[data-pick]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var s = list[+btn.getAttribute('data-pick')];
+          fillChoice(form, s);
+          form._bsrValDismissed = '';
+          dd.innerHTML = '<div class="addr-live-ok">&#10003; Address filled in.</div>';
+          setTimeout(hideDd, 1300);
+          lastQ = '__picked__';
+        });
       });
       dd.querySelector('[data-dismiss]').addEventListener('click', function () {
-        dismissedSig = sig();
-        form._bsrValDismissed = dismissedSig; /* override: save keeps your version */
+        dismissedQ = lastQ;
+        form._bsrValDismissed = '__dismissed__';
         hideDd();
       });
     }
     function run() {
-      var s = sig();
-      if (s === lastSig) return;
-      lastSig = s;
-      if (!ready() || s === dismissedSig) { hideDd(); return; }
-      var payload = {
-        address1: streetEl.value.trim(),
-        address2: fieldVal('address2'),
-        city: cityEl ? cityEl.value.trim() : '',
-        state: fieldVal('state'),
-        postal: zipEl ? zipEl.value.trim() : '',
-        country: fieldVal('country') || 'US',
-      };
-      validate(payload).then(function (j) {
-        if (sig() !== s) return; /* user kept typing; stale result */
-        if (!j || !j.ok) { hideDd(); return; }
-        var corrected = j.address || null;
-        var suggested = (j.corrected || (j.corrections && j.corrections.length)) && differs(corrected, payload);
-        if (suggested && s !== dismissedSig) showDd(corrected, payload);
+      var q = contextQuery();
+      /* Typing a new address after a dismissal re-arms save-time verification. */
+      if (q !== dismissedQ && form._bsrValDismissed === '__dismissed__') form._bsrValDismissed = '';
+      if (q.length < 4 || q === lastQ || q === dismissedQ) { if (q !== lastQ) hideDd(); return; }
+      lastQ = q;
+      var mySeq = ++seq;
+      var countryEl = form.querySelector('[name="country"]');
+      fetchSuggestions(q, countryEl ? countryEl.value : 'US').then(function (j) {
+        if (mySeq !== seq) return; /* stale */
+        if (j && j.ok && j.suggestions && j.suggestions.length) showChoices(j.suggestions);
         else hideDd();
       }).catch(function () { hideDd(); });
     }
     function schedule() {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(run, 700);
+      timer = setTimeout(run, 600);
     }
-    [streetEl, cityEl, zipEl, form.querySelector('input[name="address2"]')].forEach(function (el) {
-      if (el) el.addEventListener('input', schedule);
-    });
-    /* Suggest for pre-filled values too (e.g. editing a saved address). */
-    if (ready()) timer = setTimeout(run, 600);
+    streetEl.addEventListener('input', schedule);
+    if (cityEl) cityEl.addEventListener('input', schedule);
+    if (streetEl.value.trim().length >= 4) timer = setTimeout(run, 600);
   }
 
   /* Silent submit-time check: validate, fold any corrections into the
      payload, then save. No confirmation dialog. Never blocks saving. */
   function silentCheck(form, payload, doSave) {
+    /* User dismissed the suggestions: save their address exactly as typed. */
+    if (form._bsrValDismissed === '__dismissed__') { doSave(payload); return; }
     var psig = [payload.address1, payload.city, payload.postal].join('|').toLowerCase();
     if (form._bsrValDismissed && form._bsrValDismissed === psig) { doSave(payload); return; }
     validate(payload).then(function (j) {
