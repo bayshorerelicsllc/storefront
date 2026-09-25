@@ -432,6 +432,18 @@
   showLogin._stub = true;
   /* Account buttons: signed in → /account/, signed out → login modal. */
   /* Update the account/person icon to reflect signed-in state. */
+  /* Inject account-button styles once. */
+  (function () {
+    if (document.getElementById('bsr-account-btn-css')) return;
+    var st = document.createElement('style');
+    st.id = 'bsr-account-btn-css';
+    st.textContent = '.account-initial{display:inline-flex;align-items:center;justify-content:center;' +
+      'width:28px;height:28px;border-radius:50%;background:#1e4d33;color:#fff;' +
+      'font-weight:700;font-size:.95rem;line-height:1}' +
+      '.icon-btn.signed-in{background:rgba(255,255,255,.12)}';
+    document.head.appendChild(st);
+  })();
+
   function updateAccountButton() {
     me().then(function (c) {
       var btns = document.querySelectorAll('[data-account-btn]');
