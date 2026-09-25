@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="acct-field"><label for="pf-email">Email</label>' +
       '<input id="pf-email" type="email" readonly value="' + esc(customer.email || '') + '">' +
       '<div class="hint">This is your sign-in email.</div></div>' +
-      '<div class="acct-field"><label for="pf-phone">Phone</label>' +
+      '<div class="acct-field"><label for="pf-phone">Phone <span style="color:#c0392b;">*</span></label>' +
       '<input id="pf-phone" name="phone" type="tel" inputmode="numeric" maxlength="40" autocomplete="tel" required value="' + esc(customer.phone || '') + '">' +
       '<div class="hint">For order updates and delivery questions.</div></div>' +
       '<div class="acct-actions"><button type="submit" class="btn btn-primary" id="pf-save">Save changes</button></div>' +
