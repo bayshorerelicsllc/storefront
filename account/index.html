@@ -7,6 +7,7 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods4">
 <script src="/assets/js/bsr.js?v=northwoods1" defer></script>
+<script src="https://js.stripe.com/v3/" defer></script>
 <style>
 .acct-nav-btn { display:flex; align-items:center; gap:10px; padding:10px 12px; width:100%;
   border-radius:var(--radius-sm); color:var(--text); background:none; border:0; font:inherit;
@@ -19,18 +20,33 @@
 .order-track { display:flex; align-items:center; gap:8px; margin-top:10px;
   font-size:0.9rem; color:var(--text-soft); }
 .order-track .ic { flex:none; }
+.profile-head { display:flex; align-items:center; gap:16px; margin-bottom:22px; }
+.profile-head img { width:56px; height:56px; border-radius:50%; object-fit:cover;
+  border:1px solid var(--line); }
+.profile-head .ph-name { font-size:1.25rem; font-weight:700; }
+.profile-head .ph-email { color:var(--text-soft); font-size:0.92rem; }
+.card-row { display:flex; align-items:center; gap:14px; padding:14px 0;
+  border-top:1px solid var(--line); }
+.card-row:first-child { border-top:0; }
+.card-brand { font-weight:700; text-transform:capitalize; min-width:90px; }
+.card-meta { color:var(--text-soft); font-size:0.92rem; }
+.card-row .spacer { flex:1; }
+#stripe-card-element { padding:12px 14px; border:1px solid var(--line);
+  border-radius:var(--radius-sm); background:var(--bg); margin:12px 0; }
+.pm-error { color:var(--danger); font-size:0.88rem; margin:8px 0; }
 </style>
 </head>
 <body>
 <div id="bsr-header"></div>
 <main id="content">
-<div class="wrap" id="account-root"></div>
+<div class="wrap" id="account-root"><p>Loading&hellip;</p></div>
 </main>
 <div id="bsr-footer"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   BSR.init({ active: 'account' });
   var root = document.getElementById('account-root');
+  var tab = 'orders';
 
   function shortId(id) {
     id = String(id == null ? '' : id);
@@ -67,33 +83,66 @@ document.addEventListener('DOMContentLoaded', function () {
       items + track + '</div>';
   }
 
-  function renderSignedOut() {
-    root.innerHTML =
-      '<div class="auth-card"><h1>Your account</h1>' +
-      '<p>Sign in to see your orders and check out faster.</p>' +
-      '<a class="btn btn-primary btn-block" href="/account/login/" style="margin-top:14px">Sign in</a>' +
-      '<a class="btn btn-secondary btn-block" href="/account/register/" style="margin-top:10px">Create account</a>' +
+  function brandName(b) {
+    b = String(b || '').toLowerCase();
+    var names = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex',
+      discover: 'Discover', diners: 'Diners', jcb: 'JCB', unionpay: 'UnionPay' };
+    return names[b] || (b ? b.charAt(0).toUpperCase() + b.slice(1) : 'Card');
+  }
+
+  function cardRow(c) {
+    var exp = (c.exp_month && c.exp_year)
+      ? 'Expires ' + String(c.exp_month).padStart(2, '0') + '/' + String(c.exp_year).slice(-2) : '';
+    return '<div class="card-row" data-pm="' + BSR.esc(c.id) + '">' +
+      '<span class="card-brand">' + BSR.esc(brandName(c.brand)) + '</span>' +
+      '<span class="card-meta">&bull;&bull;&bull;&bull; ' + BSR.esc(c.last4) + '</span>' +
+      '<span class="card-meta">' + BSR.esc(exp) + '</span>' +
+      '<span class="spacer"></span>' +
+      '<button type="button" class="btn btn-secondary btn-sm pm-delete">Remove</button>' +
       '</div>';
   }
 
-  function renderDashboard(customer) {
-    var first = String(customer.name || '').trim().split(/\s+/)[0] || 'there';
-    root.innerHTML =
-      '<div class="page-head"><h1>Hi, ' + BSR.esc(first) + '</h1></div>' +
+  function shell(customer, contentHtml) {
+    var avatar = customer.avatar_url
+      ? '<img src="' + BSR.esc(customer.avatar_url) + '" alt="">' : '';
+    var name = BSR.esc(customer.name || 'Your account');
+    var email = BSR.esc(customer.email || '');
+    return '<div class="page-head"><div class="profile-head">' + avatar +
+      '<div><div class="ph-name">' + name + '</div>' +
+      '<div class="ph-email">' + email + '</div></div></div></div>' +
       '<div class="account-layout">' +
       '<nav class="account-nav" aria-label="Account">' +
-      '<a href="/account/" class="active">' + BSR.icon('package', 'ic-sm') + 'Orders</a>' +
-      '<button type="button" class="acct-nav-btn" id="signout-btn">' + BSR.icon('logout', 'ic-sm') + 'Sign out</button>' +
+      '<button type="button" class="acct-nav-btn' + (tab === 'orders' ? ' active' : '') + '" data-tab="orders">' +
+        BSR.icon('package', 'ic-sm') + 'Orders</button>' +
+      '<button type="button" class="acct-nav-btn' + (tab === 'cards' ? ' active' : '') + '" data-tab="cards">' +
+        BSR.icon('shield', 'ic-sm') + 'Payment methods</button>' +
+      '<button type="button" class="acct-nav-btn" id="signout-btn">' +
+        BSR.icon('logout', 'ic-sm') + 'Sign out</button>' +
       '</nav>' +
-      '<section id="orders-col" aria-label="Order history"><p>Loading orders\u2026</p></section>' +
+      '<section id="acct-col" aria-label="Account details">' + contentHtml + '</section>' +
       '</div>';
-    document.getElementById('signout-btn').addEventListener('click', function () {
-      BSR.api('/api/account/logout', { method: 'POST' }).then(function () {
-        window.location.reload();
+  }
+
+  function bindShell(customer) {
+    root.querySelectorAll('[data-tab]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        tab = b.getAttribute('data-tab');
+        render(customer);
       });
     });
+    document.getElementById('signout-btn').addEventListener('click', function () {
+      BSR.api('/api/account/logout', { method: 'POST' }).then(function () {
+        window.location = '/account/login/';
+      });
+    });
+  }
+
+  function renderOrders(customer) {
+    root.innerHTML = shell(customer, '<p>Loading orders&hellip;</p>');
+    bindShell(customer);
     BSR.api('/api/account/orders').then(function (j) {
-      var col = document.getElementById('orders-col');
+      if (j && j._status === 401) { window.location = '/account/login/'; return; }
+      var col = document.getElementById('acct-col');
       if (!col) return;
       var orders = (j && j.ok && Array.isArray(j.orders)) ? j.orders : [];
       if (!orders.length) {
@@ -108,9 +157,138 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  BSR.me().then(function (customer) {
-    if (customer) renderDashboard(customer);
-    else renderSignedOut();
+  var stripe = null, cardEl = null, addingCard = false;
+
+  function loadStripe() {
+    if (stripe) return Promise.resolve(stripe);
+    return BSR.api('/api/catalog/config').then(function (j) {
+      var pk = j && j.stripe_publishable_key;
+      if (!pk) throw new Error('Card saving is not available right now.');
+      if (typeof Stripe === 'undefined') throw new Error('Could not load the card form. Check your connection and try again.');
+      stripe = Stripe(pk);
+      return stripe;
+    });
+  }
+
+  function renderCards(customer) {
+    root.innerHTML = shell(customer,
+      '<div id="pm-list"><p>Loading saved cards&hellip;</p></div>' +
+      '<div id="pm-add" style="margin-top:18px">' +
+      '<button type="button" class="btn btn-secondary" id="pm-add-btn">Add a card</button>' +
+      '<div id="pm-form" style="display:none">' +
+      '<div id="stripe-card-element"></div>' +
+      '<div class="pm-error" id="pm-error" role="alert" style="display:none"></div>' +
+      '<button type="button" class="btn btn-primary" id="pm-save-btn">Save card</button> ' +
+      '<button type="button" class="btn btn-ghost" id="pm-cancel-btn">Cancel</button>' +
+      '</div></div>' +
+      '<p style="margin-top:16px;font-size:0.85rem;color:var(--text-soft)">Cards are stored securely by our payment processor. We never see your full card number.</p>');
+    bindShell(customer);
+    refreshCards();
+
+    document.getElementById('pm-add-btn').addEventListener('click', function () {
+      if (addingCard) return;
+      addingCard = true;
+      var form = document.getElementById('pm-form');
+      form.style.display = 'block';
+      this.style.display = 'none';
+      loadStripe().then(function (st) {
+        var elements = st.elements();
+        cardEl = elements.create('card');
+        cardEl.mount('#stripe-card-element');
+      }).catch(function (e) {
+        showPmError(e.message || 'Could not load the card form.');
+      });
+    });
+    document.getElementById('pm-cancel-btn').addEventListener('click', resetAddForm);
+    document.getElementById('pm-save-btn').addEventListener('click', saveCard);
+  }
+
+  function showPmError(msg) {
+    var box = document.getElementById('pm-error');
+    if (!box) return;
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+
+  function resetAddForm() {
+    addingCard = false;
+    if (cardEl) { try { cardEl.destroy(); } catch (e) {} cardEl = null; }
+    var form = document.getElementById('pm-form');
+    var addBtn = document.getElementById('pm-add-btn');
+    var errBox = document.getElementById('pm-error');
+    if (form) form.style.display = 'none';
+    if (addBtn) addBtn.style.display = '';
+    if (errBox) errBox.style.display = 'none';
+    var saveBtn = document.getElementById('pm-save-btn');
+    if (saveBtn) saveBtn.disabled = false;
+  }
+
+  function refreshCards() {
+    var list = document.getElementById('pm-list');
+    BSR.api('/api/account/payment-methods').then(function (j) {
+      if (j && j._status === 401) { window.location = '/account/login/'; return; }
+      if (!list) return;
+      if (!j || !j.ok) {
+        list.innerHTML = '<p>' + BSR.esc((j && j.error) || 'Could not load saved cards.') + '</p>';
+        return;
+      }
+      var cards = Array.isArray(j.cards) ? j.cards : [];
+      if (!cards.length) {
+        list.innerHTML = '<p style="color:var(--text-soft)">No saved cards yet. Add one for faster checkout.</p>';
+        return;
+      }
+      list.innerHTML = cards.map(cardRow).join('');
+      list.querySelectorAll('.pm-delete').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var row = b.closest('.card-row');
+          var pmId = row.getAttribute('data-pm');
+          if (!window.confirm('Remove this card?')) return;
+          b.disabled = true;
+          BSR.api('/api/account/payment-methods/' + encodeURIComponent(pmId), { method: 'DELETE' })
+            .then(function (r) {
+              if (r && r._status === 401) { window.location = '/account/login/'; return; }
+              if (r && r.ok) { refreshCards(); }
+              else {
+                b.disabled = false;
+                window.alert((r && r.error) || 'Could not remove the card.');
+              }
+            });
+        });
+      });
+    });
+  }
+
+  function saveCard() {
+    var errBox = document.getElementById('pm-error');
+    if (errBox) errBox.style.display = 'none';
+    if (!cardEl) { showPmError('Card form is not ready yet.'); return; }
+    var saveBtn = document.getElementById('pm-save-btn');
+    saveBtn.disabled = true;
+    BSR.api('/api/account/payment-methods/setup', { method: 'POST' }).then(function (j) {
+      if (j && j._status === 401) { window.location = '/account/login/'; return null; }
+      if (!j || !j.ok || !j.client_secret) throw new Error((j && j.error) || 'Could not start card setup.');
+      return stripe.confirmCardSetup(j.client_secret, { payment_method: { card: cardEl } });
+    }).then(function (res) {
+      if (!res) return;
+      if (res.error) throw new Error(res.error.message || 'Card could not be saved.');
+      resetAddForm();
+      refreshCards();
+    }).catch(function (e) {
+      saveBtn.disabled = false;
+      showPmError(e.message || 'Could not save the card.');
+    });
+  }
+
+  function render(customer) {
+    if (tab === 'cards') renderCards(customer);
+    else renderOrders(customer);
+  }
+
+  // Boot: 401 from /api/account/me -> login page.
+  BSR.api('/api/account/me').then(function (j) {
+    if (j && j._status === 401) { window.location = '/account/login/'; return; }
+    if (j && j.ok && j.customer) { render(j.customer); }
+    else { window.location = '/account/login/'; }
   });
 });
 </script>
