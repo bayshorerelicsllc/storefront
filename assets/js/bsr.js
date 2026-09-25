@@ -412,7 +412,7 @@
     if (loginModalLoading) return loginModalLoading;
     loginModalLoading = new Promise(function (resolve) {
       var s = document.createElement('script');
-      s.src = '/assets/js/login-modal.js?v=20260925d';
+      s.src = '/assets/js/login-modal.js?v=20260925e';
       s.onload = function () { resolve(); };
       s.onerror = function () { resolve(); };
       document.head.appendChild(s);
