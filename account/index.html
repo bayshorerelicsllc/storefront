@@ -366,9 +366,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var sameChecked = sameAsShip || sameAsBill;
     var sameLabel = isBill ? 'Same as ship-to address' : 'Same as bill-to address';
     var title = isBill ? 'Bill to' : (isShip ? 'Ship to' : 'Address');
-    var emailLabel = isBill ? 'Billing email' : (isShip ? 'Shipping email' : 'Email for tracking');
-    var emailHint = isBill ? 'Receipts and payment updates go here.'
-      : (isShip ? 'Order and tracking updates for this shipment go here.'
+    var emailLabel = isBill ? 'Sender email' : (isShip ? 'Recipient email' : 'Email for tracking');
+    var emailHint = isBill ? 'Order confirmation and receipts go here.'
+      : (isShip ? 'Tracking updates for this shipment go here.'
       : 'Order updates go here if different.');
     return '<div class="addr-form-wrap"><form class="addr-form" data-addr-form="' + (a.id || 'new') + '" data-addr-kind="' + kind + '">' +
       '<h4 class="addr-form-title">' + title + '</h4>' +
