@@ -168,9 +168,19 @@ document.addEventListener('DOMContentLoaded', function () {
     '</div>' +
     '<section class="card" id="card-payment-section" style="display:none"><h2><span class="step-num">6</span> Payment</h2>' +
     '<div class="pay-divider" id="card-divider"><span>pay with card</span></div>' +
-    '<div id="pay-card"><div id="stripe-element"></div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:14px" role="tablist" aria-label="Card processor">' +
+    '<button type="button" id="proc-stripe" class="proc-btn proc-active" style="flex:1;padding:10px;border:2px solid #635BFF;border-radius:8px;background:#f0efff;font-weight:700;cursor:pointer">Card via Stripe</button>' +
+    '<button type="button" id="proc-paypal" class="proc-btn" style="flex:1;padding:10px;border:2px solid #ddd;border-radius:8px;background:#fff;font-weight:700;cursor:pointer">Card via PayPal</button>' +
+    '</div>' +
+    '<div id="pay-card-stripe"><div id="stripe-element"></div>' +
     '<div class="error" id="stripe-err" style="display:none"></div>' +
     '<button id="stripe-pay" type="button" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#635BFF;color:#fff;border:none;border-radius:8px;padding:14px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,91,255,.35)">Pay with <span style="font-weight:800;letter-spacing:-.02em">Stripe</span></button></div>' +
+    '<div id="pay-card-paypal" style="display:none">' +
+    '<div class="field"><label>Card number</label><div id="pp-card-number" style="border:1px solid #ccc;border-radius:6px;padding:10px;min-height:20px"></div></div>' +
+    '<div class="form-row"><div class="field"><label>Expiry</label><div id="pp-card-expiry" style="border:1px solid #ccc;border-radius:6px;padding:10px;min-height:20px"></div></div>' +
+    '<div class="field"><label>Security code</label><div id="pp-card-cvv" style="border:1px solid #ccc;border-radius:6px;padding:10px;min-height:20px"></div></div></div>' +
+    '<div class="error" id="pp-card-err" style="display:none"></div>' +
+    '<button id="pp-card-pay" type="button" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#003087;color:#fff;border:none;border-radius:8px;padding:14px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,48,135,.35)">Pay with <span style="font-weight:800;letter-spacing:-.02em">PayPal</span></button></div>' +
     '<div class="secure-note">' + BSR.icon('lock', 'ic-sm') + '<span>Payments are encrypted. We never see your card number.</span></div>' +
     '</section></div>' +
     '<aside class="card summary"><h2>Order summary</h2>' +
@@ -591,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function () {
       setPayEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
     } else {
       var s = document.createElement('script');
-      s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(paypalKey) + '&currency=USD&intent=capture&enable-funding=paylater,venmo';
+      s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(paypalKey) + '&currency=USD&intent=capture&enable-funding=paylater,venmo&components=buttons,card-fields';
       s.onload = renderPayPalButtons;
       s.onerror = function () {
         document.getElementById('paypal-msg').textContent = 'PayPal could not load. Please try the card option.';
@@ -831,36 +841,236 @@ document.addEventListener('DOMContentLoaded', function () {
       }, 100);
     }
   }
-  function onStripePay() {
-    var errEl = document.getElementById('stripe-err');
+  /* ---------- Card processor toggle (Stripe / PayPal) ---------- */
+  var cardProc = 'stripe';
+  var stripeCard = { elements: null, intent: null, fingerprint: '' };
+  var ppCardFields = null, ppCardRendered = false;
+  function setCardProc(which) {
+    cardProc = which;
+    var sBtn = document.getElementById('proc-stripe');
+    var pBtn = document.getElementById('proc-paypal');
+    var sPane = document.getElementById('pay-card-stripe');
+    var pPane = document.getElementById('pay-card-paypal');
+    if (which === 'stripe') {
+      sBtn.style.border = '2px solid #635BFF'; sBtn.style.background = '#f0efff';
+      pBtn.style.border = '2px solid #ddd'; pBtn.style.background = '#fff';
+      sPane.style.display = ''; pPane.style.display = 'none';
+    } else {
+      pBtn.style.border = '2px solid #003087'; pBtn.style.background = '#e8f0fe';
+      sBtn.style.border = '2px solid #ddd'; sBtn.style.background = '#fff';
+      pPane.style.display = ''; sPane.style.display = 'none';
+      initPayPalCard();
+    }
+  }
+  document.getElementById('proc-stripe').addEventListener('click', function () { setCardProc('stripe'); });
+  document.getElementById('proc-paypal').addEventListener('click', function () { setCardProc('paypal'); });
+
+  /* Fingerprint of the order state the PaymentIntent was built from. If the
+     buyer changes shipping/promo after the element mounts, we rebuild. */
+  function cardFingerprint(ship, billing) {
+    return JSON.stringify({
+      slugs: slugs.slice().sort(),
+      promo: (promoCode() && promoCode().code) || '',
+      rate: ship ? (ship.rate_ref || '') : '',
+      bill: billing ? [billing.name, billing.address.line1, billing.address.postal].join('|') : ''
+    });
+  }
+  function collectCardInputs() {
+    var errEl = document.getElementById(cardProc === 'stripe' ? 'stripe-err' : 'pp-card-err');
     errEl.style.display = 'none';
     var ship = collectShipping();
     if (!ship) {
       errEl.textContent = 'Please complete the shipping address and select a shipping option above.';
       errEl.style.display = '';
       document.getElementById('f-email').focus();
-      return;
+      return null;
     }
     var billing = collectBilling(ship);
     if (!billing) {
       errEl.textContent = 'Please complete the billing address above.';
       errEl.style.display = '';
-      return;
+      return null;
     }
-    var btn = document.getElementById('stripe-pay');
-    btn.disabled = true; btn.textContent = 'Redirecting to Stripe…';
-    BSR.api('/api/stripe/create-checkout-session', {
+    return { ship: ship, billing: billing, errEl: errEl };
+  }
+
+  /* ---------- Stripe Payment Element (embedded card form) ----------
+     Two-step: first click validates the form, creates the PaymentIntent and
+     mounts the card form; second click confirms with the bill-to address
+     attached for AVS. */
+  function mountStripeElement(inputs, done) {
+    var errEl = inputs.errEl;
+    stripeCard.fingerprint = cardFingerprint(inputs.ship, inputs.billing);
+    BSR.api('/api/stripe/create-intent', {
       method: 'POST',
-      body: { slugs: slugs, promo_code: promoCode(), shipping: ship, billing: billing }
+      body: { slugs: slugs, promo_code: promoCode(), shipping: inputs.ship, billing: inputs.billing }
     }).then(function (j) {
-      if (!j.ok || !j.url) throw new Error((j && j.error) || 'Could not start the card payment.');
-      window.location.href = j.url;
+      if (!j.ok || !j.client_secret) throw new Error((j && j.error) || 'Could not start the card payment.');
+      stripeCard.intent = j;
+      stripeCard.billing = inputs.billing;
+      stripeCard.elements = stripe.elements({ clientSecret: j.client_secret });
+      stripeCard.elements.create('payment').mount('#stripe-element');
+      stripeMounted = true;
+      if (done) done();
     }).catch(function (e) {
-      errEl.textContent = e.message || 'The card payment failed.';
+      errEl.textContent = e.message || 'The card payment failed to load.';
       errEl.style.display = '';
+      var btn = document.getElementById('stripe-pay');
       btn.disabled = false; btn.innerHTML = 'Pay with <span style="font-weight:800;letter-spacing:-.02em">Stripe</span>';
     });
   }
+  function onStripePay() {
+    var btn = document.getElementById('stripe-pay');
+    /* Step 2: card form is mounted — confirm the payment. */
+    if (stripeCard.elements && stripeCard.intent) {
+      /* If the form changed since the intent was built, rebuild first. */
+      var chk = collectCardInputs();
+      if (!chk) { btn.disabled = false; btn.textContent = 'Confirm payment'; return; }
+      if (cardFingerprint(chk.ship, chk.billing) !== stripeCard.fingerprint) {
+        btn.textContent = 'Updating…';
+        document.getElementById('stripe-element').innerHTML = '';
+        stripeCard.elements = null; stripeCard.intent = null;
+        mountStripeElement(chk, function () {
+          btn.disabled = false; btn.textContent = 'Confirm payment';
+        });
+        return;
+      }
+      var bd = stripeCard.billing;
+      btn.disabled = true; btn.textContent = 'Processing…';
+      stripe.confirmPayment({
+        elements: stripeCard.elements,
+        clientSecret: stripeCard.intent.client_secret,
+        redirect: 'if_required',
+        confirmParams: {
+          return_url: 'https://bayshorerelicsllc.com/thank-you/?order_token=' + encodeURIComponent(stripeCard.intent.order_token),
+          payment_method_data: {
+            billing_details: {
+              name: bd.name || '',
+              email: document.getElementById('f-email').value.trim(),
+              phone: bd.phone || '',
+              address: {
+                line1: bd.address.line1 || '',
+                city: bd.address.city || '',
+                state: bd.address.state || '',
+                postal_code: bd.address.postal || '',
+                country: bd.address.country || 'US'
+              }
+            }
+          }
+        }
+      }).then(function (result) {
+        var errEl = document.getElementById('stripe-err');
+        if (result.error) throw new Error(result.error.message || 'The card payment failed.');
+        var pi = result.paymentIntent;
+        if (pi && pi.status === 'succeeded') {
+          finishOrder(stripeCard.intent.order_token);
+        } else {
+          errEl.textContent = 'Payment is processing — please wait…';
+          errEl.style.display = '';
+          setTimeout(function () { finishOrder(stripeCard.intent.order_token); }, 4000);
+        }
+      }).catch(function (e) {
+        var errEl = document.getElementById('stripe-err');
+        errEl.textContent = e.message || 'The card payment failed.';
+        errEl.style.display = '';
+        btn.disabled = false; btn.textContent = 'Confirm payment';
+      });
+      return;
+    }
+    /* Step 1: validate the form, create the intent, mount the card form. */
+    var inputs = collectCardInputs();
+    if (!inputs) return;
+    btn.disabled = true; btn.textContent = 'Loading secure card form…';
+    mountStripeElement(inputs, function () {
+      btn.disabled = false; btn.textContent = 'Confirm payment';
+      document.getElementById('stripe-element').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+
+  /* ---------- PayPal Card Fields (embedded card form) ---------- */
+  function initPayPalCard() {
+    if (ppCardRendered) return;
+    if (!window.paypal || !paypal.CardFields) {
+      var errEl = document.getElementById('pp-card-err');
+      errEl.textContent = 'PayPal is still loading — please wait a moment and try again.';
+      errEl.style.display = '';
+      return;
+    }
+    try {
+      ppCardFields = paypal.CardFields({
+        createOrder: function () {
+          var inputs = collectCardInputs();
+          if (!inputs) throw new Error('Please complete the addresses above.');
+          return BSR.api('/api/checkout/create', {
+            method: 'POST',
+            body: { slugs: slugs, promo_code: promoCode(), shipping: inputs.ship, billing: inputs.billing }
+          }).then(function (j) {
+            if (!j.ok || !j.orderID) throw new Error(j.error || 'Could not create the PayPal order.');
+            return j.orderID;
+          });
+        },
+        onApprove: function (data) {
+          return BSR.api('/api/checkout/capture', {
+            method: 'POST',
+            body: { orderID: data.orderID }
+          }).then(function (j) {
+            if (j.ok) { finishOrder(data.orderID); }
+            else {
+              var errEl = document.getElementById('pp-card-err');
+              errEl.textContent = j.error || 'Payment could not be captured.';
+              errEl.style.display = '';
+            }
+          });
+        },
+        onError: function (err) {
+          var errEl = document.getElementById('pp-card-err');
+          errEl.textContent = (err && err.message) || 'The PayPal card payment failed.';
+          errEl.style.display = '';
+          var btn = document.getElementById('pp-card-pay');
+          btn.disabled = false; btn.innerHTML = 'Pay with <span style="font-weight:800;letter-spacing:-.02em">PayPal</span>';
+        }
+      });
+      if (!ppCardFields.isEligible()) {
+        document.getElementById('pp-card-err').textContent = 'Card payments via PayPal are not available — please use Stripe.';
+        document.getElementById('pp-card-err').style.display = '';
+        return;
+      }
+      ppCardFields.NumberField().render('#pp-card-number');
+      ppCardFields.ExpiryField().render('#pp-card-expiry');
+      ppCardFields.CVVField().render('#pp-card-cvv');
+      ppCardRendered = true;
+    } catch (e) {
+      var errEl = document.getElementById('pp-card-err');
+      errEl.textContent = 'PayPal card fields could not load — please use Stripe.';
+      errEl.style.display = '';
+    }
+  }
+  document.getElementById('pp-card-pay').addEventListener('click', function () {
+    var inputs = collectCardInputs();
+    if (!inputs) return;
+    if (!ppCardFields) {
+      initPayPalCard();
+      if (!ppCardFields) return;
+    }
+    var errEl = inputs.errEl;
+    var btn = document.getElementById('pp-card-pay');
+    btn.disabled = true; btn.textContent = 'Processing…';
+    var b = inputs.billing;
+    ppCardFields.submit({
+      billingAddress: {
+        addressLine1: b.address.line1 || '',
+        addressLine2: '',
+        adminArea2: b.address.city || '',
+        adminArea1: b.address.state || '',
+        postalCode: b.address.postal || '',
+        countryCode: b.address.country || 'US'
+      }
+    }).catch(function (e) {
+      errEl.textContent = (e && e.message) || 'The PayPal card payment failed.';
+      errEl.style.display = '';
+      btn.disabled = false; btn.innerHTML = 'Pay with <span style="font-weight:800;letter-spacing:-.02em">PayPal</span>';
+    });
+  });
 });
 </script>
 </body>
