@@ -200,6 +200,7 @@
     }
   }
     wireAccountButtons();
+    updateAccountButton();
   function loadMenus() {
     if (menuCache) { applyMenus(menuCache); return Promise.resolve(menuCache); }
     return api('/api/catalog/menus').then(function (j) {
@@ -430,6 +431,29 @@
   }
   showLogin._stub = true;
   /* Account buttons: signed in → /account/, signed out → login modal. */
+  /* Update the account/person icon to reflect signed-in state. */
+  function updateAccountButton() {
+    me().then(function (c) {
+      var btns = document.querySelectorAll('[data-account-btn]');
+      for (var i = 0; i < btns.length; i++) {
+        var btn = btns[i];
+        /* Only update the header icon button, not drawer links. */
+        if (btn.tagName !== 'BUTTON') continue;
+        if (c) {
+          /* Signed in: show user's initial. */
+          var initial = ((c.name || c.email || '?').trim().charAt(0) || '?').toUpperCase();
+          btn.innerHTML = '<span class="account-initial">' + esc(initial) + '</span>';
+          btn.setAttribute('aria-label', 'Account: ' + (c.name || c.email || ''));
+          btn.classList.add('signed-in');
+        } else {
+          btn.innerHTML = icon('account');
+          btn.setAttribute('aria-label', 'Account');
+          btn.classList.remove('signed-in');
+        }
+      }
+    }).catch(function () {});
+  }
+
   function wireAccountButtons() {
     /* Event delegation: works even when header renders after this runs. */
     if (wireAccountButtons._done) return;
