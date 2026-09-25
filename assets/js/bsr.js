@@ -480,8 +480,15 @@
       }
       if (!btn) return;
       e.preventDefault();
-      /* Login page redirects to /account/ if already signed in. */
-      window.location = '/account/login/';
+      /* Check auth first: signed in -> /account/, else -> /account/login/. */
+      var done = false;
+      function go(url) { if (!done) { done = true; window.location = url; } }
+      /* Timeout fallback: if me() hangs, go to login (which redirects if signed in). */
+      setTimeout(function () { go('/account/login/'); }, 2000);
+      try {
+        me().then(function (c) { go(c ? '/account/' : '/account/login/'); })
+            .catch(function () { go('/account/login/'); });
+      } catch (err) { go('/account/login/'); }
     });
   }
 
