@@ -646,26 +646,37 @@ document.addEventListener('DOMContentLoaded', function () {
           .catch(function () { showAddrMsg(false, 'Could not save. Check your connection.'); toast('Could not save. Check your connection.', false); });
       };
       if (!isBook && !!fd.get('same_as_other')) {
-        /* Copy the whole other address -- contact info included -- into this
-           role as its own record. The source address is never altered and
-           nothing is deleted. */
+        /* Point both roles at the one source record, so the address book
+           shows a single entry carrying both badges. The backend clears the
+           default flags from every other record automatically, so the
+           previous destination record simply stays in the book as a regular
+           saved address -- nothing is ever deleted. */
         var src = isBill ? addrShip : addrBill;
         var needLabel = isBill ? 'ship-to' : 'bill-to';
         if (!src || !src.id) {
           showAddrMsg(false, 'Save a ' + needLabel + ' address first.');
           return;
         }
-        var copy = {
+        var linkBody = {
           name: src.name || '', company: src.company || '',
           phone: src.phone || '', email: src.email || '',
-          address1: src.address1 || '', address2: src.address2 || '',
-          city: src.city || '', state: src.state || '',
-          postal: src.postal || '', country: src.country || 'US',
+          address1: src.address1, address2: src.address2 || '',
+          city: src.city, state: src.state || '',
+          postal: src.postal, country: src.country || 'US',
+          is_default_shipping: true, is_default_billing: true,
         };
-        if (isBill) { copy.is_default_shipping = false; copy.is_default_billing = true; }
-        else { copy.is_default_shipping = true; copy.is_default_billing = false; }
         verifiedNote = '';
-        doSave(copy);
+        BSR.api('/api/account/addresses/' + encodeURIComponent(src.id), { method: 'PUT', body: linkBody })
+          .then(function (j) {
+            if (j && j.ok) {
+              loadAddresses();
+              showAddrMsg(true, (isBill ? 'Bill-to' : 'Ship-to') + ' now uses your ' + needLabel + ' address.');
+              toast('Same as ' + needLabel + ' \u2713');
+            } else {
+              showAddrMsg(false, (j && j.error) || 'Could not link the address.');
+            }
+          })
+          .catch(function () { showAddrMsg(false, 'Could not link. Check your connection.'); });
         return;
       }
       /* The bill/ship cards no longer collect name/company/phone. When those
