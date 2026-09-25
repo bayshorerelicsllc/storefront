@@ -62,6 +62,13 @@ document.addEventListener('DOMContentLoaded', function () {
   root.innerHTML =
     '<div class="checkout-layout">' +
     '<div class="checkout-main">' +
+    '<section class="card" id="express-checkout-card"><h2>Express checkout</h2>' +
+    '<p class="hint" style="margin-bottom:12px">Pay instantly — your wallet fills in shipping and billing.</p>' +
+    '<div id="pay-wallets-top"><div id="express-checkout-element"><div id="wallets-loading" style="display:flex;gap:8px;justify-content:center;padding:12px;color:#8a7d5f;font-size:.85rem">Loading payment options…</div></div></div>' +
+    '<div class="pay-divider" id="wallet-divider-top" style="display:none"><span>or</span></div>' +
+    '<div id="pay-paypal-top"><div id="paypal-buttons"></div><div id="venmo-buttons" style="margin-top:8px"></div><div id="paylater-buttons" style="margin-top:8px"></div><div class="hint" id="paypal-msg"></div></div>' +
+    '</section>' +
+    '<div class="pay-divider" style="margin:4px 0 16px"><span>or continue below</span></div>' +
     '<section class="card"><h2><span class="step-num">1</span> Contact</h2>' +
     '<div class="field"><label for="f-email">Email</label>' +
     '<input type="email" id="f-email" autocomplete="email" placeholder="you@example.com">' +
@@ -96,10 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="hint" id="promo-ok" style="display:none"></div>' +
     '<div class="error" id="promo-err" style="display:none"></div></section>' +
     '<section class="card"><h2><span class="step-num">5</span> Payment</h2>' +
-    '<div id="pay-wallets"><div id="express-checkout-element"><div id="wallets-loading" style="display:flex;gap:8px;justify-content:center;padding:12px;color:#8a7d5f;font-size:.85rem">Loading payment options…</div></div></div>' +
-    '<div class="pay-divider" id="wallet-divider" style="display:none"><span>or</span></div>' +
-    '<div id="pay-paypal"><div id="paypal-buttons"></div><div id="venmo-buttons" style="margin-top:8px"></div><div id="paylater-buttons" style="margin-top:8px"></div><div class="hint" id="paypal-msg"></div></div>' +
-    '<div class="pay-divider" id="card-divider"><span>or pay with card</span></div>' +
+    '<div class="pay-divider" id="card-divider"><span>pay with card</span></div>' +
     '<div id="pay-card"><div id="stripe-element"></div>' +
     '<div class="error" id="stripe-err" style="display:none"></div>' +
     '<button id="stripe-pay" type="button" style="display:block;width:100%;background:#635bff;color:#fff;border:none;border-radius:8px;padding:14px;font-size:1rem;font-weight:600;cursor:pointer">Pay with Stripe</button></div>' +
@@ -273,9 +277,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- payment sections ---------- */
   function setPayEnabled(which, enabled, msg) {
-    var sec = document.getElementById(which === 'paypal' ? 'pay-paypal' : 'pay-card');
+    var sec = document.getElementById(which === 'paypal' ? 'pay-paypal-top' : 'pay-card');
     if (sec) sec.style.display = enabled ? '' : 'none';
-    var div = document.getElementById(which === 'paypal' ? 'wallet-divider' : 'card-divider');
+    var div = document.getElementById(which === 'paypal' ? 'wallet-divider-top' : 'card-divider');
     if (!enabled) {
       var msgEl = document.getElementById(which === 'paypal' ? 'paypal-msg' : 'stripe-err');
       if (msgEl && msg) { msgEl.textContent = msg; msgEl.style.display = ''; }
@@ -283,13 +287,13 @@ document.addEventListener('DOMContentLoaded', function () {
     updateDividers();
   }
   function updateDividers() {
-    var wallets = document.getElementById('pay-wallets');
-    var pp = document.getElementById('pay-paypal');
+    var wallets = document.getElementById('pay-wallets-top');
+    var pp = document.getElementById('pay-paypal-top');
     var card = document.getElementById('pay-card');
     var wVis = wallets && wallets.style.display !== 'none' && wallets.innerHTML.trim() !== '';
     var ppVis = pp && pp.style.display !== 'none';
     var cardVis = card && card.style.display !== 'none';
-    var wd = document.getElementById('wallet-divider');
+    var wd = document.getElementById('wallet-divider-top');
     var cd = document.getElementById('card-divider');
     if (wd) wd.style.display = (wVis && (ppVis || cardVis)) ? '' : 'none';
     if (cd) cd.style.display = ((wVis || ppVis) && cardVis) ? '' : 'none';
@@ -404,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (loader) loader.style.display = 'none';
         var avail = (e && e.availablePaymentMethods) || {};
         if (!(avail.applePay || avail.googlePay || avail.link || avail.amazonPay)) {
-          document.getElementById('pay-wallets').style.display = 'none';
+          document.getElementById('pay-wallets-top').style.display = 'none';
         }
         updateDividers();
       });
