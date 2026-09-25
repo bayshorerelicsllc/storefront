@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="hint" id="promo-ok" style="display:none"></div>' +
     '<div class="error" id="promo-err" style="display:none"></div></section>' +
     '<section class="card"><h2><span class="step-num">5</span> Payment</h2>' +
-    '<div id="pay-wallets"><div id="express-checkout-element"></div></div>' +
+    '<div id="pay-wallets"><div id="express-checkout-element"><div id="wallets-loading" style="display:flex;gap:8px;justify-content:center;padding:12px;color:#8a7d5f;font-size:.85rem">Loading payment options…</div></div></div>' +
     '<div class="pay-divider" id="wallet-divider" style="display:none"><span>or</span></div>' +
     '<div id="pay-paypal"><div id="paypal-buttons"></div><div id="venmo-buttons" style="margin-top:8px"></div><div id="paylater-buttons" style="margin-top:8px"></div><div class="hint" id="paypal-msg"></div></div>' +
     '<div class="pay-divider" id="card-divider"><span>or pay with card</span></div>' +
@@ -387,6 +387,8 @@ document.addEventListener('DOMContentLoaded', function () {
         paymentMethods: { applePay: 'auto', googlePay: 'auto', link: 'auto', amazonPay: 'auto', paypal: 'auto' }
       });
       expressCheckoutEl.on('ready', function (e) {
+        var loader = document.getElementById('wallets-loading');
+        if (loader) loader.style.display = 'none';
         var avail = (e && e.availablePaymentMethods) || {};
         if (!(avail.applePay || avail.googlePay || avail.link || avail.amazonPay)) {
           document.getElementById('pay-wallets').style.display = 'none';
