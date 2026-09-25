@@ -52,7 +52,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '.bsr-passkey-btn{background:none;border:none;color:#1e4d33;font-size:.85rem;font-weight:700;',
     'letter-spacing:.05em;text-decoration:underline;cursor:pointer;padding:8px;font-family:inherit}',
     '.bsr-passkey-btn:disabled{opacity:.5;cursor:wait}',
-    '.bsr-passkey-msg{font-size:.8rem;color:#8a6d3b;min-height:20px;margin-top:4px}',
+    '.bsr-passkey-msg{font-size:.8rem;color:#8a6d3b}',
     '.bsr-pk-lost{margin:2px 0 0}',
     '.bsr-pk-lost button{background:none;border:none;color:#8a8172;font-size:.78rem;text-decoration:underline;cursor:pointer;padding:2px;font-family:inherit}',
     '.bsr-pk-help{display:none;font-size:.82rem;color:#2a241b;line-height:1.6;margin:8px 0 0;text-align:left;',
@@ -508,8 +508,8 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
         mounts[i].innerHTML =
           '<div class="bsr-passkey"><button type="button" class="bsr-passkey-btn">' +
           '&#x1F511; USE PASSKEY TO LOG IN</button>' +
-          '<div class="bsr-passkey-msg"></div>' +
           '<p class="bsr-pk-lost"><button type="button" data-el="pk-help-toggle">Lost your passkey?</button></p>' +
+          '<div class="bsr-passkey-msg"></div>' +
           '<p class="bsr-pk-help" data-el="pk-help">No worries — just sign in with your email and password instead. ' +
           'Then go to Account &gt; Security &gt; Passkeys to remove the lost one and add a new passkey from your current device.</p></div>';
       }
