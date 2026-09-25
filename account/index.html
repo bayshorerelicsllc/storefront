@@ -53,6 +53,16 @@
 .acct-msg { padding:11px 14px; border-radius:var(--radius-sm); font-size:.9rem; margin:0 0 16px; }
 .acct-msg.ok { background:#e8f3ec; color:#1e4d33; border:1px solid #bcd8c4; }
 .acct-msg.err { background:#fdecea; color:#9c2b1e; border:1px solid #f3c1b8; }
+/* Toast notifications */
+#acct-toast-wrap { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:9999;
+  display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none;
+  width:calc(100% - 32px); max-width:420px; }
+.acct-toast { background:#1e4d33; color:#fff; padding:12px 22px; border-radius:999px; font-size:.92rem;
+  box-shadow:0 6px 20px rgba(0,0,0,.28); opacity:0; transform:translateY(12px);
+  transition:opacity .25s ease, transform .25s ease; text-align:center; max-width:100%; }
+.acct-toast.show { opacity:1; transform:translateY(0); }
+.acct-toast.err { background:#9c2b1e; }
+@media (prefers-reduced-motion:reduce) { .acct-toast { transition:none; } }
 /* Address cards */
 .addr-grid { display:grid; gap:12px; margin:0 0 8px; }
 @media (min-width:640px) { .addr-grid { grid-template-columns:1fr 1fr; } }
@@ -127,6 +137,25 @@ document.addEventListener('DOMContentLoaded', function () {
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
   function clearMsg(el) { el.innerHTML = ''; }
+  /* Toast notification: small popup, ~3s, then fades. ok=false => red error toast. */
+  function toast(text, ok) {
+    var wrap = document.getElementById('acct-toast-wrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'acct-toast-wrap';
+      document.body.appendChild(wrap);
+    }
+    var t = document.createElement('div');
+    t.className = 'acct-toast' + (ok === false ? ' err' : '');
+    t.textContent = text;
+    wrap.appendChild(t);
+    void t.offsetWidth; /* force reflow so the transition runs */
+    t.classList.add('show');
+    setTimeout(function () {
+      t.classList.remove('show');
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+    }, 3000);
+  }
 
   /* ---------------- shell ---------------- */
   function shell(contentHtml) {
@@ -202,12 +231,16 @@ document.addEventListener('DOMContentLoaded', function () {
           customer.name = j.customer.name;
           customer.phone = j.customer.phone;
           showMsg(msg, true, 'Profile saved.');
+          toast('Profile saved \u2713');
           render();
         } else {
-          showMsg(msg, false, (j && j.error) || 'Could not save. Please try again.');
+          var em = (j && j.error) || 'Could not save. Please try again.';
+          showMsg(msg, false, em);
+          toast(em, false);
         }
       }).catch(function () {
         showMsg(msg, false, 'Could not save. Check your connection and try again.');
+        toast('Could not save. Check your connection and try again.', false);
       }).finally(function () { btn.disabled = false; });
     });
   }
@@ -310,9 +343,11 @@ document.addEventListener('DOMContentLoaded', function () {
               if (j.promoted && j.promoted.length) {
                 showAddrMsg(true, 'Address removed. Your oldest remaining address is now the default ' + j.promoted.join(' and ') + ' address.');
               }
+              toast('Address removed');
             }
-            else showAddrMsg(false, (j && j.error) || 'Could not remove the address.');
-          });
+            else { var em3 = (j && j.error) || 'Could not remove the address.'; showAddrMsg(false, em3); toast(em3, false); }
+          })
+          .catch(function () { showAddrMsg(false, 'Could not remove. Check your connection.'); toast('Could not remove. Check your connection.', false); });
       });
     });
   }
@@ -342,10 +377,27 @@ document.addEventListener('DOMContentLoaded', function () {
         var url = id === 'new' ? '/api/account/addresses' : '/api/account/addresses/' + encodeURIComponent(id);
         BSR.api(url, { method: id === 'new' ? 'POST' : 'PUT', body: p })
           .then(function (j) {
-            if (j && j.ok) { slot.innerHTML = ''; loadAddresses(); showAddrMsg(true, 'Address saved.'); }
-            else showAddrMsg(false, (j && j.error) || 'Could not save the address.');
+            if (j && j.ok) {
+              slot.innerHTML = ''; loadAddresses();
+              var defChanged = (id === 'new');
+              if (!defChanged) {
+                for (var ai = 0; ai < addrCache.length; ai++) {
+                  if (String(addrCache[ai].id) === String(id)) {
+                    defChanged = (!!addrCache[ai].is_default_shipping !== !!p.is_default_shipping) ||
+                                 (!!addrCache[ai].is_default_billing !== !!p.is_default_billing);
+                    break;
+                  }
+                }
+              }
+              showAddrMsg(true, defChanged ? 'Address saved. Defaults updated.' : 'Address saved.');
+              toast(defChanged ? 'Default updated \u2713' : 'Address saved \u2713');
+            } else {
+              var em2 = (j && j.error) || 'Could not save the address.';
+              showAddrMsg(false, em2);
+              toast(em2, false);
+            }
           })
-          .catch(function () { showAddrMsg(false, 'Could not save. Check your connection.'); });
+          .catch(function () { showAddrMsg(false, 'Could not save. Check your connection.'); toast('Could not save. Check your connection.', false); });
       };
       /* Validate the address before saving when the validator is available. */
       if (window.BSRAddrValidate && BSRAddrValidate.checkAndConfirm) {
@@ -429,12 +481,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }).then(function (j) {
           if (j && j.ok) {
             showMsg(msg, true, 'Password updated.');
+            toast('Password changed \u2713');
             pwForm.reset();
           } else {
-            showMsg(msg, false, (j && j.error) || 'Could not update password.');
+            var em4 = (j && j.error) || 'Could not update password.';
+            showMsg(msg, false, em4);
+            toast(em4, false);
           }
         }).catch(function () {
           showMsg(msg, false, 'Could not update password. Check your connection.');
+          toast('Could not update password. Check your connection.', false);
         }).finally(function () { btn.disabled = false; });
       });
     }
@@ -460,7 +516,11 @@ document.addEventListener('DOMContentLoaded', function () {
           b.addEventListener('click', function () {
             if (!window.confirm('Remove this passkey?')) return;
             BSR.api('/api/account/passkeys/' + encodeURIComponent(b.getAttribute('data-pk-del')), { method: 'DELETE' })
-              .then(function (r) { if (r && r.ok) loadPasskeys(); });
+              .then(function (r) {
+                if (r && r.ok) { loadPasskeys(); toast('Passkey removed'); }
+                else toast((r && r.error) || 'Could not remove the passkey.', false);
+              })
+              .catch(function () { toast('Could not remove the passkey. Check your connection.', false); });
           });
         });
       }
@@ -523,12 +583,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       })
       .then(function (fin) {
-        if (fin && fin.ok) { pkFormMsg(''); loadPasskeys(); }
-        else pkFormMsg((fin && fin.error) || 'Registration failed.');
+        if (fin && fin.ok) { pkFormMsg(''); loadPasskeys(); toast('Passkey added \u2713'); }
+        else { var em5 = (fin && fin.error) || 'Registration failed.'; pkFormMsg(em5); toast(em5, false); }
       })
       .catch(function (e) {
         var m = String((e && e.message) || e);
-        pkFormMsg(/notallowed|abort/i.test(m) ? 'Registration was cancelled.' : m);
+        var cancelled = /notallowed|abort/i.test(m);
+        pkFormMsg(cancelled ? 'Registration was cancelled.' : m);
+        if (!cancelled) toast(m, false);
       });
   }
 
@@ -667,12 +729,15 @@ document.addEventListener('DOMContentLoaded', function () {
           BSR.api('/api/account/payment-methods/' + encodeURIComponent(pmId), { method: 'DELETE' })
             .then(function (r) {
               if (r && r._status === 401) { window.location = '/account/login/'; return; }
-              if (r && r.ok) { refreshCards(); }
+              if (r && r.ok) { refreshCards(); toast('Card removed'); }
               else {
                 b.disabled = false;
-                window.alert((r && r.error) || 'Could not remove the card.');
+                var em7 = (r && r.error) || 'Could not remove the card.';
+                showPmError(em7);
+                toast(em7, false);
               }
-            });
+            })
+            .catch(function () { b.disabled = false; toast('Could not remove the card. Check your connection.', false); });
         });
       });
     });
@@ -692,9 +757,12 @@ document.addEventListener('DOMContentLoaded', function () {
       if (res.error) throw new Error(res.error.message || 'Card could not be saved.');
       resetAddForm();
       refreshCards();
+      toast('Card saved \u2713');
     }).catch(function (e) {
       saveBtn.disabled = false;
-      showPmError(e.message || 'Could not save the card.');
+      var em6 = e.message || 'Could not save the card.';
+      showPmError(em6);
+      toast(em6, false);
     });
   }
   function bindCards() {
