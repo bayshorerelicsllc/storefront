@@ -302,7 +302,16 @@
         '<li><a href="/policies/privacy/">Privacy</a></li><li><a href="/policies/terms/">Terms</a></li>' +
         '<li><a href="/policies/cookies/">Cookies</a></li><li><a href="/policies/accessibility/">Accessibility</a></li></ul></div>' +
         '</div><div class="footer-bottom"><span>© <span data-year></span> <span data-store-name>Bay Shore Relics LLC</span>. All rights reserved.</span>' +
-        '<span class="pay-badges" data-pay-badges>' + icon('lock', 'ic-sm') + ' Secure checkout · PayPal · Stripe</span>' +
+        '<span class="accept-badge" data-pay-badges aria-label="We accept Visa, Mastercard, American Express, Discover, PayPal, Venmo, Google Pay, and Apple Pay">' +
+        '<img src="/assets/img/payments/visa.svg" alt="Visa" loading="lazy">' +
+        '<img src="/assets/img/payments/mastercard.svg" alt="Mastercard" loading="lazy">' +
+        '<img src="/assets/img/payments/amex.svg" alt="American Express" loading="lazy">' +
+        '<img src="/assets/img/payments/discover.svg" alt="Discover" loading="lazy">' +
+        '<img src="/assets/img/payments/paypal.svg" alt="PayPal" loading="lazy">' +
+        '<img src="/assets/img/payments/venmo.svg" alt="Venmo" loading="lazy">' +
+        '<img src="/assets/img/payments/gpay.svg" alt="Google Pay" loading="lazy">' +
+        '<img src="/assets/img/payments/applepay.svg" alt="Apple Pay" loading="lazy">' +
+        '</span>' +
         '<span data-social></span>' +
         '</div></div></footer>';
     }
