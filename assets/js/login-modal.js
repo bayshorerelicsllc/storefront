@@ -76,7 +76,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     'text-decoration:underline;padding:0;font-family:inherit}',
     '.bsr-captcha-note{text-align:center;font-size:.74rem;color:#8a8172;margin:28px 0 0;line-height:1.6}',
     '.bsr-captcha-note a{color:#2a241b}',
-    '.bsr-cf-word{background:url(/assets/img/cloudflare-icon.png) left center/0.95em no-repeat;padding-left:1.25em}',
+    '.bsr-cf-word{background:url(/assets/img/cloudflare-icon.png) left center/0.85em no-repeat;padding-left:1.05em}',
     '.bsr-loginbtn{width:100%;min-height:58px;background:#1e4d33;color:#fff;border:none;border-radius:4px;',
     'font-size:.98rem;font-weight:700;letter-spacing:.07em;cursor:pointer;font-family:inherit;margin-top:6px;',
     'transition:background .15s}',
