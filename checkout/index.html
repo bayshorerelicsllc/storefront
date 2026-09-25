@@ -6,6 +6,9 @@
 <title>Checkout — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
+<link rel="preconnect" href="https://js.stripe.com">
+<link rel="preload" href="https://js.stripe.com/v3/" as="script">
+<script src="https://js.stripe.com/v3/" async></script>
 <script src="/assets/js/bsr.js" defer></script>
 </head>
 <body>
@@ -135,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
       products.push((j && j.ok && j.product) ? j.product : { slug: slug, title: slug, price_cents: 0, image: '' });
       if (--pending === 0) {
         products.sort(function (a, b) { return slugs.indexOf(a.slug) - slugs.indexOf(b.slug); });
-        initExpressCheckout();        sumLines.innerHTML = products.map(function (p) {
+        sumLines.innerHTML = products.map(function (p) {
           var img = p.image
             ? '<img src="' + BSR.esc(p.image) + '" alt="' + BSR.esc(p.title) + '" loading="lazy">'
             : '<div class="empty-icon">' + BSR.icon('box') + '</div>';
@@ -441,16 +444,26 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- Stripe ---------- */
   var stripe = null, elements = null, stripeMounted = false, stripeIntent = null;
   function initStripe(pk) {
-    var s = document.createElement('script');
-    s.src = 'https://js.stripe.com/v3/';
-    s.onload = function () {
-      stripe = window.Stripe(pk);
-      document.getElementById('stripe-pay').addEventListener('click', onStripePay);
-    };
-    s.onerror = function () {
-      setPayEnabled('card', false, 'Card payments could not load — please try PayPal.');
-    };
-    document.head.appendChild(s);
+    function setup() {
+      try {
+        stripe = window.Stripe(pk);
+        document.getElementById('stripe-pay').addEventListener('click', onStripePay);
+        initExpressCheckout();
+        initCardElement();
+      } catch (e) {
+        setPayEnabled('card', false, 'Card payments could not load — please try PayPal.');
+      }
+    }
+    if (window.Stripe) {
+      setup();
+    } else {
+      var tries = 0;
+      var iv = setInterval(function () {
+        tries++;
+        if (window.Stripe) { clearInterval(iv); setup(); }
+        else if (tries > 50) { clearInterval(iv); setPayEnabled('card', false, 'Card payments could not load — please try PayPal.'); }
+      }, 100);
+    }
   }
   function onStripePay() {
     var errEl = document.getElementById('stripe-err');
