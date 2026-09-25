@@ -1,232 +1,226 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bay Shore Relics LLC — Coming Soon | Vintage 35mm Railroad Slides</title>
-<meta name="description" content="Bay Shore Relics LLC is opening soon: one-of-a-kind vintage 35mm railroad slides. Each slide is a single physical item, sold once. Join the launch list for first dibs.">
-<link rel="canonical" href="https://bayshorerelicsllc.com/">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Bay Shore Relics LLC — Coming Soon">
-<meta property="og:description" content="One-of-a-kind vintage 35mm railroad slides. Join the launch list for first dibs.">
-<meta property="og:url" content="https://bayshorerelicsllc.com/">
-<meta property="og:image" content="https://bayshorerelicsllc.com/assets/img/coming-soon/hero.jpg">
-<meta name="theme-color" content="#141210">
-<link rel="icon" href="/assets/img/logo-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-/* Bay Shore Relics — Coming Soon. Depot-night dark, brass, Kodachrome warmth. */
-.cs-page { margin: 0; background: #141210; color: #f5ead0;
-  font-family: "Helvetica Neue", Arial, system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased; }
-.cs-hero { min-height: 100svh; display: flex; align-items: center;
-  justify-content: center; text-align: center; padding: 72px 20px 56px;
-  background:
-    linear-gradient(rgba(12,10,8,.62), rgba(12,10,8,.78) 70%, #141210),
-    url("/assets/img/coming-soon/hero.jpg") center 35% / cover no-repeat #141210; }
-.cs-inner { max-width: 860px; }
-.cs-eyebrow { font-family: Oswald, "Arial Narrow", sans-serif;
-  letter-spacing: .42em; text-indent: .42em; font-size: 13px; color: #d9b45f;
-  margin: 0 0 18px; text-transform: uppercase; }
-.cs-board { display: inline-block; background: #0b0a08;
-  border: 1px solid #3a3226; border-radius: 8px; padding: 10px 22px;
-  margin-bottom: 26px;
-  box-shadow: 0 0 24px rgba(217,180,95,.18), inset 0 0 18px rgba(0,0,0,.8); }
-.cs-board span { font-family: "Courier New", monospace; font-weight: 700;
-  letter-spacing: .3em; text-indent: .3em; color: #ffcf6e;
-  text-shadow: 0 0 10px rgba(255,207,110,.65);
-  animation: cs-flicker 4.5s infinite; }
-@keyframes cs-flicker { 0%,100% { opacity: 1; } 92% { opacity: 1; }
-  93% { opacity: .55; } 94% { opacity: 1; } 96% { opacity: .75; } 97% { opacity: 1; } }
-.cs-title { font-family: Oswald, "Arial Narrow", sans-serif; font-weight: 700;
-  text-transform: uppercase; font-size: clamp(2.6rem, 10vw, 6.2rem);
-  line-height: .95; margin: 0 0 18px; color: #faf3df;
-  text-shadow: 0 4px 0 rgba(0,0,0,.45), 0 10px 44px rgba(0,0,0,.6); }
-.cs-title .brass { color: #e8bd63; }
-.cs-sub { font-size: clamp(1.02rem, 2.6vw, 1.3rem); line-height: 1.55;
-  color: #e9dcc0; max-width: 620px; margin: 0 auto 34px;
-  text-shadow: 0 2px 12px rgba(0,0,0,.7); }
-.cs-sub strong { color: #ffcf6e; }
-.cs-ticket { display: flex; align-items: stretch; justify-content: center;
-  max-width: 560px; margin: 0 auto 40px;
-  filter: drop-shadow(0 10px 26px rgba(0,0,0,.55)); }
-.cs-ticket .stub, .cs-ticket .tear { background: #e8bd63; color: #241c0e; }
-.cs-ticket .stub { padding: 14px 26px; border-radius: 12px 0 0 12px;
-  font-family: Oswald, "Arial Narrow", sans-serif; font-weight: 600;
-  letter-spacing: .18em; text-transform: uppercase; font-size: 15px;
-  display: flex; align-items: center; }
-.cs-ticket .tear { border-left: 2px dashed #241c0e; border-radius: 0 12px 12px 0;
-  padding: 14px 20px; font-family: Oswald, "Arial Narrow", sans-serif;
-  font-weight: 700; letter-spacing: .12em; display: flex; align-items: center;
-  position: relative; }
-.cs-ticket .tear::before, .cs-ticket .tear::after { content: "";
-  position: absolute; left: -11px; width: 20px; height: 20px;
-  border-radius: 50%; background: #141210; }
-.cs-ticket .tear::before { top: -10px; }
-.cs-ticket .tear::after { bottom: -10px; }
-.cs-card { background: rgba(20,17,12,.82);
-  border: 1px solid rgba(217,180,95,.35); border-radius: 16px;
-  padding: 30px 28px 26px; max-width: 520px; margin: 0 auto;
-  backdrop-filter: blur(6px); box-shadow: 0 18px 60px rgba(0,0,0,.5); }
-.cs-card h2 { font-family: Oswald, "Arial Narrow", sans-serif;
-  text-transform: uppercase; letter-spacing: .08em; font-size: 1.5rem;
-  margin: 0 0 8px; color: #faf3df; }
-.cs-card p { color: #d9cba6; font-size: .95rem; margin: 0 0 18px; }
-.cs-form { display: flex; gap: 10px; }
-.cs-form input[type="email"] { flex: 1; min-width: 0; padding: 14px 16px;
-  border-radius: 10px; border: 1px solid #4a3f2a; background: #0e0c09;
-  color: #faf3df; font-size: 1rem; }
-.cs-form input[type="email"]:focus { outline: none; border-color: #e8bd63;
-  box-shadow: 0 0 0 3px rgba(232,189,99,.25); }
-.cs-form input[type="email"]::placeholder { color: #8a7c5c; }
-.cs-btn { font-family: Oswald, "Arial Narrow", sans-serif; text-transform: uppercase;
-  letter-spacing: .1em; font-weight: 600; font-size: 1rem; padding: 14px 26px;
-  border: none; border-radius: 10px; cursor: pointer; color: #241c0e;
-  background: linear-gradient(180deg, #f2cd7d, #d9a83f);
-  box-shadow: 0 6px 20px rgba(217,168,63,.35);
-  transition: transform .15s ease, box-shadow .15s ease; white-space: nowrap; }
-.cs-btn:hover { transform: translateY(-2px);
-  box-shadow: 0 10px 26px rgba(217,168,63,.45); }
-.cs-btn:active { transform: translateY(0); }
-.cs-fine { font-size: .8rem; color: #9a8b66; margin: 14px 0 0; }
-.cs-done h2 { color: #ffcf6e; }
-.cs-done .big { font-size: 2.4rem; }
-.cs-stripwrap { overflow: hidden; background: #0b0a08;
-  border-top: 1px solid #2c2517; border-bottom: 1px solid #2c2517; }
-.cs-strip { padding: 26px 0;
-  background-image:
-    repeating-linear-gradient(90deg, transparent 0 14px, rgba(217,180,95,.28) 14px 30px),
-    repeating-linear-gradient(90deg, transparent 0 14px, rgba(217,180,95,.28) 14px 30px);
-  background-size: 100% 12px, 100% 12px;
-  background-position: top 6px left 0, bottom 6px left 0;
-  background-repeat: repeat-x; }
-.cs-track { display: flex; gap: 26px; width: max-content; padding: 0 13px;
-  animation: cs-roll 46s linear infinite; }
-.cs-stripwrap:hover .cs-track { animation-play-state: paused; }
-@keyframes cs-roll { to { transform: translateX(-50%); } }
-.cs-frame { background: #efe6cf; padding: 10px 10px 26px; border-radius: 4px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.6); transform: rotate(-1.2deg);
-  position: relative; }
-.cs-frame:nth-child(even) { transform: rotate(1.4deg); }
-.cs-frame img { display: block; width: 190px; height: 190px; object-fit: cover;
-  border-radius: 2px; background: #222; }
-.cs-frame::after { content: "35mm"; position: absolute; bottom: 5px; right: 10px;
-  font-size: 10px; letter-spacing: .2em; color: #8a7c5c;
-  font-family: Oswald, "Arial Narrow", sans-serif; }
-.cs-teasers { max-width: 960px; margin: 0 auto; padding: 64px 20px 20px;
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.cs-teaser { background: rgba(232,189,99,.06);
-  border: 1px solid rgba(217,180,95,.22); border-radius: 14px;
-  padding: 24px 20px; text-align: center; }
-.cs-teaser .n { font-family: Oswald, "Arial Narrow", sans-serif; font-size: 2rem;
-  color: #e8bd63; display: block; margin-bottom: 8px; }
-.cs-teaser h3 { font-family: Oswald, "Arial Narrow", sans-serif;
-  text-transform: uppercase; letter-spacing: .06em; font-size: 1.05rem;
-  margin: 0 0 8px; color: #faf3df; }
-.cs-teaser p { font-size: .9rem; color: #cbbb92; margin: 0; line-height: 1.5; }
-.cs-footer { text-align: center; padding: 46px 20px 60px; color: #8a7c5c;
-  font-size: .85rem; }
-.cs-footer nav { margin-bottom: 14px; }
-.cs-footer nav a { color: #cbbb92; margin: 0 10px; text-decoration: none; }
-.cs-footer nav a:hover { color: #ffcf6e; text-decoration: underline; }
-@media (max-width: 640px) { .cs-form { flex-direction: column; }
-  .cs-teasers { grid-template-columns: 1fr; }
-  .cs-frame img { width: 150px; height: 150px; } }
-@media (prefers-reduced-motion: reduce) { .cs-track { animation: none; }
-  .cs-board span { animation: none; } .cs-btn { transition: none; } }
-</style>
-</head>
-<body class="cs-page">
+---
+layout: default
+---
 
-<section class="cs-hero">
-  <div class="cs-inner">
-    <p class="cs-eyebrow">Bay Shore Relics LLC</p>
-    <div class="cs-board" role="status" aria-label="Coming soon"><span>COMING&nbsp;SOON</span></div>
-    <h1 class="cs-title">Own a piece of<br><span class="brass">railroad history</span></h1>
-    <p class="cs-sub">Steam, diesel, depots &amp; fallen flags — captured on <strong>35mm film</strong> decades ago.
-      Every slide is a <strong>single physical item, sold once</strong>. When it&rsquo;s gone, it&rsquo;s gone.</p>
-    <div class="cs-ticket" aria-hidden="true">
-      <span class="stub">Bay Shore Relics</span><span class="tear">Admit One</span>
-    </div>
-    <div class="cs-card" id="launch-card">
-      <div id="launch-form">
-        <h2>Notify me at launch</h2>
-        <p>Join the launch list and you&rsquo;ll be first through the door when the shop opens.</p>
-        <form class="cs-form" action="https://formsubmit.co/hello@bayshorerelicsllc.com" method="POST">
-          <input type="hidden" name="_subject" value="[Launch List] Notify me at launch — Bay Shore Relics LLC">
-          <input type="hidden" name="_next" value="https://bayshorerelicsllc.com/?notified=1">
-          <input type="email" name="email" placeholder="Email address" required aria-label="Email address">
-          <button class="cs-btn" type="submit">Join the list</button>
-        </form>
-        <p class="cs-fine">One email at launch. No spam, no sharing your address.</p>
-      </div>
-      <div id="launch-done" class="cs-done" hidden>
-        <div class="big">&#x1F3AB;</div>
-        <h2>You&rsquo;re on the list!</h2>
-        <p>We&rsquo;ll email you the moment the shop opens.</p>
-      </div>
-    </div>
+<section class="hero" aria-label="Featured">
+  <img src="{{ '/assets/images/hero.jpg' | relative_url }}" alt="Steam locomotive crossing a trestle over Lake Michigan at dawn, Door County, Wisconsin" fetchpriority="high">
+  <div class="hero-text">
+    <p class="hero-kicker">Original 35mm slides · Never reprinted · Never restocked</p>
+    <h2 data-bsr="hero_title">Own a Piece of Railroad History</h2>
+    <p class="lead" data-bsr="hero_sub">Steam, diesel, depots &amp; fallen flags — captured on film decades ago and curated on the shores of Lake Michigan. Each slide is unique. When it's gone, it's gone.</p>
+    <a class="btn" href="#slides">Browse the Collection</a>
   </div>
 </section>
 
-<div class="cs-stripwrap" aria-hidden="true">
-  <div class="cs-strip">
-    <div class="cs-track" id="cs-track">
-      <div class="cs-frame"><img src="/assets/img/coming-soon/slide-1.jpg" alt="" loading="lazy"></div>
-      <div class="cs-frame"><img src="/assets/img/coming-soon/slide-2.jpg" alt="" loading="lazy"></div>
-      <div class="cs-frame"><img src="/assets/img/coming-soon/slide-3.jpg" alt="" loading="lazy"></div>
-      <div class="cs-frame"><img src="/assets/img/coming-soon/hero.jpg" alt="" loading="lazy"></div>
-      <div class="cs-frame"><img src="/assets/img/coming-soon/slide-1.jpg" alt="" loading="lazy"></div>
-      <div class="cs-frame"><img src="/assets/img/coming-soon/slide-2.jpg" alt="" loading="lazy"></div>
-      <div class="cs-frame"><img src="/assets/img/coming-soon/slide-3.jpg" alt="" loading="lazy"></div>
-      <div class="cs-frame"><img src="/assets/img/coming-soon/hero.jpg" alt="" loading="lazy"></div>
-    </div>
+<section aria-label="Browse by category">
+  <div class="section-head">
+    <h2>Shop by <span class="accent">Era</span></h2>
   </div>
-</div>
-
-<section class="cs-teasers">
-  <div class="cs-teaser">
-    <span class="n">40k+</span>
-    <h3>Slides &amp; growing</h3>
-    <p>A deep collection of vintage railroad slides, still growing as new collections arrive.</p>
-  </div>
-  <div class="cs-teaser">
-    <span class="n">1 of 1</span>
-    <h3>One of a kind</h3>
-    <p>Each listing is one physical slide, sold once. No reprints, no restocks.</p>
-  </div>
-  <div class="cs-teaser">
-    <span class="n">First</span>
-    <h3>First dibs</h3>
-    <p>Launch-list members shop before the doors open to everyone else.</p>
+  <div class="tiles">
+    <button type="button" class="tile" data-tile-search="steam">
+      <span class="tile-kicker">Iron horses</span>
+      <span class="tile-name">Steam Power</span>
+      <span class="tile-sub">Locomotives of the steam age</span>
+    </button>
+    <button type="button" class="tile" data-tile-search="diesel">
+      <span class="tile-kicker">The transition</span>
+      <span class="tile-name">Diesel Era</span>
+      <span class="tile-sub">First-generation road power</span>
+    </button>
+    <button type="button" class="tile" data-tile-search="depot station">
+      <span class="tile-kicker">Trackside</span>
+      <span class="tile-name">Depots &amp; Stations</span>
+      <span class="tile-sub">Buildings, towers &amp; yards</span>
+    </button>
+    <button type="button" class="tile" data-tile-search="passenger">
+      <span class="tile-kicker">Rolling stock</span>
+      <span class="tile-name">Passenger &amp; Freight</span>
+      <span class="tile-sub">Cars, consists &amp; cabooses</span>
+    </button>
   </div>
 </section>
 
-<footer class="cs-footer">
-  <nav>
-    <a href="/policies/privacy/">Privacy</a>
-    <a href="/policies/terms/">Terms</a>
-    <a href="/policies/cookies/">Cookies</a>
-    <a href="/policies/returns/">Returns</a>
-    <a href="/contact/">Contact</a>
-  </nav>
-  <div>&copy; <span id="cs-year">2026</span> Bay Shore Relics LLC. All rights reserved.</div>
-</footer>
+<section class="listings" id="slides" aria-label="Slides for sale">
+  <div class="section-head">
+    <h2>Fresh <span class="accent">Arrivals</span></h2>
+    <a class="more" href="#slides" id="view-all">View all &rarr;</a>
+  </div>
+  {% assign items = site.listings | sort: 'listed_on' | reverse %}
+  {% if items.size > 0 %}
+  <div class="shop-tools">
+    <input type="search" id="slide-search" placeholder="Search slides — railroad, locomotive, location…" aria-label="Search slides" autocomplete="off">
+    <div class="shop-filters">
+      {% assign railroads = site.listings | map: 'railroad' | compact | uniq | sort %}
+      {% if railroads.size > 0 %}
+      <select id="railroad-filter" aria-label="Filter by railroad">
+        <option value="">All railroads</option>
+        {% for rr in railroads %}<option value="{{ rr | escape }}">{{ rr }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      <select id="decade-filter" aria-label="Filter by decade">
+        <option value="">All decades</option>
+      </select>
+      <select id="sort-filter" aria-label="Sort slides">
+        <option value="newest">Newest first</option>
+        <option value="price-asc">Price: low to high</option>
+        <option value="price-desc">Price: high to low</option>
+      </select>
+    </div>
+    <p class="result-count" id="result-count" aria-live="polite"></p>
+  </div>
+  <div class="grid" id="slides-grid">
+    {% for item in items %}
+    <article class="card"
+      data-search="{{ item.title | append: ' ' | append: item.railroad | append: ' ' | append: item.locomotive | append: ' ' | append: item.location | append: ' ' | append: item.description | strip_html | downcase | escape }}"
+      data-railroad="{{ item.railroad | default: '' | escape }}"
+      data-price="{{ item.price | default: 0 }}"
+      data-year="{{ item.photo_year | default: '' | escape }}"
+      data-idx="{{ forloop.index0 }}">
+      <a href="{{ item.url | relative_url }}" aria-label="{{ item.title | escape }} — ${{ item.price }}">
+        <div class="card-img">
+          <span class="badge">One of a kind</span>
+          {% if item.image %}
+          <img src="{{ item.image | relative_url }}" alt="{{ item.title | escape }}" loading="lazy">
+          {% else %}
+          <div class="img-placeholder"><span>Photo<br>coming soon</span></div>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <h3>{{ item.title | escape }}</h3>
+          <p class="card-meta">{{ item.railroad | escape }}{% if item.photo_year %} · {{ item.photo_year | escape }}{% endif %}</p>
+          <div class="card-foot">
+            <p class="card-price">${{ item.price }}</p>
+            <span class="card-cta">View &rarr;</span>
+          </div>
+        </div>
+      </a>
+    </article>
+    {% endfor %}
+  </div>
+  <p class="empty" id="no-results" style="display:none">No slides match your search — try fewer words, or browse everything.</p>
+  <script>
+  (function () {
+    var q = document.getElementById('slide-search');
+    var rr = document.getElementById('railroad-filter');
+    var dec = document.getElementById('decade-filter');
+    var sort = document.getElementById('sort-filter');
+    var grid = document.getElementById('slides-grid');
+    var count = document.getElementById('result-count');
+    var empty = document.getElementById('no-results');
+    if (!q || !grid) return;
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.card'));
+    function decadeOf(card) {
+      var m = (card.getAttribute('data-year') || '').match(/(\d{4})/);
+      return m ? (Math.floor(parseInt(m[1], 10) / 10) * 10) + 's' : '';
+    }
+    if (dec) {
+      var decades = {};
+      cards.forEach(function (c) { var d = decadeOf(c); if (d) decades[d] = true; });
+      Object.keys(decades).sort().reverse().forEach(function (d) {
+        var o = document.createElement('option');
+        o.value = d; o.textContent = d;
+        dec.appendChild(o);
+      });
+    }
+    function apply() {
+      var term = (q.value || '').toLowerCase().trim();
+      var words = term.split(/\s+/).filter(Boolean);
+      var rrVal = rr ? rr.value : '';
+      var decVal = dec ? dec.value : '';
+      var shown = [];
+      cards.forEach(function (c) {
+        var blob = c.getAttribute('data-search') || '';
+        var okWords = words.every(function (w) { return blob.indexOf(w) !== -1; });
+        var okRr = !rrVal || (c.getAttribute('data-railroad') === rrVal);
+        var okDec = !decVal || (decadeOf(c) === decVal);
+        var show = okWords && okRr && okDec;
+        c.style.display = show ? '' : 'none';
+        if (show) shown.push(c);
+      });
+      var mode = sort ? sort.value : 'newest';
+      shown.sort(function (a, b) {
+        if (mode === 'price-asc') return parseFloat(a.getAttribute('data-price')) - parseFloat(b.getAttribute('data-price'));
+        if (mode === 'price-desc') return parseFloat(b.getAttribute('data-price')) - parseFloat(a.getAttribute('data-price'));
+        return parseInt(a.getAttribute('data-idx'), 10) - parseInt(b.getAttribute('data-idx'), 10);
+      });
+      shown.forEach(function (c) { grid.appendChild(c); });
+      count.textContent = shown.length === cards.length
+        ? cards.length + (cards.length === 1 ? ' slide' : ' slides')
+        : 'Showing ' + shown.length + ' of ' + cards.length + ' slides';
+      empty.style.display = shown.length ? 'none' : '';
+    }
+    q.addEventListener('input', apply);
+    if (rr) rr.addEventListener('change', apply);
+    if (dec) dec.addEventListener('change', apply);
+    if (sort) sort.addEventListener('change', apply);
+    document.querySelectorAll('[data-tile-search]').forEach(function (t) {
+      t.addEventListener('click', function () {
+        q.value = t.getAttribute('data-tile-search');
+        if (rr) rr.value = '';
+        if (dec) dec.value = '';
+        apply();
+        document.getElementById('slides').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+    var viewAll = document.getElementById('view-all');
+    if (viewAll) viewAll.addEventListener('click', function () {
+      q.value = '';
+      if (rr) rr.value = '';
+      if (dec) dec.value = '';
+      apply();
+    });
+    apply();
+  })();
+  </script>
+  {% else %}
+  <p class="empty">Fresh slides are being listed daily — check back soon.</p>
+  {% endif %}
+</section>
 
+{% assign quotes = site.data.testimonials %}
+{% if quotes and quotes.size > 0 %}
+<section aria-label="What collectors say">
+  <div class="section-head">
+    <h2>What <span class="accent">Collectors</span> Say</h2>
+  </div>
+  <div class="grid">
+    {% for t in quotes limit:6 %}
+    <figure class="card t-card">
+      <div class="card-body">
+        <blockquote class="t-quote">{{ t.quote }}</blockquote>
+        <p class="card-meta t-byline">— {{ t.name }}{% if t.location %}, {{ t.location }}{% endif %}</p>
+      </div>
+    </figure>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="email-band" aria-label="Email signup">
+  <div>
+    <h2>Get <span class="accent">First Dibs</span></h2>
+    <p>New slides land weekly and the good ones go fast. Join the list and hear about fresh arrivals before anyone else.</p>
+  </div>
+  <div>
+    <form class="email-form" id="email-form" action="https://formsubmit.co/hello@bayshorerelicsllc.com" method="POST">
+      <input type="hidden" name="_subject" value="[Mailing List] New signup — Bay Shore Relics LLC">
+      <input type="hidden" name="_captcha" value="false">
+      <input type="hidden" name="_next" value="https://bayshorerelicsllc.github.io/?signedup=1">
+      <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <label for="email-signup">Email address</label>
+      <input type="email" id="email-signup" name="email" placeholder="you@example.com" required autocomplete="email">
+      <button type="submit" class="btn">Sign Up</button>
+    </form>
+    <span class="email-note">One email when new slides arrive. Unsubscribe anytime.</span>
+  </div>
+</section>
 <script>
 (function () {
-  document.getElementById('cs-year').textContent = new Date().getFullYear();
-  try {
-    var q = new URLSearchParams(location.search);
-    if (q.get('notified') === '1') {
-      document.getElementById('launch-form').hidden = true;
-      document.getElementById('launch-done').hidden = false;
-      history.replaceState(null, '', location.pathname);
+  if (window.location.search.indexOf('signedup=1') !== -1) {
+    var form = document.getElementById('email-form');
+    if (form) {
+      form.outerHTML = '<p class="email-done"><strong>You\u2019re on the list.</strong> Watch your inbox for fresh arrivals.</p>';
     }
-  } catch (e) {}
+  }
 })();
 </script>
-</body>
-</html>
