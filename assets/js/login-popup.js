@@ -36,7 +36,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '.bsr-login-close:hover{background:#1e4d33;color:#fff;border-color:#1e4d33}',
     '@media(min-width:768px){.bsr-login-overlay{align-items:flex-start;justify-content:flex-end;padding:76px 24px 24px}',
     '.bsr-login-card{margin:0;max-width:400px}}',
-    '@media(max-width:767px){.bsr-login-card{padding:28px 26px 24px}',
+    '@media(max-width:767px){.bsr-login-card{padding:64px 26px 24px}',
     '.bsr-brand{margin-bottom:14px}.bsr-express{margin-top:14px}.bsr-or{margin:24px 0 20px}',
     '.bsr-field{margin-bottom:20px}.bsr-passkey{margin-top:20px}.bsr-captcha-note{margin-top:18px}}',
     /* Shared Logitech-style form */
@@ -44,7 +44,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '.bsr-backline{max-width:400px;margin:0 auto 20px}',
     '.bsr-back{display:inline-flex;align-items:center;gap:6px;color:#6b6252;text-decoration:none;font-size:.9rem}',
     '.bsr-back:hover{color:#2a241b}',
-    '.bsr-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 32px;padding:0 40px;box-sizing:border-box;',
+    '.bsr-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 32px;',
     'font-family:var(--font-head,"Bitter",Georgia,"Times New Roman",serif);font-weight:800;font-size:1.55rem;',
     'letter-spacing:.01em;line-height:1.1;color:#1e4d33;white-space:nowrap}',
     '.bsr-brand img{width:54px;height:54px;object-fit:contain;flex:none}',
