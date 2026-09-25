@@ -355,8 +355,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // The server will use cheapest shipping; onApprove will have the real address
         if (!ship) {
           ship = {
-            name: '', email: '',
-            address: { line1: '', city: '', state: '', postal: '54311', country: 'US' },
+            name: 'PayPal Customer', email: '',
+            address: { line1: '123 Main St', city: 'Green Bay', state: 'WI', postal: '54311', country: 'US' },
             rate_ref: null, provider: null, carrier: null, service: null,
             wallet_provided: true
           };
