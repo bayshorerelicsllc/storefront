@@ -237,7 +237,7 @@
        readonly stays on the address fields only: a readonly required field
        is exempt from native validation, so name/phone keep the token alone
        and stay validating. */
-    ['name', 'company', 'phone', 'email',
+    ['name', 'company', 'phone', 'email', 'nickname',
      'address1', 'address2', 'city', 'state', 'postal', 'country'].forEach(function (n) {
       var el = form.querySelector('input[name="' + n + '"]');
       if (!el) return;

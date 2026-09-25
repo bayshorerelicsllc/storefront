@@ -104,6 +104,9 @@ table.addr-table { width:100%; border-collapse:collapse; font-size:.88rem; }
 .addr-table td { padding:10px; border-bottom:1px solid var(--line); vertical-align:top; }
 .addr-table tbody tr:last-child td { border-bottom:none; }
 .addr-table .addr-cell-name { font-weight:700; }
+.addr-cell-nick { display:inline-block; font-size:.68rem; font-weight:700; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--text-soft); border:1px solid var(--line); border-radius:999px;
+  padding:2px 8px; margin-bottom:4px; }
 .addr-table .addr-cell-sub { color:var(--text-soft); font-size:.82rem; }
 .addr-table .addr-badge { display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.05em;
   text-transform:uppercase; background:#1e4d33; color:#fff; border-radius:999px;
@@ -399,6 +402,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ((!isBook) ? '<label class="checkbox-row"><input type="checkbox" name="same_as_other"' + (sameChecked ? ' checked' : '') + '> ' + sameLabel + '</label>' : '') +
       '<div class="addr-form-grid two-col" data-addr-fields' + (sameChecked ? ' style="display:none"' : '') + '>' +
       (isBook ?
+        '<div class="acct-field"><label>Nickname <span class="opt">(optional)</span></label><input name="nickname" maxlength="80" placeholder="Home, Warehouse\u2026" value="' + esc(a.nickname || '') + '"></div>' +
         '<div class="acct-field"><label>Full name' + req + '</label><input name="name" required maxlength="120" autocomplete="name" value="' + esc(a.name || '') + '"></div>' +
         '<div class="acct-field"><label>Company <span class="opt">(optional)</span></label><input name="company" maxlength="120" autocomplete="organization" value="' + esc(a.company || '') + '"></div>' +
         '<div class="acct-field"><label>Phone' + req + '</label><input name="phone" type="tel" required maxlength="40" autocomplete="tel" value="' + esc(a.phone || '') + '"></div>'
@@ -480,13 +484,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (cl.length < 2) return;
         var keep = cl[0];
         var body = {
-          name: '', company: '', phone: '', email: '',
+          name: '', company: '', phone: '', email: '', nickname: '',
           address1: keep.address1, address2: keep.address2 || '',
           city: keep.city, state: keep.state || '',
           postal: keep.postal, country: keep.country || 'US',
           is_default_shipping: false, is_default_billing: false,
         };
-        ['name', 'company', 'phone', 'email'].forEach(function (f) {
+        ['name', 'company', 'phone', 'email', 'nickname'].forEach(function (f) {
           for (var i = 0; i < cl.length; i++) {
             if (cl[i][f]) { body[f] = (f === 'phone') ? cleanPhone(cl[i][f]) : cl[i][f]; break; }
           }
@@ -543,6 +547,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function addrDisplayLines(a) {
     var lines = '';
+    if (a.nickname) lines += '<span class="addr-cell-nick">' + esc(a.nickname) + '</span><br>';
     if (a.name) lines += '<strong>' + esc(a.name) + '</strong><br>';
     if (a.company) lines += esc(a.company) + '<br>';
     lines += esc(a.address1 || '');
@@ -622,7 +627,8 @@ document.addEventListener('DOMContentLoaded', function () {
       var badges = '';
       if (a.is_default_shipping) badges += '<span class="addr-badge">Ship-to</span>';
       if (a.is_default_billing) badges += '<span class="addr-badge addr-badge-bill">Bill-to</span>';
-      var cell = (a.name ? '<div class="addr-cell-name">' + esc(a.name) + '</div>' : '') +
+      var cell = (a.nickname ? '<div><span class="addr-cell-nick">' + esc(a.nickname) + '</span></div>' : '') +
+        (a.name ? '<div class="addr-cell-name">' + esc(a.name) + '</div>' : '') +
         '<div>' + esc(a.address1 || '') + (a.address2 ? ', ' + esc(a.address2) : '') + '</div>' +
         '<div class="addr-cell-sub">' + esc(a.city || '') + ', ' + esc(a.state || '') + ' ' + esc(a.postal || '') +
         ((a.country && a.country !== 'US') ? ', ' + esc(a.country) : '') + '</div>';
@@ -679,6 +685,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function setAsDefault(a, role) {
     var body = {
       name: a.name || '', company: a.company || '', phone: cleanPhone(a.phone), email: a.email || '',
+      nickname: a.nickname || '',
       address1: a.address1, address2: a.address2 || '', city: a.city, state: a.state || '',
       postal: a.postal, country: a.country || 'US',
       is_default_shipping: role === 'ship' ? true : !!a.is_default_shipping,
@@ -765,6 +772,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var linkBody = {
           name: src.name || '', company: src.company || '',
           phone: cleanPhone(src.phone), email: src.email || '',
+          nickname: src.nickname || '',
           address1: src.address1, address2: src.address2 || '',
           city: src.city, state: src.state || '',
           postal: src.postal, country: src.country || 'US',
@@ -803,6 +811,7 @@ document.addEventListener('DOMContentLoaded', function () {
         company: fv('company'),
         phone: cleanPhone(fv('phone')),
         email: fv('email'),
+        nickname: fv('nickname'),
         address1: fv('address1'),
         address2: fv('address2'),
         city: fv('city'),
