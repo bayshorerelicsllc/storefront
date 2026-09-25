@@ -35,6 +35,9 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '.bsr-login-close:hover{background:rgba(42,36,27,.08)}',
     /* Shared Logitech-style form */
     '.bsr-loginform{max-width:400px;margin:0 auto}',
+    '.bsr-backline{max-width:400px;margin:0 auto 12px}',
+    '.bsr-back{display:inline-flex;align-items:center;gap:6px;color:#6b6252;text-decoration:none;font-size:.9rem}',
+    '.bsr-back:hover{color:#2a241b}',
     '.bsr-brand{display:flex;align-items:center;justify-content:center;gap:14px;margin:2px 0 10px;',
     'font-family:var(--font-head,"Bitter",Georgia,"Times New Roman",serif);font-weight:800;font-size:1.85rem;',
     'letter-spacing:.01em;line-height:1.1;color:#1e4d33;white-space:nowrap}',
@@ -238,6 +241,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
 
   function buildForm(container) {
     container.innerHTML =
+      '<div class="bsr-backline"><a href="/" class="bsr-back">&larr; Back to home</a></div>' +
       '<div class="bsr-loginform">' +
       '<div class="bsr-error" data-el="error" role="alert"></div>' +
       '<div class="bsr-brand"><img src="/assets/img/logo.png" alt="Bay Shore Relics logo"><span>Bay Shore Relics LLC</span></div>' +
