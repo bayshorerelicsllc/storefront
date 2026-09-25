@@ -448,7 +448,8 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       html += '<p style="color:var(--text-soft);font-size:.92rem">No address saved yet.</p>';
     }
-    html += '<div class="acct-actions"><button type="button" class="btn btn-secondary btn-sm" data-addrbox-edit="' + kind + '">Edit ' + title.toLowerCase() + '</button></div>';
+    html += '<div class="acct-actions"><button type="button" class="btn btn-secondary btn-sm" data-addrbox-edit="' + kind + '">Edit ' + title.toLowerCase() + '</button>' +
+      (a ? ' <button type="button" class="btn btn-ghost btn-sm" data-addrbox-clear style="color:#a33">Clear</button>' : '') + '</div>';
     html += '<div class="addr-edit-slot"></div>';
     el.innerHTML = html;
     el.querySelector('[data-addrbox-edit]').addEventListener('click', function () {
@@ -457,6 +458,37 @@ document.addEventListener('DOMContentLoaded', function () {
       bindAddrForm(slot, kind);
       slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
+    var clearBtn = el.querySelector('[data-addrbox-clear]');
+    if (clearBtn && a) clearBtn.addEventListener('click', function () { clearAddrBox(kind, a); });
+  }
+  function clearAddrBox(kind, a) {
+    var title = kind === 'ship' ? 'Ship to' : 'Bill to';
+    if (!window.confirm('Clear this ' + title.toLowerCase() + ' address?')) return;
+    var other = kind === 'ship' ? addrBill : addrShip;
+    var shared = other && String(other.id) === String(a.id);
+    var done = function () {
+      loadAddresses();
+      showAddrMsg(true, title + ' address cleared.');
+      toast(title + ' cleared');
+    };
+    var fail = function (em) { showAddrMsg(false, em || 'Could not clear. Check your connection.'); };
+    if (shared) {
+      /* Record doubles as the other default: just drop this role's flag. */
+      var body = {
+        name: a.name || '', company: a.company || '', phone: a.phone || '', email: a.email || '',
+        address1: a.address1, address2: a.address2 || '', city: a.city, state: a.state || '',
+        postal: a.postal, country: a.country || 'US',
+        is_default_shipping: kind === 'ship' ? false : true,
+        is_default_billing: kind === 'bill' ? false : true,
+      };
+      BSR.api('/api/account/addresses/' + encodeURIComponent(a.id), { method: 'PUT', body: body })
+        .then(function (j) { if (j && j.ok) done(); else fail(j && j.error); })
+        .catch(function () { fail(); });
+    } else {
+      BSR.api('/api/account/addresses/' + encodeURIComponent(a.id), { method: 'DELETE' })
+        .then(function (j) { if (j && j.ok) done(); else fail(j && j.error); })
+        .catch(function () { fail(); });
+    }
   }
   /* Address book: every saved address with default-role buttons. */
   function paintAddrBook() {
