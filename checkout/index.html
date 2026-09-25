@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
     '<img src="/assets/img/pay/amazonpay.svg" alt="Amazon Pay" loading="lazy"></div>' +
     '<div id="pay-wallets"><div id="express-checkout-element"></div></div>' +
     '<div class="pay-divider" id="wallet-divider" style="display:none"><span>or</span></div>' +
-    '<div id="pay-paypal"><div id="paypal-buttons"></div><div class="hint" id="paypal-msg"></div></div>' +
+    '<div id="pay-paypal"><div id="paypal-buttons"></div><div id="venmo-buttons" style="margin-top:8px"></div><div id="paylater-buttons" style="margin-top:8px"></div><div class="hint" id="paypal-msg"></div></div>' +
     '<div class="pay-divider" id="card-divider"><span>or pay with card</span></div>' +
     '<div id="pay-card"><div id="stripe-element"></div>' +
     '<div class="error" id="stripe-err" style="display:none"></div>' +
@@ -344,8 +344,7 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('paypal-msg').textContent = 'PayPal could not load. Please try the card option.';
       return;
     }
-    window.paypal.Buttons({
-      style: { color: 'gold', shape: 'rect', label: 'checkout', height: 44 },
+    var ppConfig = {
       createOrder: function () {
         var ship = collectShipping();
         if (!ship) return Promise.reject(new Error('Please complete the shipping form.'));
@@ -368,7 +367,20 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       onCancel: function () { BSR.toast('PayPal payment cancelled.'); },
       onError: function (err) { BSR.toast('PayPal error: ' + (err && err.message ? err.message : 'please try again.'), 'err'); }
-    }).render('#paypal-buttons');
+    };
+    // PayPal gold button
+    window.paypal.Buttons(Object.assign({ fundingSource: window.paypal.FUNDING.PAYPAL,
+      style: { color: 'gold', shape: 'rect', label: 'checkout', height: 44 } }, ppConfig)).render('#paypal-buttons');
+    // Venmo blue button (only if eligible)
+    if (window.paypal.isFundingEligible(window.paypal.FUNDING.VENMO)) {
+      window.paypal.Buttons(Object.assign({ fundingSource: window.paypal.FUNDING.VENMO,
+        style: { color: 'blue', shape: 'rect', height: 44 } }, ppConfig)).render('#venmo-buttons');
+    }
+    // Pay Later button (only if eligible)
+    if (window.paypal.isFundingEligible(window.paypal.FUNDING.PAYLATER)) {
+      window.paypal.Buttons(Object.assign({ fundingSource: window.paypal.FUNDING.PAYLATER,
+        style: { color: 'blue', shape: 'rect', height: 44 } }, ppConfig)).render('#paylater-buttons');
+    }
   }
 
   /* ---------- Stripe Express Checkout (Apple Pay / Google Pay / Link) ---------- */
