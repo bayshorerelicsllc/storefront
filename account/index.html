@@ -263,6 +263,124 @@ document.addEventListener('DOMContentLoaded', function () {
       '<button type="button" class="btn btn-ghost btn-sm" data-addr-del="' + esc(a.id) + '" style="color:#9c2b1e">Remove</button>' +
       '</div></div>';
   }
+  
+  /* ---- Country / State dropdown data (alphabetical) ---- */
+  var BSR_COUNTRIES = [
+    ["AF","Afghanistan"],["AX","\u00c5land Islands"],["AL","Albania"],["DZ","Algeria"],
+    ["AS","American Samoa"],["AD","Andorra"],["AO","Angola"],["AI","Anguilla"],
+    ["AQ","Antarctica"],["AG","Antigua and Barbuda"],["AR","Argentina"],["AM","Armenia"],
+    ["AW","Aruba"],["AU","Australia"],["AT","Austria"],["AZ","Azerbaijan"],
+    ["BS","Bahamas"],["BH","Bahrain"],["BD","Bangladesh"],["BB","Barbados"],
+    ["BY","Belarus"],["BE","Belgium"],["BZ","Belize"],["BJ","Benin"],
+    ["BM","Bermuda"],["BT","Bhutan"],["BO","Bolivia"],["BQ","Bonaire"],
+    ["BA","Bosnia and Herzegovina"],["BW","Botswana"],["BV","Bouvet Island"],["BR","Brazil"],
+    ["IO","British Indian Ocean Territory"],["BN","Brunei"],["BG","Bulgaria"],["BF","Burkina Faso"],
+    ["BI","Burundi"],["KH","Cambodia"],["CM","Cameroon"],["CA","Canada"],
+    ["CV","Cape Verde"],["KY","Cayman Islands"],["CF","Central African Republic"],["TD","Chad"],
+    ["CL","Chile"],["CN","China"],["CX","Christmas Island"],["CC","Cocos Islands"],
+    ["CO","Colombia"],["KM","Comoros"],["CG","Congo"],["CD","Congo (DRC)"],
+    ["CK","Cook Islands"],["CR","Costa Rica"],["CI","C\u00f4te d\u2019Ivoire"],["HR","Croatia"],
+    ["CU","Cuba"],["CW","Cura\u00e7ao"],["CY","Cyprus"],["CZ","Czechia"],
+    ["DK","Denmark"],["DJ","Djibouti"],["DM","Dominica"],["DO","Dominican Republic"],
+    ["EC","Ecuador"],["EG","Egypt"],["SV","El Salvador"],["GQ","Equatorial Guinea"],
+    ["ER","Eritrea"],["EE","Estonia"],["SZ","Eswatini"],["ET","Ethiopia"],
+    ["FK","Falkland Islands"],["FO","Faroe Islands"],["FJ","Fiji"],["FI","Finland"],
+    ["FR","France"],["GF","French Guiana"],["PF","French Polynesia"],["TF","French Southern Territories"],
+    ["GA","Gabon"],["GM","Gambia"],["GE","Georgia"],["DE","Germany"],
+    ["GH","Ghana"],["GI","Gibraltar"],["GR","Greece"],["GL","Greenland"],
+    ["GD","Grenada"],["GP","Guadeloupe"],["GU","Guam"],["GT","Guatemala"],
+    ["GG","Guernsey"],["GN","Guinea"],["GW","Guinea-Bissau"],["GY","Guyana"],
+    ["HT","Haiti"],["HM","Heard Island"],["VA","Holy See"],["HN","Honduras"],
+    ["HK","Hong Kong"],["HU","Hungary"],["IS","Iceland"],["IN","India"],
+    ["ID","Indonesia"],["IR","Iran"],["IQ","Iraq"],["IE","Ireland"],
+    ["IM","Isle of Man"],["IL","Israel"],["IT","Italy"],["JM","Jamaica"],
+    ["JP","Japan"],["JE","Jersey"],["JO","Jordan"],["KZ","Kazakhstan"],
+    ["KE","Kenya"],["KI","Kiribati"],["KP","North Korea"],["KR","South Korea"],
+    ["KW","Kuwait"],["KG","Kyrgyzstan"],["LA","Laos"],["LV","Latvia"],
+    ["LB","Lebanon"],["LS","Lesotho"],["LR","Liberia"],["LY","Libya"],
+    ["LI","Liechtenstein"],["LT","Lithuania"],["LU","Luxembourg"],["MO","Macao"],
+    ["MG","Madagascar"],["MW","Malawi"],["MY","Malaysia"],["MV","Maldives"],
+    ["ML","Mali"],["MT","Malta"],["MH","Marshall Islands"],["MQ","Martinique"],
+    ["MR","Mauritania"],["MU","Mauritius"],["YT","Mayotte"],["MX","Mexico"],
+    ["FM","Micronesia"],["MD","Moldova"],["MC","Monaco"],["MN","Mongolia"],
+    ["ME","Montenegro"],["MS","Montserrat"],["MA","Morocco"],["MZ","Mozambique"],
+    ["MM","Myanmar"],["NA","Namibia"],["NR","Nauru"],["NP","Nepal"],
+    ["NL","Netherlands"],["NC","New Caledonia"],["NZ","New Zealand"],["NI","Nicaragua"],
+    ["NE","Niger"],["NG","Nigeria"],["NU","Niue"],["NF","Norfolk Island"],
+    ["MK","North Macedonia"],["MP","Northern Mariana Islands"],["NO","Norway"],["OM","Oman"],
+    ["PK","Pakistan"],["PW","Palau"],["PS","Palestine"],["PA","Panama"],
+    ["PG","Papua New Guinea"],["PY","Paraguay"],["PE","Peru"],["PH","Philippines"],
+    ["PN","Pitcairn"],["PL","Poland"],["PT","Portugal"],["PR","Puerto Rico"],
+    ["QA","Qatar"],["RE","R\u00e9union"],["RO","Romania"],["RU","Russia"],
+    ["RW","Rwanda"],["BL","Saint Barth\u00e9lemy"],["SH","Saint Helena"],["KN","Saint Kitts and Nevis"],
+    ["LC","Saint Lucia"],["MF","Saint Martin"],["PM","Saint Pierre and Miquelon"],["VC","Saint Vincent and the Grenadines"],
+    ["WS","Samoa"],["SM","San Marino"],["ST","S\u00e3o Tom\u00e9 and Pr\u00edncipe"],["SA","Saudi Arabia"],
+    ["SN","Senegal"],["RS","Serbia"],["SC","Seychelles"],["SL","Sierra Leone"],
+    ["SG","Singapore"],["SX","Sint Maarten"],["SK","Slovakia"],["SI","Slovenia"],
+    ["SB","Solomon Islands"],["SO","Somalia"],["ZA","South Africa"],["GS","South Georgia"],
+    ["SS","South Sudan"],["ES","Spain"],["LK","Sri Lanka"],["SD","Sudan"],
+    ["SR","Suriname"],["SJ","Svalbard"],["SE","Sweden"],["CH","Switzerland"],
+    ["SY","Syria"],["TW","Taiwan"],["TJ","Tajikistan"],["TZ","Tanzania"],
+    ["TH","Thailand"],["TL","Timor-Leste"],["TG","Togo"],["TK","Tokelau"],
+    ["TO","Tonga"],["TT","Trinidad and Tobago"],["TN","Tunisia"],["TR","Turkey"],
+    ["TM","Turkmenistan"],["TC","Turks and Caicos"],["TV","Tuvalu"],["UG","Uganda"],
+    ["UA","Ukraine"],["AE","United Arab Emirates"],["GB","United Kingdom"],["US","United States"],
+    ["UM","US Minor Outlying Islands"],["UY","Uruguay"],["UZ","Uzbekistan"],["VU","Vanuatu"],
+    ["VE","Venezuela"],["VN","Vietnam"],["VG","British Virgin Islands"],["VI","US Virgin Islands"],
+    ["WF","Wallis and Futuna"],["EH","Western Sahara"],["YE","Yemen"],["ZM","Zambia"],
+    ["ZW","Zimbabwe"]
+  ];
+  var BSR_SUBDIVISIONS = {
+    "US": [["AL","Alabama"],["AK","Alaska"],["AZ","Arizona"],["AR","Arkansas"],["CA","California"],["CO","Colorado"],["CT","Connecticut"],["DE","Delaware"],["DC","District of Columbia"],["FL","Florida"],["GA","Georgia"],["HI","Hawaii"],["ID","Idaho"],["IL","Illinois"],["IN","Indiana"],["IA","Iowa"],["KS","Kansas"],["KY","Kentucky"],["LA","Louisiana"],["ME","Maine"],["MD","Maryland"],["MA","Massachusetts"],["MI","Michigan"],["MN","Minnesota"],["MS","Mississippi"],["MO","Missouri"],["MT","Montana"],["NE","Nebraska"],["NV","Nevada"],["NH","New Hampshire"],["NJ","New Jersey"],["NM","New Mexico"],["NY","New York"],["NC","North Carolina"],["ND","North Dakota"],["OH","Ohio"],["OK","Oklahoma"],["OR","Oregon"],["PA","Pennsylvania"],["RI","Rhode Island"],["SC","South Carolina"],["SD","South Dakota"],["TN","Tennessee"],["TX","Texas"],["UT","Utah"],["VT","Vermont"],["VA","Virginia"],["WA","Washington"],["WV","West Virginia"],["WI","Wisconsin"],["WY","Wyoming"],["PR","Puerto Rico"],["GU","Guam"],["VI","US Virgin Islands"],["AS","American Samoa"],["MP","Northern Mariana Islands"]],
+    "CA": [["AB","Alberta"],["BC","British Columbia"],["MB","Manitoba"],["NB","New Brunswick"],["NL","Newfoundland and Labrador"],["NS","Nova Scotia"],["NT","Northwest Territories"],["NU","Nunavut"],["ON","Ontario"],["PE","Prince Edward Island"],["QC","Quebec"],["SK","Saskatchewan"],["YT","Yukon"]],
+    "GB": [["ENG","England"],["NIR","Northern Ireland"],["SCT","Scotland"],["WLS","Wales"]],
+    "AU": [["NSW","New South Wales"],["VIC","Victoria"],["QLD","Queensland"],["SA","South Australia"],["WA","Western Australia"],["TAS","Tasmania"],["NT","Northern Territory"],["ACT","Australian Capital Territory"]],
+    "DE": [["BW","Baden-W\u00fcrttemberg"],["BY","Bavaria"],["BE","Berlin"],["BB","Brandenburg"],["HB","Bremen"],["HH","Hamburg"],["HE","Hesse"],["MV","Mecklenburg-Vorpommern"],["NI","Lower Saxony"],["NW","North Rhine-Westphalia"],["RP","Rhineland-Palatinate"],["SL","Saarland"],["SN","Saxony"],["ST","Saxony-Anhalt"],["SH","Schleswig-Holstein"],["TH","Thuringia"]],
+    "FR": [["ARA","Auvergne-Rh\u00f4ne-Alpes"],["BFC","Bourgogne-Franche-Comt\u00e9"],["BRE","Brittany"],["CVL","Centre-Val de Loire"],["COR","Corsica"],["GES","Grand Est"],["HDF","Hauts-de-France"],["IDF","\u00cele-de-France"],["NOR","Normandy"],["NAQ","Nouvelle-Aquitaine"],["OCC","Occitanie"],["PDL","Pays de la Loire"],["PAC","Provence-Alpes-C\u00f4te d\u2019Azur"]],
+    "IT": [["AG","Agrigento"],["AL","Alessandria"],["AN","Ancona"],["AO","Aosta"],["AR","Arezzo"],["AP","Ascoli Piceno"],["AT","Asti"],["AV","Avellino"],["BA","Bari"],["BT","Barletta-Andria-Trani"],["BL","Belluno"],["BN","Benevento"],["BG","Bergamo"],["BI","Biella"],["BO","Bologna"],["BZ","Bolzano"],["BS","Brescia"],["BR","Brindisi"],["CA","Cagliari"],["CL","Caltanissetta"],["CB","Campobasso"],["CI","Carbonia-Iglesias"],["CE","Caserta"],["CT","Catania"],["CZ","Catanzaro"],["CH","Chieti"],["CO","Como"],["CS","Cosenza"],["CR","Cremona"],["KR","Crotone"],["CN","Cuneo"],["EN","Enna"],["FM","Fermo"],["FE","Ferrara"],["FI","Florence"],["FG","Foggia"],["FC","Forl\u00ec-Cesena"],["FR","Frosinone"],["GE","Genoa"],["GO","Gorizia"],["GR","Grosseto"],["IM","Imperia"],["IS","Isernia"],["SP","La Spezia"],["AQ","L\u2019Aquila"],["LT","Latina"],["LE","Lecce"],["LC","Lecco"],["LI","Livorno"],["LO","Lodi"],["LU","Lucca"],["MC","Macerata"],["MN","Mantua"],["MS","Massa-Carrara"],["MT","Matera"],["VS","Medio Campidano"],["ME","Messina"],["MI","Milan"],["MO","Modena"],["MB","Monza and Brianza"],["NA","Naples"],["NO","Novara"],["NU","Nuoro"],["OG","Ogliastra"],["OT","Olbia-Tempio"],["OR","Oristano"],["PD","Padua"],["PA","Palermo"],["PR","Parma"],["PV","Pavia"],["PG","Perugia"],["PU","Pesaro and Urbino"],["PE","Pescara"],["PC","Piacenza"],["PI","Pisa"],["PT","Pistoia"],["PN","Pordenone"],["PZ","Potenza"],["PO","Prato"],["RG","Ragusa"],["RA","Ravenna"],["RC","Reggio Calabria"],["RE","Reggio Emilia"],["RI","Rieti"],["RN","Rimini"],["RM","Rome"],["RO","Rovigo"],["SA","Salerno"],["SS","Sassari"],["SV","Savona"],["SI","Siena"],["SR","Syracuse"],["SO","Sondrio"],["TA","Taranto"],["TE","Teramo"],["TR","Terni"],["TO","Turin"],["TP","Trapani"],["TN","Trento"],["TV","Treviso"],["TS","Trieste"],["UD","Udine"],["VA","Varese"],["VE","Venice"],["VB","Verbano-Cusio-Ossola"],["VC","Vercelli"],["VR","Verona"],["VV","Vibo Valentia"],["VI","Vicenza"],["VT","Viterbo"]],
+    "ES": [["AN","Andalusia"],["AR","Aragon"],["AS","Asturias"],["CN","Canary Islands"],["CB","Cantabria"],["CL","Castile and Le\u00f3n"],["CM","Castilla-La Mancha"],["CT","Catalonia"],["EX","Extremadura"],["GA","Galicia"],["IB","Balearic Islands"],["RI","La Rioja"],["MD","Madrid"],["MC","Murcia"],["NC","Navarre"],["PV","Basque Country"],["VC","Valencian Community"],["CE","Ceuta"],["ML","Melilla"]],
+    "MX": [["AGU","Aguascalientes"],["BCN","Baja California"],["BCS","Baja California Sur"],["CAM","Campeche"],["CHP","Chiapas"],["CHH","Chihuahua"],["COA","Coahuila"],["COL","Colima"],["DUR","Durango"],["GUA","Guanajuato"],["GRO","Guerrero"],["HID","Hidalgo"],["JAL","Jalisco"],["MEX","Mexico State"],["MIC","Michoac\u00e1n"],["MOR","Morelos"],["NAY","Nayarit"],["NLE","Nuevo Le\u00f3n"],["OAX","Oaxaca"],["PUE","Puebla"],["QUE","Quer\u00e9taro"],["ROO","Quintana Roo"],["SLP","San Luis Potos\u00ed"],["SIN","Sinaloa"],["SON","Sonora"],["TAB","Tabasco"],["TAM","Tamaulipas"],["TLA","Tlaxcala"],["VER","Veracruz"],["YUC","Yucat\u00e1n"],["ZAC","Zacatecas"],["DIF","Mexico City"]],
+    "BR": [["AC","Acre"],["AL","Alagoas"],["AP","Amap\u00e1"],["AM","Amazonas"],["BA","Bahia"],["CE","Cear\u00e1"],["DF","Distrito Federal"],["ES","Esp\u00edrito Santo"],["GO","Goi\u00e1s"],["MA","Maranh\u00e3o"],["MT","Mato Grosso"],["MS","Mato Grosso do Sul"],["MG","Minas Gerais"],["PA","Par\u00e1"],["PB","Para\u00edba"],["PR","Paran\u00e1"],["PE","Pernambuco"],["PI","Piau\u00ed"],["RJ","Rio de Janeiro"],["RN","Rio Grande do Norte"],["RS","Rio Grande do Sul"],["RO","Rond\u00f4nia"],["RR","Roraima"],["SC","Santa Catarina"],["SP","S\u00e3o Paulo"],["SE","Sergipe"],["TO","Tocantins"]],
+    "IN": [["AP","Andhra Pradesh"],["AR","Arunachal Pradesh"],["AS","Assam"],["BR","Bihar"],["CT","Chhattisgarh"],["GA","Goa"],["GJ","Gujarat"],["HR","Haryana"],["HP","Himachal Pradesh"],["JK","Jammu and Kashmir"],["JH","Jharkhand"],["KA","Karnataka"],["KL","Kerala"],["MP","Madhya Pradesh"],["MH","Maharashtra"],["MN","Manipur"],["ML","Meghalaya"],["MZ","Mizoram"],["NL","Nagaland"],["OR","Odisha"],["PB","Punjab"],["RJ","Rajasthan"],["SK","Sikkim"],["TN","Tamil Nadu"],["TG","Telangana"],["TR","Tripura"],["UP","Uttar Pradesh"],["UT","Uttarakhand"],["WB","West Bengal"],["AN","Andaman and Nicobar"],["CH","Chandigarh"],["DN","Dadra and Nagar Haveli"],["DD","Daman and Diu"],["DL","Delhi"],["LD","Lakshadweep"],["PY","Puducherry"]],
+    "CN": [["AH","Anhui"],["BJ","Beijing"],["CQ","Chongqing"],["FJ","Fujian"],["GD","Guangdong"],["GS","Gansu"],["GX","Guangxi"],["GZ","Guizhou"],["HAIN","Hainan"],["HEB","Hebei"],["HEN","Henan"],["HLJ","Heilongjiang"],["HB","Hubei"],["HN","Hunan"],["JL","Jilin"],["JS","Jiangsu"],["JX","Jiangxi"],["LN","Liaoning"],["NM","Inner Mongolia"],["NX","Ningxia"],["QH","Qinghai"],["SD","Shandong"],["SX","Shanxi"],["SN","Shaanxi"],["SH","Shanghai"],["SC","Sichuan"],["TJ","Tianjin"],["XJ","Xinjiang"],["XZ","Tibet"],["YN","Yunnan"],["ZJ","Zhejiang"],["HK","Hong Kong"],["MO","Macao"],["TW","Taiwan"]],
+    "JP": [["HOK","Hokkaido"],["AOM","Aomori"],["IWA","Iwate"],["MIY","Miyagi"],["AKI","Akita"],["YAM","Yamagata"],["FUK","Fukushima"],["IBA","Ibaraki"],["TOC","Tochigi"],["GUN","Gunma"],["SAI","Saitama"],["CHI","Chiba"],["TOK","Tokyo"],["KAN","Kanagawa"],["NII","Niigata"],["TOY","Toyama"],["ISH","Ishikawa"],["FUK2","Fukui"],["YAM2","Yamanashi"],["NAG","Nagano"],["GIF","Gifu"],["SHI","Shizuoka"],["AIC","Aichi"],["MIE","Mie"],["SHI2","Shiga"],["KYO","Kyoto"],["OSA","Osaka"],["HYO","Hyogo"],["NAR","Nara"],["WAK","Wakayama"],["TOT","Tottori"],["SHI3","Shimane"],["OKA","Okayama"],["HIR","Hiroshima"],["YAM3","Yamaguchi"],["TOK2","Tokushima"],["KAG","Kagawa"],["EHI","Ehime"],["KOC","Kochi"],["FUK3","Fukuoka"],["SAG","Saga"],["NAG2","Nagasaki"],["KUM","Kumamoto"],["OIT","Oita"],["MIY2","Miyazaki"],["KAG2","Kagoshima"],["OKI","Okinawa"]],
+    "NL": [["DR","Drenthe"],["FL","Flevoland"],["FR","Friesland"],["GE","Gelderland"],["GR","Groningen"],["LI","Limburg"],["NB","North Brabant"],["NH","North Holland"],["OV","Overijssel"],["UT","Utrecht"],["ZE","Zeeland"],["ZH","South Holland"]],
+    "BE": [["BRU","Brussels"],["VAN","Antwerp"],["VLI","Limburg"],["VOV","East Flanders"],["VBW","Flemish Brabant"],["VWV","West Flanders"],["WBR","Walloon Brabant"],["WHT","Hainaut"],["WLG","Li\u00e8ge"],["WLX","Luxembourg"],["WNA","Namur"]],
+    "CH": [["AG","Aargau"],["AI","Appenzell Innerrhoden"],["AR","Appenzell Ausserrhoden"],["BE","Bern"],["BL","Basel-Landschaft"],["BS","Basel-Stadt"],["FR","Fribourg"],["GE","Geneva"],["GL","Glarus"],["GR","Graub\u00fcnden"],["JU","Jura"],["LU","Lucerne"],["NE","Neuch\u00e2tel"],["NW","Nidwalden"],["OW","Obwalden"],["SG","St. Gallen"],["SH","Schaffhausen"],["SO","Solothurn"],["SZ","Schwyz"],["TG","Thurgau"],["TI","Ticino"],["UR","Uri"],["VS","Valais"],["VD","Vaud"],["ZG","Zug"],["ZH","Zurich"]],
+    "AT": [["B","Burgenland"],["K","Carinthia"],["N","Lower Austria"],["O","Upper Austria"],["S","Salzburg"],["ST","Styria"],["T","Tyrol"],["V","Vorarlberg"],["W","Vienna"]],
+    "SE": [["BLE","Blekinge"],["DAL","Dalarna"],["GAV","G\u00e4vleborg"],["GOT","Gotland"],["HAL","Halland"],["JAM","J\u00e4mtland"],["JON","J\u00f6nk\u00f6ping"],["KAL","Kalmar"],["KRO","Kronoberg"],["NOR","Norrbotten"],["ORE","\u00d6rebro"],["OST","\u00d6sterg\u00f6tland"],["SKA","Sk\u00e5ne"],["SOD","S\u00f6dermanland"],["STO","Stockholm"],["UPP","Uppsala"],["VAR","V\u00e4rmland"],["VBT","V\u00e4sterbotten"],["VNL","V\u00e4sternorrland"],["VST","V\u00e4stmanland"],["VGR","V\u00e4stra G\u00f6taland"]],
+    "NO": [["AG","Agder"],["IN","Innlandet"],["MR","M\u00f8re og Romsdal"],["NO","Nordland"],["OF","Oslo"],["RF","Rogaland"],["TF","Troms og Finnmark"],["TE","Telemark"],["TK","Tr\u00f8ndelag"],["VE","Vestfold"],["VV","Vestland"],["VI","Viken"]],
+    "DK": [["HOV","Capital Region"],["MID","Central Denmark"],["NOR","North Denmark"],["SJE","Zealand"],["SYD","Southern Denmark"]],
+    "FI": [["LAPI","Lapland"],["POH","North Ostrobothnia"],["KAI","Kainuu"],["POH2","North Savo"],["POH3","North Karelia"],["KES","Central Finland"],["KES2","Central Ostrobothnia"],["POH4","Ostrobothnia"],["POH5","South Ostrobothnia"],["POH6","South Savo"],["POH7","South Karelia"],["VAR","Southwest Finland"],["KAN","Kanta-H\u00e4me"],["PAI","P\u00e4ij\u00e4t-H\u00e4me"],["KYL","Kymenlaakso"],["UUS","Uusimaa"],["ALA","\u00c5land"]],
+    "PL": [["DS","Lower Silesian"],["KP","Kuyavian-Pomeranian"],["LU","Lublin"],["LB","Lubusz"],["LD","\u0141\u00f3d\u017a"],["MA","Lesser Poland"],["MZ","Masovian"],["OP","Opole"],["PK","Subcarpathian"],["PD","Podlaskie"],["PM","Pomeranian"],["SL","Silesian"],["SK","Holy Cross"],["WM","Warmian-Masurian"],["WP","Greater Poland"],["ZP","West Pomeranian"]],
+    "PT": [["AVE","Aveiro"],["BEJ","Beja"],["BRA","Braga"],["BGC","Bragan\u00e7a"],["CBR","Castelo Branco"],["COI","Coimbra"],["EVO","\u00c9vora"],["FAR","Faro"],["GUA","Guarda"],["LEI","Leiria"],["LIS","Lisbon"],["POR","Portalegre"],["POR2","Porto"],["SAN","Santar\u00e9m"],["SET","Set\u00fabal"],["VIA","Viana do Castelo"],["VIL","Vila Real"],["VIS","Viseu"],["ACO","Azores"],["MAD","Madeira"]],
+    "NZ": [["AUK","Auckland"],["BOP","Bay of Plenty"],["CAN","Canterbury"],["GIS","Gisborne"],["HAW","Hawke\u2019s Bay"],["MAN","Manawatu-Whanganui"],["MAR","Marlborough"],["OTA","Otago"],["STL","Southland"],["TAR","Taranaki"],["TAS","Tasman"],["WAI","Waikato"],["WEL","Wellington"],["WES","West Coast"]],
+    "IE": [["C","Cork"],["CE","Clare"],["CN","Cavan"],["CW","Carlow"],["D","Dublin"],["DL","Donegal"],["G","Galway"],["KE","Kildare"],["KK","Kilkenny"],["KY","Kerry"],["LD","Longford"],["LH","Louth"],["LK","Limerick"],["LM","Leitrim"],["LS","Laois"],["MH","Meath"],["MN","Monaghan"],["MO","Mayo"],["OY","Offaly"],["RN","Roscommon"],["SO","Sligo"],["TA","Tipperary"],["WD","Waterford"],["WH","Westmeath"],["WX","Wexford"],["WW","Wicklow"]],
+    "ZA": [["EC","Eastern Cape"],["FS","Free State"],["GT","Gauteng"],["KZN","KwaZulu-Natal"],["LIM","Limpopo"],["MPU","Mpumalanga"],["NW","North West"],["NC","Northern Cape"],["WC","Western Cape"]]
+  };
+  function bsrCountryOptions(selected) {
+    var h = '';
+    for (var i = 0; i < BSR_COUNTRIES.length; i++) {
+      var c = BSR_COUNTRIES[i];
+      h += '<option value="' + c[0] + '"' + (c[0] === selected ? ' selected' : '') + '>' + c[1] + '</option>';
+    }
+    return h;
+  }
+  function bsrStateFieldHtml(countryCode, currentState) {
+    var subs = BSR_SUBDIVISIONS[countryCode];
+    if (subs && subs.length) {
+      var h = '<select name="state" autocomplete="address-level1">';
+      h += '<option value="">Select state / province</option>';
+      for (var i = 0; i < subs.length; i++) {
+        var s = subs[i];
+        var sel = (currentState === s[0] || currentState === s[1]) ? ' selected' : '';
+        h += '<option value="' + s[0] + '"' + sel + '>' + s[1] + '</option>';
+      }
+      return h + '</select>';
+    }
+    return '<input name="state" maxlength="100" autocomplete="address-level1" placeholder="State / Province" value="' + esc(currentState || '') + '">';
+  }
+
   function addrFormHtml(a) {
     a = a || {};
     var isNew = !a.id;
@@ -274,9 +392,9 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="acct-field"><label>Street address</label><input name="address1" required maxlength="200" autocomplete="street-address" value="' + esc(a.address1 || '') + '"></div>' +
       '<div class="acct-field"><label>Apt, suite, etc. (optional)</label><input name="address2" maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
       '<div class="acct-field"><label>City</label><input name="city" required maxlength="100" autocomplete="address-level2" value="' + esc(a.city || '') + '"></div>' +
-      '<div class="acct-field"><label>State / Province</label><input name="state" maxlength="100" autocomplete="address-level1" value="' + esc(a.state || '') + '"></div>' +
+      '<div class="acct-field"><label>State / Province</label>' + bsrStateFieldHtml(a.country || 'US', a.state || '') + '</div>' +
       '<div class="acct-field"><label>ZIP / Postal code</label><input name="postal" required maxlength="20" autocomplete="postal-code" value="' + esc(a.postal || '') + '"></div>' +
-      '<div class="acct-field"><label>Country</label><input name="country" maxlength="10" autocomplete="country-name" value="' + esc(a.country || 'US') + '"></div>' +
+      '<div class="acct-field"><label>Country</label><select name="country" autocomplete="country-name">' + bsrCountryOptions(a.country || 'US') + '</select></div>' +
       '</div>' +
       '<div id="addr-validate-msg"></div>' +
       '<label class="checkbox-row"><input type="checkbox" name="is_default_shipping"' + (checkShip ? ' checked' : '') + '> Use as default shipping address</label>' +
