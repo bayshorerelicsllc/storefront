@@ -721,31 +721,55 @@ document.addEventListener('DOMContentLoaded', function () {
   function onExpressConfirm(event) {
     var errEl = document.getElementById('stripe-err');
     errEl.style.display = 'none';
-    // Wallet provides shipping/billing — try form first, fall back to wallet address
-    var ship = collectShipping();
-    if (!ship) {
-      // Form not filled — use wallet-provided address if available
-      var wa = (event && event.shippingAddress) || {};
-      var email = (event && event.payerEmail) || '';
-      if (wa && wa.address && wa.address.postal_code) {
-        ship = {
-          name: wa.name || '',
-          email: email,
+    /* The wallet (Amazon Pay, PayPal, …) is the source of truth for the
+       address: when it provides a complete shipping address it overrides
+       anything typed in the form. Billing comes from the wallet too. */
+    var wa = (event && event.shippingAddress) || {};
+    var wAddr = wa.address || {};
+    var ship = null, billing = null;
+    if (wAddr.postal_code) {
+      var wEmail = (event && event.payerEmail) || document.getElementById('f-email').value.trim();
+      var wLine1 = ((wAddr.line1 || '') + (wAddr.line2 ? ' ' + wAddr.line2 : '')).trim();
+      ship = {
+        name: wa.name || '',
+        email: wEmail, contact_email: wEmail,
+        address: {
+          line1: wLine1,
+          city: wAddr.city || '',
+          state: wAddr.state || '',
+          postal: wAddr.postal_code || '',
+          country: wAddr.country || 'US'
+        },
+        // Wallet flow: use default shipping rate (calculated server-side)
+        rate_ref: null, provider: null, carrier: null, service: null,
+        wallet_provided: true
+      };
+      var bd = (event && event.billingDetails) || {};
+      var ba = bd.address || {};
+      if (ba.postal_code || ba.line1) {
+        billing = {
+          name: bd.name || wa.name || '',
+          email: bd.email || wEmail,
+          phone: bd.phone || '',
           address: {
-            line1: (wa.address.line1 || '') + (wa.address.line2 ? ' ' + wa.address.line2 : ''),
-            city: wa.address.city || '',
-            state: wa.address.state || '',
-            postal: wa.address.postal_code || '',
-            country: wa.address.country || 'US'
-          },
-          // Wallet flow: use default shipping rate (calculated server-side)
-          rate_ref: null, provider: null, carrier: null, service: null,
-          wallet_provided: true
+            line1: ((ba.line1 || '') + (ba.line2 ? ' ' + ba.line2 : '')).trim(),
+            city: ba.city || '',
+            state: ba.state || '',
+            postal: ba.postal_code || '',
+            country: ba.country || 'US'
+          }
         };
       } else {
-        // No wallet address — need the form
+        // Wallet gave no billing address — ship-to doubles as bill-to
+        billing = { name: ship.name, email: ship.email, phone: '',
+                    address: ship.address, same_as_shipping: true };
+      }
+      if (window.BSR && BSR.toast) BSR.toast('Using the address from your wallet.', 'info');
+    } else {
+      // No wallet address — the form must be complete
+      ship = collectShipping();
+      if (!ship) {
         event.paymentFailed({ reason: 'fail' });
-        // Scroll to form and highlight
         document.getElementById('f-email').focus();
         errEl.textContent = 'Please complete the shipping form above, or use a wallet that provides your address.';
         errEl.style.display = '';
@@ -756,7 +780,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (submitResult && submitResult.error) { event.paymentFailed({ reason: 'fail' }); return; }
       return BSR.api('/api/stripe/create-intent', {
         method: 'POST',
-        body: { slugs: slugs, promo_code: promoCode(), shipping: ship }
+        body: { slugs: slugs, promo_code: promoCode(), shipping: ship, billing: billing }
       });
     }).then(function (j) {
       if (!j || !j.ok) throw new Error((j && j.error) || 'Could not start the wallet payment.');
