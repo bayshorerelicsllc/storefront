@@ -32,6 +32,11 @@
   width:100%; margin-bottom:12px; min-height:48px; }
 .sdk-btn > div, .sdk-btn > a { display:flex; justify-content:center; }
 #LoginWithAmazon img { display:block; }
+.oauth-fallback-btn { display:flex; align-items:center; justify-content:center; width:100%;
+  max-width:320px; margin:0 auto; padding:12px 16px; border:1px solid var(--line);
+  border-radius:6px; background:var(--bg); color:var(--text); font-weight:600;
+  font-size:15px; text-decoration:none; }
+.oauth-fallback-btn:active { filter:brightness(0.94); }
 .sdk-fallback { font-size:0.85rem; }
 .sdk-fallback a { color:var(--accent); }
 .oauth-divider { display:flex; align-items:center; gap:12px; margin:20px 0;
@@ -54,7 +59,7 @@
       <div class="sdk-btn" id="sdk-amazon"><div id="amazon-root"></div>
         <a href="#" id="LoginWithAmazon" aria-label="Login with Amazon">
           <img border="0" alt="Login with Amazon"
-               src="https://images-na.ssl-images-amazon.com/images/G/01/lwa/btnLWA_gold_156x32.png"
+               src="https://images-na.ssl-images-amazon.com/images/G/01/lwa/btnLWA_gold_312x64.png"
                width="156" height="32">
         </a>
       </div>
@@ -100,8 +105,10 @@ function bsrOAuthError(msg) {
 }
 function bsrOAuthFallback(containerId, provider, label) {
   var c = document.getElementById(containerId);
-  if (c) c.innerHTML = '<span class="sdk-fallback"><a href="https://cm.bayshorerelicsllc.com/api/account/' +
-    provider + '/start">' + label + '</a></span>';
+  if (!c || c.getAttribute('data-fb-done')) return;
+  c.setAttribute('data-fb-done', '1');
+  c.innerHTML = '<a class="oauth-fallback-btn" href="https://cm.bayshorerelicsllc.com/api/account/' +
+    provider + '/start">' + label + '</a>';
 }
 function bsrVerify(provider, path, body) {
   bsrOAuthError(''); // clear
@@ -196,6 +203,20 @@ function bsrInitOAuth(cfg) {
       })
       .catch(function () { bsrOAuthFallback('sdk-paypal', 'paypal', 'Log in with PayPal'); });
   } else { document.getElementById('sdk-paypal').style.display = 'none'; }
+  /* Global backstop: if any SDK script hung (no load, no error, no render),
+     make sure a working fallback link is shown instead of empty space. */
+  setTimeout(function () {
+    try {
+      var g = document.getElementById('gsi-button');
+      if (g && !g.hasChildNodes()) bsrOAuthFallback('sdk-google', 'google', 'Continue with Google');
+      var p = document.getElementById('paypal-login-button');
+      if (p && !p.hasChildNodes()) bsrOAuthFallback('sdk-paypal', 'paypal', 'Log in with PayPal');
+      if (typeof amazon === 'undefined' || !amazon.Login) bsrOAuthFallback('sdk-amazon', 'amazon', 'Login with Amazon');
+      var f = document.getElementById('sdk-facebook');
+      if (f && f.style.display !== 'none' && !f.querySelector('iframe'))
+        bsrOAuthFallback('sdk-facebook', 'facebook', 'Continue with Facebook');
+    } catch (e) {}
+  }, 12000);
 }
 document.addEventListener('DOMContentLoaded', function () {
   BSR.init({ active: 'account' });
