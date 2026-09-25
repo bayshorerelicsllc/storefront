@@ -363,15 +363,15 @@ document.addEventListener('DOMContentLoaded', function () {
     window.paypal.Buttons(Object.assign({ fundingSource: window.paypal.FUNDING.PAYPAL,
       style: { color: 'gold', shape: 'rect', label: 'checkout', height: 44 } }, ppConfig)).render('#paypal-buttons');
     // Venmo blue button (only if eligible)
-    if (window.paypal.isFundingEligible(window.paypal.FUNDING.VENMO)) {
+    try {
       window.paypal.Buttons(Object.assign({ fundingSource: window.paypal.FUNDING.VENMO,
         style: { color: 'blue', shape: 'rect', height: 44 } }, ppConfig)).render('#venmo-buttons');
-    }
+    } catch (e) { document.getElementById('venmo-buttons').style.display = 'none'; }
     // Pay Later button (only if eligible)
-    if (window.paypal.isFundingEligible(window.paypal.FUNDING.PAYLATER)) {
+    try {
       window.paypal.Buttons(Object.assign({ fundingSource: window.paypal.FUNDING.PAYLATER,
         style: { color: 'blue', shape: 'rect', height: 44 } }, ppConfig)).render('#paylater-buttons');
-    }
+    } catch (e) { document.getElementById('paylater-buttons').style.display = 'none'; }
   }
 
   /* ---------- Stripe Express Checkout (Apple Pay / Google Pay / Link) ---------- */
@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       expressCheckoutEl = expressElements.create('expressCheckout', {
         layout: { maxColumns: 2, maxRows: 3 },
-        paymentMethods: { applePay: 'auto', googlePay: 'auto', link: 'auto', amazonPay: 'auto' }
+        paymentMethods: { applePay: 'auto', googlePay: 'auto', link: 'auto', amazonPay: 'auto', paypal: 'auto' }
       });
       expressCheckoutEl.on('ready', function (e) {
         var loader = document.getElementById('wallets-loading');
