@@ -53,6 +53,10 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     'letter-spacing:.05em;text-decoration:underline;cursor:pointer;padding:8px;font-family:inherit}',
     '.bsr-passkey-btn:disabled{opacity:.5;cursor:wait}',
     '.bsr-passkey-msg{font-size:.8rem;color:#8a6d3b;min-height:20px;margin-top:4px}',
+    '.bsr-pk-lost{margin:6px 0 0}',
+    '.bsr-pk-lost button{background:none;border:none;color:#8a8172;font-size:.78rem;text-decoration:underline;cursor:pointer;padding:4px;font-family:inherit}',
+    '.bsr-pk-help{display:none;font-size:.8rem;color:#5a5347;line-height:1.55;margin:8px 0 0;text-align:left}',
+    '.bsr-pk-help.show{display:block}',
     '.bsr-tagline{text-align:center;color:#2a241b;font-size:1.04rem;font-weight:700;margin:0 0 30px;line-height:1.55}',
     '.bsr-expressbox{background:#ffffff;border:1px solid rgba(30,77,51,.14);border-radius:16px;',
     'box-shadow:0 8px 24px rgba(30,77,51,.12),0 2px 6px rgba(0,0,0,.05);',
@@ -503,11 +507,22 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
         mounts[i].innerHTML =
           '<div class="bsr-passkey"><button type="button" class="bsr-passkey-btn">' +
           '&#x1F511; USE PASSKEY TO LOG IN</button>' +
-          '<div class="bsr-passkey-msg"></div></div>';
+          '<div class="bsr-passkey-msg"></div>' +
+          '<p class="bsr-pk-lost"><button type="button" data-el="pk-help-toggle">Lost your passkey?</button></p>' +
+          '<p class="bsr-pk-help" data-el="pk-help">No worries — just sign in with your email and password instead. ' +
+          'Then go to Account &gt; Security &gt; Passkeys to remove the lost one and add a new passkey from your current device.</p></div>';
       }
       var btns = container.querySelectorAll('.bsr-passkey-btn');
       for (var j = 0; j < btns.length; j++) {
         btns[j].addEventListener('click', function () { doPasskeyLogin(this); });
+      }
+      var helps = container.querySelectorAll('[data-el="pk-help-toggle"]');
+      for (var k = 0; k < helps.length; k++) {
+        helps[k].addEventListener('click', function () {
+          var wrap = this.closest('.bsr-passkey');
+          var help = wrap ? wrap.querySelector('[data-el="pk-help"]') : null;
+          if (help) help.classList.toggle('show');
+        });
       }
     }
 
