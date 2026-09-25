@@ -36,7 +36,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '.bsr-login-close:hover{background:#1e4d33;color:#fff;border-color:#1e4d33}',
     '@media(min-width:768px){.bsr-login-overlay{align-items:flex-start;justify-content:flex-end;padding:76px 24px 24px}',
     '.bsr-login-card{margin:0;max-width:400px}}',
-    '@media(max-width:767px){.bsr-login-card{padding:40px 26px 20px}','@media(max-height:740px){.bsr-login-card{padding-top:32px !important;}.bsr-brand img{width:40px !important;height:40px !important;}.bsr-brand{margin-bottom:16px !important;}.bsr-express{gap:10px !important;margin-top:12px !important;}.bsr-provider-btn{min-height:46px !important;}.bsr-or{margin:16px 0 !important;}}',
+    '@media(max-width:767px){.bsr-login-card{padding:58px 26px 20px}','@media(max-height:740px){.bsr-login-card{padding-top:32px !important;}.bsr-brand img{width:40px !important;height:40px !important;}.bsr-brand{margin-bottom:16px !important;}.bsr-express{gap:10px !important;margin-top:12px !important;}.bsr-provider-btn{min-height:46px !important;}.bsr-or{margin:16px 0 !important;}}',
     '.bsr-brand{margin-bottom:14px}.bsr-express{margin-top:14px}.bsr-or{margin:24px 0 20px}',
     '.bsr-field{margin-bottom:20px}.bsr-passkey{margin-top:20px}.bsr-captcha-note{margin-top:18px}}',
     /* Shared Logitech-style form */
