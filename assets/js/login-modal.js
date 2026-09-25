@@ -66,7 +66,8 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '.bsr-pk-help.show{display:block}',
     '.bsr-tagline{text-align:center;color:#2a241b;font-size:1.04rem;font-weight:700;margin:0 0 30px;line-height:1.55}',
     '.bsr-express{display:flex;flex-direction:column;align-items:stretch;gap:14px;margin:20px 0 0;padding:6px 0 2px}',
-    '.bsr-express-label{font-size:.78rem;font-weight:700;color:#8a8172;letter-spacing:.1em;text-transform:uppercase;text-align:center}',
+    '.bsr-express-label{font-size:.82rem;font-weight:700;color:#1e4d33;letter-spacing:.08em;text-transform:uppercase;text-align:center}',
+    '.bsr-express-sub{font-size:.8rem;color:#8a8172;text-align:center;margin-top:-8px;line-height:1.5}',
     '.bsr-error{display:none;background:#fdecea;color:#9c2b1e;border:1px solid #f3c1b8;border-radius:10px;',
     'padding:10px 14px;font-size:.87rem;margin:0 0 20px;line-height:1.45}',
     '.bsr-error.show{display:block}',
@@ -253,7 +254,8 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       '<div class="bsr-loginform">' +
       '<div class="bsr-error" data-el="error" role="alert"></div>' +
       '<div class="bsr-brand"><img src="/assets/img/logo.png" alt="Bay Shore Relics logo"><span>Bay Shore Relics LLC</span></div>' +
-      '<div class="bsr-express"><span class="bsr-express-label">Continue with</span>' +
+      '<div class="bsr-express"><span class="bsr-express-label">\u26a1 Express login</span>' +
+      '<span class="bsr-express-sub">One tap with Google or Amazon \u2014 no password needed.</span>' +
       circlesHtml() + '</div>' +
       '<div class="bsr-or"><span>OR</span></div>' +
       /* ---- STEP 1: email ---- */
