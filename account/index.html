@@ -366,6 +366,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var sameChecked = sameAsShip || sameAsBill;
     var sameLabel = isBill ? 'Same as ship-to address' : 'Same as bill-to address';
     var title = isBill ? 'Bill to' : (isShip ? 'Ship to' : 'Address');
+    var emailLabel = isBill ? 'Billing email' : (isShip ? 'Shipping email' : 'Email for tracking');
+    var emailHint = isBill ? 'Receipts and payment updates go here.'
+      : (isShip ? 'Order and tracking updates for this shipment go here.'
+      : 'Order updates go here if different.');
     return '<div class="addr-form-wrap"><form class="addr-form" data-addr-form="' + (a.id || 'new') + '" data-addr-kind="' + kind + '">' +
       '<h4 class="addr-form-title">' + title + '</h4>' +
       ((!isBook) ? '<label class="checkbox-row"><input type="checkbox" name="same_as_other"' + (sameChecked ? ' checked' : '') + '> ' + sameLabel + '</label>' : '') +
@@ -373,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="acct-field"><label>Full name</label><input name="name" required maxlength="120" autocomplete="name" value="' + esc(a.name || '') + '"></div>' +
       '<div class="acct-field"><label>Company <span class="opt">(optional)</span></label><input name="company" maxlength="120" autocomplete="organization" value="' + esc(a.company || '') + '"></div>' +
       '<div class="acct-field"><label>Phone</label><input name="phone" type="tel" required maxlength="40" autocomplete="tel" value="' + esc(a.phone || '') + '"></div>' +
-      '<div class="acct-field"><label>Email for tracking <span class="opt">(optional)</span></label><input name="email" type="email" maxlength="160" autocomplete="email" value="' + esc(a.email || '') + '"><div class="hint">Order updates go here if different.</div></div>' +
+      '<div class="acct-field"><label>' + emailLabel + ' <span class="opt">(optional)</span></label><input name="email" type="email" maxlength="160" autocomplete="email" value="' + esc(a.email || '') + '"><div class="hint">' + emailHint + '</div></div>' +
       '<div class="acct-field"><label>Street address</label><input name="address1" required maxlength="200" autocomplete="street-address" value="' + esc(a.address1 || '') + '"></div>' +
       '<div class="acct-field"><label>Apt, suite, etc. (optional)</label><input name="address2" maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
       '<div class="acct-field"><label>City</label><input name="city" required maxlength="100" autocomplete="address-level2" value="' + esc(a.city || '') + '"></div>' +
