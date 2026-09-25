@@ -1,122 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
-<script>
-// Apply cached theme instantly to avoid flash of default styling
-(function() {
-  try {
-    var cached = localStorage.getItem('bsr-theme-cache');
-    if (cached) {
-      var t = JSON.parse(cached);
-      var root = document.documentElement.style;
-      if (t.color_accent) root.setProperty('--accent', t.color_accent);
-      if (t.color_bg) root.setProperty('--bg', t.color_bg);
-      if (t.color_text) root.setProperty('--text', t.color_text);
-      if (t.color_bg_soft) root.setProperty('--bg-soft', t.color_bg_soft);
-      if (t.color_line) root.setProperty('--line', t.color_line);
-      if (t.color_text_faint) root.setProperty('--text-faint', t.color_text_faint);
-      if (t.font_heading && t.font_heading !== 'system') root.setProperty('--font-head', t.font_heading);
-      if (t.font_body && t.font_body !== 'system') root.setProperty('--font-body', t.font_body);
-    }
-  } catch(e) {}
-})();
-</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sign in — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
-<link rel="stylesheet" href="/assets/css/theme.css?v=20260925b">
-<script src="/assets/js/bsr.js?v=20260925k" defer></script>
-<script src="/assets/js/login-modal.js?v=20260925au" defer></script>
-<style>
-/* Bay Shore Relics sign-in: warm, inviting, railroad-inspired. */
-html, body { margin: 0; padding: 0; }
-body {
-  background: linear-gradient(135deg, #f8f4e9 0%, #efe8d3 50%, #e8ddc0 100%);
-  color: var(--text, #2a241b);
-  font-family: var(--font-body, system-ui, -apple-system, "Segoe UI", sans-serif);
-  min-height: 100dvh;
-}
-body::before {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image: radial-gradient(circle at 20% 80%, rgba(30,77,51,0.04) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(30,77,51,0.04) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
-}
-.logi-page { min-height: 100dvh; display: flex; flex-direction: column;
-  align-items: center; justify-content: flex-start; padding: 16px 16px 24px;
-  box-sizing: border-box; overflow-y: auto; position: relative; z-index: 1; }
-.logi-page-inner {
-  background: rgba(255,255,255,0.75);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(30,77,51,0.1);
-  border-radius: 20px;
-  padding: 28px 28px 32px;
-  box-shadow: 0 8px 32px rgba(30,77,51,0.08), 0 2px 8px rgba(0,0,0,0.04);
-}
-.logi-page-inner { width: 100%; max-width: 400px; overflow-y: auto;
-  scrollbar-width: none; }
-.logi-page-inner::-webkit-scrollbar { display: none; }
-/* Spacing comes from the shared login form styles (airy, Logitech-like). */
-.logi-loading { text-align: center; color: #8a8172; font-size: .95rem; }
-</style>
+<meta http-equiv="refresh" content="0;url=/?login=1">
+<script>window.location.replace('/?login=1');</script>
 </head>
 <body>
-<main class="logi-page">
-  <div class="logi-page-inner" id="login-form-root">
-    <p class="logi-loading">Loading…</p>
-  </div>
-</main>
-<script>
-(function () {
-  function checkSignedIn() {
-    // Already signed in? Go to account page. Retry until BSR.me is available.
-    var tries = 0;
-    var iv = setInterval(function () {
-      tries++;
-      if (window.BSR && BSR.me) {
-        clearInterval(iv);
-        BSR.me().then(function (c) { if (c) window.location = '/account/'; }).catch(function () {});
-      } else if (tries > 50) {
-        clearInterval(iv);
-      }
-    }, 100);
-  }
-  checkSignedIn();
-  function render() {
-    // Cache the real theme object for instant application on next page load.
-    if (window.BSR && BSR.loadTheme) {
-      BSR.loadTheme().then(function (t) {
-        try { if (t && t.color_bg) localStorage.setItem('bsr-theme-cache', JSON.stringify(t)); } catch (e) {}
-      }).catch(function () {});
-    }
-    // Render the shared Logitech-style form inline (no modal on this page).
-    if (window.BSR && BSR.renderLoginForm && !BSR.renderLoginForm._missing) {
-      BSR.renderLoginForm('#login-form-root');
-    } else if (window.BSR && BSR.showLogin) {
-      // login-modal.js failed to load: fall back to the modal.
-      BSR.showLogin();
-      document.getElementById('login-form-root').innerHTML = '';
-    }
-  }
-  // login-modal.js is deferred; poll briefly until BSR.renderLoginForm exists.
-  var tries = 0;
-  var iv = setInterval(function () {
-    tries++;
-    var ready = window.BSR && BSR.renderLoginForm && !BSR.renderLoginForm._missing;
-    var root = document.getElementById('login-form-root');
-    var stillLoading = root && root.querySelector('.logi-loading');
-    if ((ready && stillLoading) || tries > 60) {
-      clearInterval(iv);
-      if (stillLoading) render();
-    }
-  }, 100);
-  if (document.readyState === 'complete') { /* poller handles it */ }
-})();
-</script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a40c7368cc06654e',t:'MTc5MDM2NDcwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a40c80c0783886ab',t:'MTc5MDM2NTI1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<p style="text-align:center;font-family:system-ui,sans-serif;color:#8a8172">Opening sign in… <a href="/?login=1">Continue</a></p>
+</body>
 </html>
