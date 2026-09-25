@@ -467,49 +467,18 @@ document.addEventListener('DOMContentLoaded', function () {
   function onStripePay() {
     var errEl = document.getElementById('stripe-err');
     errEl.style.display = 'none';
-    if (!stripe) { errEl.textContent = 'Card payments are still loading — try again in a moment.'; errEl.style.display = ''; return; }
     var ship = collectShipping();
     if (!ship) return;
     var btn = document.getElementById('stripe-pay');
-    btn.disabled = true; btn.textContent = 'Preparing payment…';
-    BSR.api('/api/stripe/create-intent', {
+    btn.disabled = true; btn.textContent = 'Redirecting to Stripe…';
+    BSR.api('/api/stripe/create-checkout-session', {
       method: 'POST',
       body: { slugs: slugs, promo_code: promoCode(), shipping: ship }
     }).then(function (j) {
-      if (!j.ok) throw new Error(j.error || 'Could not start the card payment.');
-      stripeIntent = j;
-      stripeBreakdown = j.breakdown || { total_cents: j.amount_cents };
-      renderTotals(stripeBreakdown);
-      if (!stripeMounted) {
-        elements = stripe.elements({ clientSecret: j.client_secret });
-        var paymentEl = elements.create('payment');
-        paymentEl.mount('#stripe-element');
-        stripeMounted = true;
-      }
-      return stripe.confirmPayment({
-        elements: elements,
-        confirmParams: { return_url: window.location.origin + '/thank-you/' },
-        redirect: 'if_required'
-      });
-    }).then(function (result) {
-      var err = result && result.error;
-      if (err) {
-        errEl.textContent = err.message || 'The card payment failed.';
-        errEl.style.display = '';
-        btn.disabled = false; btn.textContent = 'Pay with Stripe';
-        return;
-      }
-      var pi = result && result.paymentIntent;
-      if (pi && pi.status === 'succeeded') {
-        try { sessionStorage.setItem('bsr-last-order', stripeIntent.order_token || pi.id); } catch (e) {}
-        finishOrder(stripeIntent.order_token || pi.id);
-      } else {
-        errEl.textContent = 'Payment status: ' + (pi ? pi.status : 'unknown') + '. Please try again.';
-        errEl.style.display = '';
-        btn.disabled = false; btn.textContent = 'Pay with Stripe';
-      }
+      if (!j.ok || !j.url) throw new Error((j && j.error) || 'Could not start the card payment.');
+      window.location.href = j.url;
     }).catch(function (e) {
-      errEl.textContent = e.message || 'Could not start the card payment.';
+      errEl.textContent = e.message || 'The card payment failed.';
       errEl.style.display = '';
       btn.disabled = false; btn.textContent = 'Pay with Stripe';
     });
