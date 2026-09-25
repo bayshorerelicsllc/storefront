@@ -85,6 +85,16 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="field"><label for="f-name">Full name</label>' +
     '<input type="text" id="f-name" autocomplete="name">' +
     '<div class="error" id="e-name" style="display:none"></div></div>' +
+    '<div class="field"><label for="f-company">Company <span class="opt">(optional)</span></label>' +
+    '<input type="text" id="f-company" autocomplete="organization">' +
+    '</div>' +
+    '<div class="form-row"><div class="field"><label for="f-ship-phone">Phone</label>' +
+    '<input type="tel" id="f-ship-phone" autocomplete="tel" placeholder="(555) 123-4567">' +
+    '<div class="error" id="e-ship-phone" style="display:none"></div></div>' +
+    '<div class="field"><label for="f-ship-email">Email for tracking <span class="opt">(optional)</span></label>' +
+    '<input type="email" id="f-ship-email" autocomplete="email" placeholder="Leave blank to use contact email">' +
+    '<div class="error" id="e-ship-email" style="display:none"></div>' +
+    '<div class="hint">Order updates go here if different.</div></div></div>' +
     '<div class="field"><label for="f-line1">Address</label>' +
     '<input type="text" id="f-line1" autocomplete="street-address">' +
     '<div class="error" id="e-line1" style="display:none"></div></div>' +
@@ -105,13 +115,45 @@ document.addEventListener('DOMContentLoaded', function () {
     '<button class="btn btn-secondary" id="ship-find" type="button">Show shipping options</button>' +
     '<div class="error" id="e-ship" style="display:none;margin-top:8px"></div>' +
     '<div id="ship-options" style="margin-top:12px"></div></div></section>' +
-    '<section class="card"><h2><span class="step-num">4</span> Promo code</h2>' +
+    '<section class="card"><h2><span class="step-num">4</span> Billing address</h2>' +
+    '<div class="field"><label class="mkt-toggle"><input type="checkbox" id="f-bill-same" checked>' +
+    '<span>Same as shipping address</span></label></div>' +
+    '<div id="bill-fields" style="display:none">' +
+    '<div class="field"><label for="f-bill-name">Billing name</label>' +
+    '<input type="text" id="f-bill-name" autocomplete="cc-name">' +
+    '<div class="error" id="e-bill-name" style="display:none"></div></div>' +
+    '<div class="field"><label for="f-bill-company">Company <span class="opt">(optional)</span></label>' +
+    '<input type="text" id="f-bill-company" autocomplete="organization"></div>' +
+    '<div class="field"><label for="f-bill-line1">Address</label>' +
+    '<input type="text" id="f-bill-line1" autocomplete="billing street-address">' +
+    '<div class="error" id="e-bill-line1" style="display:none"></div></div>' +
+    '<div class="form-row"><div class="field"><label for="f-bill-city">City</label>' +
+    '<input type="text" id="f-bill-city" autocomplete="billing address-level2">' +
+    '<div class="error" id="e-bill-city" style="display:none"></div></div>' +
+    '<div class="field"><label for="f-bill-state">State / Province</label>' +
+    '<input type="text" id="f-bill-state" autocomplete="billing address-level1">' +
+    '<div class="error" id="e-bill-state" style="display:none"></div></div></div>' +
+    '<div class="form-row"><div class="field"><label for="f-bill-postal">Postal code</label>' +
+    '<input type="text" id="f-bill-postal" autocomplete="billing postal-code">' +
+    '<div class="error" id="e-bill-postal" style="display:none"></div></div>' +
+    '<div class="field"><label for="f-bill-country">Country</label>' +
+    '<select id="f-bill-country">' + COUNTRIES.map(function (cc) {
+      return '<option value="' + cc[0] + '"' + (cc[0] === 'US' ? ' selected' : '') + '>' + BSR.esc(cc[1]) + '</option>';
+    }).join('') + '</select></div></div>' +
+    '<div class="form-row"><div class="field"><label for="f-bill-phone">Phone</label>' +
+    '<input type="tel" id="f-bill-phone" autocomplete="tel">' +
+    '<div class="error" id="e-bill-phone" style="display:none"></div></div>' +
+    '<div class="field"><label for="f-bill-email">Email <span class="opt">(optional)</span></label>' +
+    '<input type="email" id="f-bill-email" autocomplete="email">' +
+    '<div class="error" id="e-bill-email" style="display:none"></div></div></div>' +
+    '</div></section>' +
+    '<section class="card"><h2><span class="step-num">5</span> Promo code</h2>' +
     '<div class="promo-row"><input type="text" id="f-promo" class="field" placeholder="Promo code" aria-label="Promo code" value="' + BSR.esc(savedPromo() ? savedPromo().code : '') + '">' +
     '<button class="btn btn-secondary btn-sm" id="promo-apply" type="button">Apply</button></div>' +
     '<div class="hint" id="promo-ok" style="display:none"></div>' +
     '<div class="error" id="promo-err" style="display:none"></div></section>' +
     '</div>' +
-    '<section class="card" id="card-payment-section" style="display:none"><h2><span class="step-num">5</span> Payment</h2>' +
+    '<section class="card" id="card-payment-section" style="display:none"><h2><span class="step-num">6</span> Payment</h2>' +
     '<div class="pay-divider" id="card-divider"><span>pay with card</span></div>' +
     '<div id="pay-card"><div id="stripe-element"></div>' +
     '<div class="error" id="stripe-err" style="display:none"></div>' +
@@ -212,6 +254,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var bad = false;
     var email = document.getElementById('f-email').value.trim();
     var name = document.getElementById('f-name').value.trim();
+    var company = document.getElementById('f-company').value.trim();
+    var shipPhone = document.getElementById('f-ship-phone').value.trim();
+    var shipEmail = document.getElementById('f-ship-email').value.trim();
     var line1 = document.getElementById('f-line1').value.trim();
     var city = document.getElementById('f-city').value.trim();
     var state = document.getElementById('f-state').value.trim();
@@ -219,6 +264,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var country = document.getElementById('f-country').value;
     bad = fieldErr('e-email', !email ? 'Email is required.' : (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Enter a valid email address.' : '')) || bad;
     bad = fieldErr('e-name', !name ? 'Full name is required.' : '') || bad;
+    bad = fieldErr('e-ship-phone', !shipPhone ? 'Phone is required.' : '') || bad;
+    bad = fieldErr('e-ship-email', shipEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shipEmail) ? 'Enter a valid email address.' : '') || bad;
     bad = fieldErr('e-line1', !line1 ? 'Street address is required.' : '') || bad;
     bad = fieldErr('e-city', !city ? 'City is required.' : '') || bad;
     bad = fieldErr('e-state', !state ? 'State / province is required.' : '') || bad;
@@ -229,10 +276,44 @@ document.addEventListener('DOMContentLoaded', function () {
       return null;
     }
     return {
-      name: name, email: email,
+      name: name, company: company, phone: shipPhone, email: shipEmail || email,
+      contact_email: email,
       address: { line1: line1, city: city, state: state, postal: postal, country: country },
       rate_ref: shipChoice.ref, provider: shipChoice.provider,
       carrier: shipChoice.carrier, service: shipChoice.service
+    };
+  }
+
+  function collectBilling(ship) {
+    var same = document.getElementById('f-bill-same').checked;
+    if (same) {
+      return {
+        name: ship.name, company: ship.company, phone: ship.phone, email: ship.email,
+        address: ship.address, same_as_shipping: true
+      };
+    }
+    var bad = false;
+    var name = document.getElementById('f-bill-name').value.trim();
+    var company = document.getElementById('f-bill-company').value.trim();
+    var line1 = document.getElementById('f-bill-line1').value.trim();
+    var city = document.getElementById('f-bill-city').value.trim();
+    var state = document.getElementById('f-bill-state').value.trim();
+    var postal = document.getElementById('f-bill-postal').value.trim();
+    var country = document.getElementById('f-bill-country').value;
+    var phone = document.getElementById('f-bill-phone').value.trim();
+    var email = document.getElementById('f-bill-email').value.trim();
+    bad = fieldErr('e-bill-name', !name ? 'Billing name is required.' : '') || bad;
+    bad = fieldErr('e-bill-line1', !line1 ? 'Street address is required.' : '') || bad;
+    bad = fieldErr('e-bill-city', !city ? 'City is required.' : '') || bad;
+    bad = fieldErr('e-bill-state', !state ? 'State / province is required.' : '') || bad;
+    bad = fieldErr('e-bill-postal', !postal ? 'Postal code is required.' : '') || bad;
+    bad = fieldErr('e-bill-phone', !phone ? 'Phone is required.' : '') || bad;
+    bad = fieldErr('e-bill-email', email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Enter a valid email address.' : '') || bad;
+    if (bad) return null;
+    return {
+      name: name, company: company, phone: phone, email: email || ship.email,
+      address: { line1: line1, city: city, state: state, postal: postal, country: country },
+      same_as_shipping: false
     };
   }
 
@@ -240,6 +321,9 @@ document.addEventListener('DOMContentLoaded', function () {
   var shipChoice = null;
   var shipOptions = [];
   var WORKER = 'https://cm.bayshorerelicsllc.com';
+  document.getElementById('f-bill-same').addEventListener('change', function () {
+    document.getElementById('bill-fields').style.display = this.checked ? 'none' : '';
+  });
   document.getElementById('show-card-form').addEventListener('click', function () {
     document.getElementById('manual-form-wrap').style.display = '';
     document.getElementById('card-payment-section').style.display = '';
@@ -363,12 +447,17 @@ document.addEventListener('DOMContentLoaded', function () {
       createOrder: function () {
         var ship = collectShipping();
         var isWallet = !ship;
+        var billing = null;
+        if (!isWallet) {
+          billing = collectBilling(ship);
+          if (!billing) throw new Error('Please complete the billing address.');
+        }
         if (isWallet) {
           BSR.toast('PayPal will provide your shipping address.', 'info');
         }
         return BSR.api('/api/checkout/create', {
           method: 'POST',
-          body: { slugs: slugs, promo_code: promoCode(), shipping: ship, wallet_order: isWallet }
+          body: { slugs: slugs, promo_code: promoCode(), shipping: ship, billing: billing, wallet_order: isWallet }
         }).then(function (j) {
           if (!j.ok) throw new Error(j.error || 'Could not create the PayPal order.');
           return j.orderID;
@@ -562,11 +651,17 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('f-email').focus();
       return;
     }
+    var billing = collectBilling(ship);
+    if (!billing) {
+      errEl.textContent = 'Please complete the billing address above.';
+      errEl.style.display = '';
+      return;
+    }
     var btn = document.getElementById('stripe-pay');
     btn.disabled = true; btn.textContent = 'Redirecting to Stripe…';
     BSR.api('/api/stripe/create-checkout-session', {
       method: 'POST',
-      body: { slugs: slugs, promo_code: promoCode(), shipping: ship }
+      body: { slugs: slugs, promo_code: promoCode(), shipping: ship, billing: billing }
     }).then(function (j) {
       if (!j.ok || !j.url) throw new Error((j && j.error) || 'Could not start the card payment.');
       window.location.href = j.url;
