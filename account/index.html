@@ -423,55 +423,80 @@ document.addEventListener('DOMContentLoaded', function () {
       '</div>';
   }
   var addrShip = null, addrBill = null, addrList = [];
-  /* Two records for the same place collapse into one: every default flag
-     and any filled contact field folds into the oldest record, the rest are
-     removed. Runs on every load but only acts when true duplicates exist,
+  /* Two records for the same place collapse into one -- unless their contact
+     info genuinely conflicts. A name, company, phone, or email counts as a
+     conflict only when BOTH records have it filled in and the values differ;
+     an empty field is just missing info, not a difference, so it folds in.
+     Phones compare by digits only, so "(920) 267-2480" and "9202672480" are
+     the same. Runs on every load but only acts when true duplicates exist,
      so the table fixes itself with no extra taps. */
-  function addrIdentity(a) {
-    return ['name', 'company', 'address1', 'address2', 'city', 'state', 'postal', 'country']
-      .map(function (k) { return (a[k] || '').toString().trim().toLowerCase(); }).join('|');
+  function normStr(v) { return (v || '').toString().trim().toLowerCase().replace(/\s+/g, ' '); }
+  function normPhone(v) { return (v || '').toString().replace(/\D/g, ''); }
+  function contactConflict(a, b) {
+    if (normStr(a.name) && normStr(b.name) && normStr(a.name) !== normStr(b.name)) return true;
+    if (normStr(a.company) && normStr(b.company) && normStr(a.company) !== normStr(b.company)) return true;
+    var pa = normPhone(a.phone), pb = normPhone(b.phone);
+    if (pa && pb && pa !== pb) return true;
+    if (normStr(a.email) && normStr(b.email) && normStr(a.email) !== normStr(b.email)) return true;
+    return false;
+  }
+  function postalKey(a) {
+    return ['address1', 'address2', 'city', 'state', 'postal', 'country']
+      .map(function (k) { return normStr(a[k]); }).join('|');
+  }
+  function byCreated(a, b) {
+    var xc = String(a.created_at || ''), yc = String(b.created_at || '');
+    return xc < yc ? -1 : (xc > yc ? 1 : 0);
   }
   function mergeDuplicateAddresses() {
     var groups = {};
     addrList.forEach(function (a) {
-      var k = addrIdentity(a);
+      var k = postalKey(a);
       (groups[k] = groups[k] || []).push(a);
     });
     var jobs = [];
     Object.keys(groups).forEach(function (k) {
       var g = groups[k];
       if (g.length < 2) return;
-      g.sort(function (x, y) {
-        var xc = String(x.created_at || ''), yc = String(y.created_at || '');
-        return xc < yc ? -1 : (xc > yc ? 1 : 0);
+      /* Cluster by contact agreement: a record joins the oldest cluster it
+         does not conflict with; conflicting records stay separate entries. */
+      var clusters = [];
+      g.slice().sort(byCreated).forEach(function (a) {
+        var placed = false;
+        for (var i = 0; i < clusters.length; i++) {
+          if (!contactConflict(clusters[i][0], a)) { clusters[i].push(a); placed = true; break; }
+        }
+        if (!placed) clusters.push([a]);
       });
-      var keep = g[0];
-      var body = {
-        name: keep.name || '', company: keep.company || '',
-        phone: keep.phone || '', email: keep.email || '',
-        address1: keep.address1, address2: keep.address2 || '',
-        city: keep.city, state: keep.state || '',
-        postal: keep.postal, country: keep.country || 'US',
-        is_default_shipping: false, is_default_billing: false,
-      };
-      g.forEach(function (a) {
-        if (a.is_default_shipping) body.is_default_shipping = true;
-        if (a.is_default_billing) body.is_default_billing = true;
+      clusters.forEach(function (cl) {
+        if (cl.length < 2) return;
+        var keep = cl[0];
+        var body = {
+          name: '', company: '', phone: '', email: '',
+          address1: keep.address1, address2: keep.address2 || '',
+          city: keep.city, state: keep.state || '',
+          postal: keep.postal, country: keep.country || 'US',
+          is_default_shipping: false, is_default_billing: false,
+        };
         ['name', 'company', 'phone', 'email'].forEach(function (f) {
-          if (!body[f] && a[f]) body[f] = a[f];
+          for (var i = 0; i < cl.length; i++) { if (cl[i][f]) { body[f] = cl[i][f]; break; } }
         });
+        cl.forEach(function (a) {
+          if (a.is_default_shipping) body.is_default_shipping = true;
+          if (a.is_default_billing) body.is_default_billing = true;
+        });
+        jobs.push(
+          BSR.api('/api/account/addresses/' + encodeURIComponent(keep.id), { method: 'PUT', body: body })
+            .then(function (jr) {
+              if (!(jr && jr.ok)) return;
+              return Promise.all(cl.slice(1).map(function (d) {
+                return BSR.api('/api/account/addresses/' + encodeURIComponent(d.id), { method: 'DELETE' })
+                  .catch(function () {});
+              }));
+            })
+            .catch(function () {})
+        );
       });
-      jobs.push(
-        BSR.api('/api/account/addresses/' + encodeURIComponent(keep.id), { method: 'PUT', body: body })
-          .then(function (jr) {
-            if (!(jr && jr.ok)) return;
-            return Promise.all(g.slice(1).map(function (d) {
-              return BSR.api('/api/account/addresses/' + encodeURIComponent(d.id), { method: 'DELETE' })
-                .catch(function () {});
-            }));
-          })
-          .catch(function () {})
-      );
     });
     if (!jobs.length) return Promise.resolve(false);
     return Promise.all(jobs).then(function () { return true; });
@@ -722,7 +747,6 @@ document.addEventListener('DOMContentLoaded', function () {
            nothing. A destination with different content stays in the book
            as a regular saved address. */
         var src = isBill ? addrShip : addrBill;
-        var dest = isBill ? addrBill : addrShip;
         var needLabel = isBill ? 'ship-to' : 'bill-to';
         if (!src || !src.id) {
           showAddrMsg(false, 'Save a ' + needLabel + ' address first.');
@@ -739,26 +763,14 @@ document.addEventListener('DOMContentLoaded', function () {
         verifiedNote = '';
         BSR.api('/api/account/addresses/' + encodeURIComponent(src.id), { method: 'PUT', body: linkBody })
           .then(function (j) {
-            if (!(j && j.ok)) {
-              showAddrMsg(false, (j && j.error) || 'Could not link the address.');
-              return;
-            }
-            var dup = dest && dest.id && String(dest.id) !== String(src.id) &&
-              ['name', 'company', 'phone', 'email', 'address1', 'address2', 'city', 'state', 'postal', 'country']
-                .every(function (k) {
-                  return (dest[k] || '').toString().trim().toLowerCase() ===
-                         (src[k] || '').toString().trim().toLowerCase();
-                });
-            var finish = function () {
+            if (j && j.ok) {
+              /* The auto-merge on reload collapses any true duplicate into
+                 this record; records with conflicting contact info stay. */
               loadAddresses();
               showAddrMsg(true, (isBill ? 'Bill-to' : 'Ship-to') + ' now uses your ' + needLabel + ' address.');
               toast('Same as ' + needLabel + ' \u2713');
-            };
-            if (dup) {
-              BSR.api('/api/account/addresses/' + encodeURIComponent(dest.id), { method: 'DELETE' })
-                .then(finish).catch(finish);
             } else {
-              finish();
+              showAddrMsg(false, (j && j.error) || 'Could not link the address.');
             }
           })
           .catch(function () { showAddrMsg(false, 'Could not link. Check your connection.'); });
