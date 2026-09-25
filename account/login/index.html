@@ -7,6 +7,17 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css">
 <script src="/assets/js/bsr.js" defer></script>
+<style>
+.oauth-btn { display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; padding:12px 16px; margin-bottom:10px;
+  border:1px solid var(--line); border-radius:var(--radius-sm);
+  background:var(--bg); color:var(--text); font:inherit; font-weight:600;
+  text-decoration:none; cursor:pointer; }
+.oauth-btn:hover { background:var(--bg-soft); border-color:var(--text-faint); }
+.oauth-divider { display:flex; align-items:center; gap:12px; margin:20px 0;
+  color:var(--text-faint); font-size:0.85rem; }
+.oauth-divider::before, .oauth-divider::after { content:""; flex:1; height:1px; background:var(--line); }
+</style>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -14,6 +25,14 @@
 <div class="wrap">
   <div class="auth-card">
     <h1>Sign in</h1>
+    <div id="oauth-buttons">
+      <a class="oauth-btn" href="https://commerce-manager.bayshorerelicsllc.workers.dev/api/account/google/start">Continue with Google</a>
+      <a class="oauth-btn" href="https://commerce-manager.bayshorerelicsllc.workers.dev/api/account/amazon/start">Continue with Amazon</a>
+      <a class="oauth-btn" href="https://commerce-manager.bayshorerelicsllc.workers.dev/api/account/facebook/start">Continue with Facebook</a>
+      <a class="oauth-btn" href="https://commerce-manager.bayshorerelicsllc.workers.dev/api/account/paypal/start">Continue with PayPal</a>
+    </div>
+    <div class="oauth-divider">or with email</div>
+    <div class="error" id="oauth-error" role="alert" style="display:none;margin:0 0 16px;font-size:0.85rem;color:var(--danger)"></div>
     <form id="login-form" novalidate>
       <div class="error" id="form-error" role="alert" style="display:none;margin:0 0 16px;font-size:0.85rem;color:var(--danger)"></div>
       <div class="field">
@@ -39,6 +58,16 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   BSR.init({ active: 'account' });
+  // Already signed in? Go straight to the account page.
+  BSR.me().then(function (c) { if (c) window.location = '/account/'; });
+  // Surface OAuth failures (?error=... set by the worker's failure page redirect).
+  var q = new URLSearchParams(window.location.search);
+  var oerr = q.get('error');
+  if (oerr) {
+    var box = document.getElementById('oauth-error');
+    box.textContent = 'Sign-in failed: ' + oerr;
+    box.style.display = 'block';
+  }
   var form = document.getElementById('login-form');
   var errBox = document.getElementById('form-error');
   var btn = document.getElementById('submit-btn');
