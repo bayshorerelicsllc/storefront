@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="pay-divider" id="card-divider"><span>or pay with card</span></div>' +
     '<div id="pay-card"><div id="stripe-element"></div>' +
     '<div class="error" id="stripe-err" style="display:none"></div>' +
-    '<button class="btn btn-primary btn-block" id="stripe-pay" type="button">Pay securely</button></div>' +
+    '<button id="stripe-pay" type="button" style="display:block;width:100%;background:#635bff;color:#fff;border:none;border-radius:8px;padding:14px;font-size:1rem;font-weight:600;cursor:pointer">Pay with Stripe</button></div>' +
     '<div class="secure-note">' + BSR.icon('lock', 'ic-sm') + '<span>Payments are encrypted. We never see your card number.</span></div>' +
     '</section></div>' +
     '<aside class="card summary"><h2>Order summary</h2>' +
@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (err) {
         errEl.textContent = err.message || 'The card payment failed.';
         errEl.style.display = '';
-        btn.disabled = false; btn.textContent = 'Pay securely';
+        btn.disabled = false; btn.textContent = 'Pay with Stripe';
         return;
       }
       var pi = result && result.paymentIntent;
@@ -492,12 +492,12 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         errEl.textContent = 'Payment status: ' + (pi ? pi.status : 'unknown') + '. Please try again.';
         errEl.style.display = '';
-        btn.disabled = false; btn.textContent = 'Pay securely';
+        btn.disabled = false; btn.textContent = 'Pay with Stripe';
       }
     }).catch(function (e) {
       errEl.textContent = e.message || 'Could not start the card payment.';
       errEl.style.display = '';
-      btn.disabled = false; btn.textContent = 'Pay securely';
+      btn.disabled = false; btn.textContent = 'Pay with Stripe';
     });
   }
 });
