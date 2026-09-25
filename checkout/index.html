@@ -68,7 +68,9 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="pay-divider" id="wallet-divider-top" style="display:none"><span>or</span></div>' +
     '<div id="pay-paypal-top"><div id="paypal-buttons"></div><div id="venmo-buttons" style="margin-top:8px"></div><div id="paylater-buttons" style="margin-top:8px"></div><div class="hint" id="paypal-msg"></div></div>' +
     '</section>' +
-    '<div class="pay-divider" style="margin:4px 0 16px"><span>or continue below</span></div>' +
+    '<div class="pay-divider" style="margin:4px 0 16px"><span>or</span></div>' +
+    '<button id="show-card-form" type="button" style="display:block;width:100%;background:#fff;color:#1a1a1a;border:2px solid #1a1a1a;border-radius:8px;padding:14px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:16px">Pay with card</button>' +
+    '<div id="manual-form-wrap" style="display:none">' +
     '<section class="card"><h2><span class="step-num">1</span> Contact</h2>' +
     '<div class="field"><label for="f-email">Email</label>' +
     '<input type="email" id="f-email" autocomplete="email" placeholder="you@example.com">' +
@@ -102,7 +104,8 @@ document.addEventListener('DOMContentLoaded', function () {
     '<button class="btn btn-secondary btn-sm" id="promo-apply" type="button">Apply</button></div>' +
     '<div class="hint" id="promo-ok" style="display:none"></div>' +
     '<div class="error" id="promo-err" style="display:none"></div></section>' +
-    '<section class="card"><h2><span class="step-num">5</span> Payment</h2>' +
+    '</div>' +
+    '<section class="card" id="card-payment-section" style="display:none"><h2><span class="step-num">5</span> Payment</h2>' +
     '<div class="pay-divider" id="card-divider"><span>pay with card</span></div>' +
     '<div id="pay-card"><div id="stripe-element"></div>' +
     '<div class="error" id="stripe-err" style="display:none"></div>' +
@@ -226,6 +229,12 @@ document.addEventListener('DOMContentLoaded', function () {
   var shipChoice = null;
   var shipOptions = [];
   var WORKER = 'https://cm.bayshorerelicsllc.com';
+  document.getElementById('show-card-form').addEventListener('click', function () {
+    document.getElementById('manual-form-wrap').style.display = '';
+    document.getElementById('card-payment-section').style.display = '';
+    this.style.display = 'none';
+    document.getElementById('f-email').focus();
+  });
   document.getElementById('ship-find').addEventListener('click', function () {
     var errEl = document.getElementById('e-ship');
     errEl.style.display = 'none';
