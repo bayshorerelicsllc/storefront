@@ -89,6 +89,12 @@
 .addr-card .addr-badge.addr-badge-bill { background:#8a6d3b; }
 .addr-card .addr-actions { display:flex; gap:8px; margin-top:12px; }
 .addr-card .addr-actions button { font-size:.84rem; padding:6px 12px; }
+.addr-two-col { display:grid; gap:16px; }
+@media (min-width:760px) { .addr-two-col { grid-template-columns:1fr 1fr; } }
+.addr-box { border:1px solid var(--line); border-radius:var(--radius-sm); padding:16px; }
+.addr-box .sub { margin-top:0; }
+.addr-same-note { font-size:.85rem; color:var(--text-soft); font-style:italic; margin:0 0 8px; }
+.addr-form-title { margin:0 0 12px; font-size:1rem; }
 .addr-form-wrap { border:1px solid var(--line); border-radius:var(--radius-sm);
   padding:18px; margin:14px 0; background:var(--bg-soft); }
 .addr-form-grid { display:grid; gap:0 12px; }
@@ -341,14 +347,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  function addrFormHtml(a) {
+  function addrFormHtml(a, kind) {
     a = a || {};
-    var isNew = !a.id;
-    /* First address saved becomes default for both. */
-    var checkShip = isNew ? (addrCache.length === 0) : !!a.is_default_shipping;
-    var checkBill = isNew ? (addrCache.length === 0) : !!a.is_default_billing;
-    return '<div class="addr-form-wrap"><form class="addr-form" data-addr-form="' + (a.id || 'new') + '">' +
-      '<div class="addr-form-grid two-col">' +
+    kind = kind || 'ship';
+    var isBill = kind === 'bill';
+    var sameAsShip = isBill && a.id && addrShip && String(a.id) === String(addrShip.id);
+    var title = isBill ? 'Bill to' : 'Ship to';
+    return '<div class="addr-form-wrap"><form class="addr-form" data-addr-form="' + (a.id || 'new') + '" data-addr-kind="' + kind + '">' +
+      '<h4 class="addr-form-title">' + title + '</h4>' +
+      (isBill ? '<label class="checkbox-row"><input type="checkbox" name="same_as_ship"' + (sameAsShip ? ' checked' : '') + '> Same as ship-to address</label>' : '') +
+      '<div class="addr-form-grid two-col" data-addr-fields' + (sameAsShip ? ' style="display:none"' : '') + '>' +
       '<div class="acct-field"><label>Full name</label><input name="name" required maxlength="120" autocomplete="name" value="' + esc(a.name || '') + '"></div>' +
       '<div class="acct-field"><label>Company <span class="opt">(optional)</span></label><input name="company" maxlength="120" autocomplete="organization" value="' + esc(a.company || '') + '"></div>' +
       '<div class="acct-field"><label>Phone</label><input name="phone" type="tel" required maxlength="40" autocomplete="tel" value="' + esc(a.phone || '') + '"></div>' +
@@ -361,90 +369,118 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="acct-field"><label>Country</label><select name="country" autocomplete="country-name">' + bsrCountryOptions(a.country || 'US') + '</select></div>' +
       '</div>' +
       '<div id="addr-validate-msg"></div>' +
-      '<label class="checkbox-row"><input type="checkbox" name="is_default_shipping"' + (checkShip ? ' checked' : '') + '> Use as default shipping address</label>' +
-      '<label class="checkbox-row"><input type="checkbox" name="is_default_billing"' + (checkBill ? ' checked' : '') + '> Use as default billing address</label>' +
-      '<div class="acct-actions"><button type="submit" class="btn btn-primary btn-sm">Save address</button>' +
+      '<div class="acct-actions"><button type="submit" class="btn btn-primary btn-sm">Save ' + title.toLowerCase() + ' address</button>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-addr-cancel>Cancel</button></div>' +
       '</form></div>';
   }
   function renderAddresses() {
     return '<div class="acct-section"><h2>Addresses</h2>' +
-      '<p class="sec-desc">Saved addresses for faster checkout. Your defaults are pre-filled at checkout.</p>' +
+      '<p class="sec-desc">Ship-to and bill-to addresses, saved separately. Your defaults are pre-filled at checkout.</p>' +
       '<div id="addr-msg"></div>' +
-      '<div class="addr-grid" id="addr-list"><p>Loading&hellip;</p></div>' +
-      '<div id="addr-form-slot"></div>' +
-      '<div class="acct-actions"><button type="button" class="btn btn-secondary btn-sm" id="addr-add">Add address</button></div>' +
-      '</div>';
+      '<div class="addr-two-col">' +
+      '<div class="addr-box" id="addr-ship-box"><p>Loading&hellip;</p></div>' +
+      '<div class="addr-box" id="addr-bill-box"><p>Loading&hellip;</p></div>' +
+      '</div></div>';
   }
-  var addrCache = [];
+  var addrShip = null, addrBill = null;
   function loadAddresses() {
     BSR.api('/api/account/addresses').then(function (j) {
       if (j && j._status === 401) { window.location = '/account/login/'; return; }
-      addrCache = (j && j.ok && Array.isArray(j.addresses)) ? j.addresses : [];
-      paintAddrList();
+      var list = (j && j.ok && Array.isArray(j.addresses)) ? j.addresses : [];
+      addrShip = list.find(function (x) { return x.is_default_shipping; }) || null;
+      addrBill = list.find(function (x) { return x.is_default_billing; }) || null;
+      paintAddrBox('ship');
+      paintAddrBox('bill');
     }).catch(function () {
-      document.getElementById('addr-list').innerHTML = '<p>Could not load addresses.</p>';
+      document.getElementById('addr-ship-box').innerHTML = '<p>Could not load addresses.</p>';
+      document.getElementById('addr-bill-box').innerHTML = '';
     });
   }
-  function paintAddrList() {
-    var el = document.getElementById('addr-list');
+  function addrDisplayLines(a) {
+    var lines = '';
+    if (a.name) lines += '<strong>' + esc(a.name) + '</strong><br>';
+    if (a.company) lines += esc(a.company) + '<br>';
+    lines += esc(a.address1 || '');
+    if (a.address2) lines += '<br>' + esc(a.address2);
+    lines += '<br>' + esc(a.city || '') + ', ' + esc(a.state || '') + ' ' + esc(a.postal || '');
+    lines += '<br>' + esc(a.country || '');
+    if (a.phone) lines += '<br>' + esc(a.phone);
+    if (a.email) lines += '<br>' + esc(a.email);
+    return lines;
+  }
+  function paintAddrBox(kind) {
+    var el = document.getElementById(kind === 'ship' ? 'addr-ship-box' : 'addr-bill-box');
     if (!el) return;
-    el.innerHTML = addrCache.length ? addrCache.map(addrCard).join('')
-      : '<p style="color:var(--text-soft);font-size:.92rem">No addresses saved yet.</p>';
-    bindAddrButtons();
-  }
-  function bindAddrButtons() {
-    root.querySelectorAll('[data-addr-edit]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var a = addrCache.find(function (x) { return x.id === b.getAttribute('data-addr-edit'); });
-        if (!a) return;
-        var slot = document.getElementById('addr-form-slot');
-        slot.innerHTML = addrFormHtml(a);
-        bindAddrForm(slot);
-        slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
-    });
-    root.querySelectorAll('[data-addr-del]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var id = b.getAttribute('data-addr-del');
-        var a = addrCache.find(function (x) { return x.id === id; });
-        var roles = [];
-        if (a) {
-          if (a.is_default_shipping) roles.push('default shipping');
-          if (a.is_default_billing) roles.push('default billing');
-        }
-        var msg = 'Remove this address?';
-        if (roles.length && addrCache.length > 1) {
-          msg = 'This is your ' + roles.join(' and ') + ' address. Removing it will make your oldest remaining address the new default. Continue?';
-        }
-        if (!window.confirm(msg)) return;
-        BSR.api('/api/account/addresses/' + encodeURIComponent(id), { method: 'DELETE' })
-          .then(function (j) {
-            if (j && j.ok) {
-              loadAddresses();
-              if (j.promoted && j.promoted.length) {
-                showAddrMsg(true, 'Address removed. Your oldest remaining address is now the default ' + j.promoted.join(' and ') + ' address.');
-              }
-              toast('Address removed');
-            }
-            else { var em3 = (j && j.error) || 'Could not remove the address.'; showAddrMsg(false, em3); toast(em3, false); }
-          })
-          .catch(function () { showAddrMsg(false, 'Could not remove. Check your connection.'); toast('Could not remove. Check your connection.', false); });
-      });
+    var a = kind === 'ship' ? addrShip : addrBill;
+    var title = kind === 'ship' ? 'Ship to' : 'Bill to';
+    var sameAsShip = kind === 'bill' && addrBill && addrShip && String(addrBill.id) === String(addrShip.id);
+    var html = '<h3 class="sub">' + title + '</h3>';
+    if (a) {
+      if (sameAsShip) html += '<p class="addr-same-note">Same as ship-to address.</p>';
+      html += '<div class="addr-lines">' + addrDisplayLines(a) + '</div>';
+    } else {
+      html += '<p style="color:var(--text-soft);font-size:.92rem">No address saved yet.</p>';
+    }
+    html += '<div class="acct-actions"><button type="button" class="btn btn-secondary btn-sm" data-addrbox-edit="' + kind + '">Edit ' + title.toLowerCase() + '</button></div>';
+    html += '<div class="addr-edit-slot"></div>';
+    el.innerHTML = html;
+    var btn = el.querySelector('[data-addrbox-edit]');
+    btn.addEventListener('click', function () {
+      var slot = el.querySelector('.addr-edit-slot');
+      slot.innerHTML = addrFormHtml(a, kind);
+      bindAddrForm(slot, kind);
+      slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
   }
   function showAddrMsg(ok, text) {
     var el = document.getElementById('addr-msg');
     if (el) showMsg(el, ok, text);
   }
-  function bindAddrForm(slot) {
+  function bindAddrForm(slot, kind) {
     var form = slot.querySelector('[data-addr-form]');
     if (!form) return;
+    kind = form.getAttribute('data-addr-kind') || kind || 'ship';
+    var isBill = kind === 'bill';
     form.querySelector('[data-addr-cancel]').addEventListener('click', function () { slot.innerHTML = ''; });
+    /* Bill-to "same as ship-to" toggle hides the fields. */
+    var sameBox = form.querySelector('input[name="same_as_ship"]');
+    var fieldsWrap = form.querySelector('[data-addr-fields]');
+    if (sameBox && fieldsWrap) {
+      sameBox.addEventListener('change', function () {
+        fieldsWrap.style.display = sameBox.checked ? 'none' : '';
+      });
+    }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var id = form.getAttribute('data-addr-form');
       var fd = new FormData(form);
+      var sameAsShip = isBill && !!fd.get('same_as_ship');
+      /* "Same as ship-to": point the billing default at the shipping address. */
+      if (sameAsShip) {
+        if (!addrShip || !addrShip.id) {
+          showAddrMsg(false, 'Save a ship-to address first.');
+          return;
+        }
+        BSR.api('/api/account/addresses/' + encodeURIComponent(addrShip.id),
+          { method: 'PUT', body: { name: addrShip.name, company: addrShip.company, phone: addrShip.phone, email: addrShip.email, address1: addrShip.address1, address2: addrShip.address2, city: addrShip.city, state: addrShip.state, postal: addrShip.postal, country: addrShip.country, is_default_shipping: true, is_default_billing: true } })
+          .then(function (j) {
+            if (!(j && j.ok)) throw new Error((j && j.error) || 'Could not save.');
+            /* Remove the old separate billing address if there was one. */
+            if (addrBill && addrBill.id && String(addrBill.id) !== String(addrShip.id)) {
+              return BSR.api('/api/account/addresses/' + encodeURIComponent(addrBill.id), { method: 'DELETE' });
+            }
+          })
+          .then(function () {
+            slot.innerHTML = ''; loadAddresses();
+            showAddrMsg(true, 'Bill-to address set to same as ship-to.');
+            toast('Bill-to updated \u2713');
+          })
+          .catch(function (err) {
+            var em = (err && err.message) || 'Could not save. Check your connection.';
+            showAddrMsg(false, em); toast(em, false);
+          });
+        return;
+      }
       var payload = {
         name: (fd.get('name') || '').toString().trim(),
         company: (fd.get('company') || '').toString().trim(),
@@ -456,27 +492,26 @@ document.addEventListener('DOMContentLoaded', function () {
         state: (fd.get('state') || '').toString().trim(),
         postal: (fd.get('postal') || '').toString().trim(),
         country: (fd.get('country') || 'US').toString().trim() || 'US',
-        is_default_shipping: !!fd.get('is_default_shipping'),
-        is_default_billing: !!fd.get('is_default_billing'),
       };
+      if (isBill) {
+        payload.is_default_shipping = false;
+        payload.is_default_billing = true;
+      } else {
+        payload.is_default_shipping = true;
+        /* Keep the billing role if this address already doubles as bill-to. */
+        payload.is_default_billing = !!(addrBill && addrShip && String(addrBill.id) === String(addrShip.id));
+      }
       var doSave = function (p) {
-        var url = id === 'new' ? '/api/account/addresses' : '/api/account/addresses/' + encodeURIComponent(id);
-        BSR.api(url, { method: id === 'new' ? 'POST' : 'PUT', body: p })
+        var sharedWithShip = isBill && id !== 'new' && addrShip && String(addrShip.id) === String(id);
+        var saveId = sharedWithShip ? 'new' : id;
+        var url = saveId === 'new' ? '/api/account/addresses' : '/api/account/addresses/' + encodeURIComponent(saveId);
+        BSR.api(url, { method: saveId === 'new' ? 'POST' : 'PUT', body: p })
           .then(function (j) {
             if (j && j.ok) {
               slot.innerHTML = ''; loadAddresses();
-              var defChanged = (id === 'new');
-              if (!defChanged) {
-                for (var ai = 0; ai < addrCache.length; ai++) {
-                  if (String(addrCache[ai].id) === String(id)) {
-                    defChanged = (!!addrCache[ai].is_default_shipping !== !!p.is_default_shipping) ||
-                                 (!!addrCache[ai].is_default_billing !== !!p.is_default_billing);
-                    break;
-                  }
-                }
-              }
-              showAddrMsg(true, defChanged ? 'Address saved. Defaults updated.' : 'Address saved.');
-              toast(defChanged ? 'Default updated \u2713' : 'Address saved \u2713');
+              var label = isBill ? 'Bill-to' : 'Ship-to';
+              showAddrMsg(true, label + ' address saved.');
+              toast(label + ' address saved \u2713');
             } else {
               var em2 = (j && j.error) || 'Could not save the address.';
               showAddrMsg(false, em2);
@@ -494,12 +529,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
   function bindAddresses() {
-    document.getElementById('addr-add').addEventListener('click', function () {
-      var slot = document.getElementById('addr-form-slot');
-      slot.innerHTML = addrFormHtml(null);
-      bindAddrForm(slot);
-      slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
     loadAddresses();
   }
 
