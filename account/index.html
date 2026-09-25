@@ -280,10 +280,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------------- addresses ---------------- */
   function addrCard(a) {
-    var lines = esc(a.address1 || '');
+    var lines = '';
+    if (a.name) lines += '<strong>' + esc(a.name) + '</strong><br>';
+    if (a.company) lines += esc(a.company) + '<br>';
+    lines += esc(a.address1 || '');
     if (a.address2) lines += '<br>' + esc(a.address2);
     lines += '<br>' + esc(a.city || '') + ', ' + esc(a.state || '') + ' ' + esc(a.postal || '');
     lines += '<br>' + esc(a.country || '');
+    if (a.phone) lines += '<br>' + esc(a.phone);
     var badges = '';
     if (a.is_default_shipping) badges += '<span class="addr-badge">Default shipping</span> ';
     if (a.is_default_billing) badges += '<span class="addr-badge addr-badge-bill">Default billing</span> ';
@@ -345,6 +349,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var checkBill = isNew ? (addrCache.length === 0) : !!a.is_default_billing;
     return '<div class="addr-form-wrap"><form class="addr-form" data-addr-form="' + (a.id || 'new') + '">' +
       '<div class="addr-form-grid two-col">' +
+      '<div class="acct-field"><label>Full name</label><input name="name" required maxlength="120" autocomplete="name" value="' + esc(a.name || '') + '"></div>' +
+      '<div class="acct-field"><label>Company <span class="opt">(optional)</span></label><input name="company" maxlength="120" autocomplete="organization" value="' + esc(a.company || '') + '"></div>' +
+      '<div class="acct-field"><label>Phone</label><input name="phone" type="tel" required maxlength="40" autocomplete="tel" value="' + esc(a.phone || '') + '"></div>' +
+      '<div class="acct-field"><label>Email for tracking <span class="opt">(optional)</span></label><input name="email" type="email" maxlength="160" autocomplete="email" value="' + esc(a.email || '') + '"><div class="hint">Order updates go here if different.</div></div>' +
       '<div class="acct-field"><label>Street address</label><input name="address1" required maxlength="200" autocomplete="street-address" value="' + esc(a.address1 || '') + '"></div>' +
       '<div class="acct-field"><label>Apt, suite, etc. (optional)</label><input name="address2" maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
       '<div class="acct-field"><label>City</label><input name="city" required maxlength="100" autocomplete="address-level2" value="' + esc(a.city || '') + '"></div>' +
@@ -438,6 +446,10 @@ document.addEventListener('DOMContentLoaded', function () {
       var id = form.getAttribute('data-addr-form');
       var fd = new FormData(form);
       var payload = {
+        name: (fd.get('name') || '').toString().trim(),
+        company: (fd.get('company') || '').toString().trim(),
+        phone: (fd.get('phone') || '').toString().trim(),
+        email: (fd.get('email') || '').toString().trim(),
         address1: (fd.get('address1') || '').toString().trim(),
         address2: (fd.get('address2') || '').toString().trim(),
         city: (fd.get('city') || '').toString().trim(),
