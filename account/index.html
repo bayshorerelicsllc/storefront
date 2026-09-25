@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="acct-field"><label>Phone</label><input name="phone" type="tel" required maxlength="40" autocomplete="tel" value="' + esc(a.phone || '') + '"></div>' +
       '<div class="acct-field"><label>' + emailLabel + ' <span class="opt">(optional)</span></label><input name="email" type="email" maxlength="160" autocomplete="email" value="' + esc(a.email || '') + '"><div class="hint">' + emailHint + '</div></div>' +
       '<div class="acct-field"><label>Street address</label><input name="address1" required maxlength="200" autocomplete="street-address" value="' + esc(a.address1 || '') + '"></div>' +
-      '<div class="acct-field"><label>Apt, suite, etc. (optional)</label><input name="address2" maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
+      '<div class="acct-field"><label>Apt, suite, etc.</label><input name="address2" required maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
       '<div class="acct-field"><label>City</label><input name="city" required maxlength="100" autocomplete="address-level2" value="' + esc(a.city || '') + '"></div>' +
       '<div class="acct-field"><label>State / Province</label>' + bsrStateFieldHtml(a.country || 'US', a.state || '') + '</div>' +
       '<div class="acct-field"><label>ZIP / Postal code</label><input name="postal" required maxlength="20" autocomplete="postal-code" value="' + esc(a.postal || '') + '"></div>' +
