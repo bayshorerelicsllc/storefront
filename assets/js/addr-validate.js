@@ -140,9 +140,33 @@
   }
 
 
-  /* Live as-you-type validation. Attaches debounced listeners to the
-     street/city/ZIP fields: shows a live status and offers one-tap
-     fill-in of the corrected address. Never blocks typing or saving. */
+  /* Apply a validator correction straight into the form fields. */
+  function applyCorrection(form, corrected, payload) {
+    function setField(name, val) {
+      var el = form.querySelector('[name="' + name + '"]');
+      if (!el || val == null) return;
+      el.value = val;
+      var ev;
+      try { ev = new Event('change', { bubbles: true }); }
+      catch (e) { ev = document.createEvent('HTMLEvents'); ev.initEvent('change', true, false); }
+      el.dispatchEvent(ev);
+    }
+    setField('address1', corrected.street || payload.address1);
+    setField('address2', corrected.street2 || '');
+    setField('city', corrected.city || payload.city);
+    setField('state', corrected.state || payload.state);
+    setField('postal', corrected.zip || payload.postal);
+  }
+
+  function correctionKey(corrected) {
+    return [corrected.street, corrected.street2, corrected.city,
+            corrected.state, corrected.zip].join('|').toLowerCase();
+  }
+
+  /* Live as-you-type validation with auto-fill. When the validator returns
+     a corrected address it is written straight into the fields — no
+     suggestion box. If the user changes it back, we stop auto-applying and
+     show the suggestion instead of fighting them. Never blocks typing. */
   function attachLive(form) {
     var box = msgEl(form);
     if (!box || form._bsrLiveAttached) return;
@@ -151,7 +175,7 @@
     var cityEl = form.querySelector('input[name="city"]');
     var zipEl = form.querySelector('input[name="postal"]');
     if (!streetEl) return;
-    var timer = null, lastSig = '';
+    var timer = null, lastSig = '', appliedSig = '', appliedKey = '';
 
     function sig() {
       return [streetEl.value, cityEl ? cityEl.value : '', zipEl ? zipEl.value : ''].join('|').toLowerCase();
@@ -166,14 +190,28 @@
       var el = form.querySelector('[name="' + name + '"]');
       return el ? el.value : '';
     }
-    function setField(name, val) {
-      var el = form.querySelector('[name="' + name + '"]');
-      if (!el || val == null) return;
-      el.value = val;
-      var ev;
-      try { ev = new Event('change', { bubbles: true }); }
-      catch (e) { ev = document.createEvent('HTMLEvents'); ev.initEvent('change', true, false); }
-      el.dispatchEvent(ev);
+    function showSuggest(corrected, payload) {
+      box.innerHTML =
+        '<div class="addr-val-suggest"><p><strong>Did you mean:</strong><br>' + fmtAddr({
+          address1: corrected.street, address2: corrected.street2,
+          city: corrected.city, state: corrected.state,
+          postal: corrected.zip, country: corrected.country || payload.country,
+        }) + '</p>' +
+        '<div class="addr-val-actions">' +
+        '<button type="button" class="btn btn-primary btn-sm" data-live-use>Use this address</button> ' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-live-keep>Keep mine</button>' +
+        '</div></div>';
+      var useBtn = box.querySelector('[data-live-use]');
+      var keepBtn = box.querySelector('[data-live-keep]');
+      if (useBtn) useBtn.addEventListener('click', function () {
+        applyCorrection(form, corrected, payload);
+        box.innerHTML = '<p class="addr-val-ok">&#10003; Address updated.</p>';
+        appliedSig = sig(); appliedKey = correctionKey(corrected); lastSig = appliedSig;
+      });
+      if (keepBtn) keepBtn.addEventListener('click', function () {
+        box.innerHTML = '';
+        lastSig = sig();
+      });
     }
     function run() {
       var s = sig();
@@ -202,29 +240,19 @@
           return;
         }
         if (suggested) {
-          box.innerHTML =
-            '<div class="addr-val-suggest"><p><strong>Did you mean:</strong><br>' + fmtAddr({
-              address1: corrected.street, address2: corrected.street2,
-              city: corrected.city, state: corrected.state,
-              postal: corrected.zip, country: corrected.country || payload.country,
-            }) + '</p>' +
-            '<div class="addr-val-actions">' +
-            '<button type="button" class="btn btn-primary btn-sm" data-live-use>Use this address</button>' +
-            '</div></div>';
-          var useBtn = box.querySelector('[data-live-use]');
-          if (useBtn) useBtn.addEventListener('click', function () {
-            setField('address1', corrected.street || payload.address1);
-            setField('address2', corrected.street2 || '');
-            setField('city', corrected.city || payload.city);
-            setField('state', corrected.state || payload.state);
-            setField('postal', corrected.zip || payload.postal);
-            box.innerHTML = '<p class="addr-val-ok">&#10003; Address updated.</p>';
-            lastSig = sig();
-          });
+          var key = correctionKey(corrected);
+          if (key === appliedKey && s !== appliedSig) {
+            /* User changed it back after an auto-fill: offer, don't fight. */
+            showSuggest(corrected, payload);
+            return;
+          }
+          applyCorrection(form, corrected, payload);
+          appliedSig = sig(); appliedKey = key; lastSig = appliedSig;
+          box.innerHTML = '<p class="addr-val-ok">&#10003; Address verified.</p>';
           return;
         }
         box.innerHTML = '';
-      }).catch(function () { /* stay silent; the submit-time check still runs */ });
+      }).catch(function () { /* stay silent; saving still works */ });
     }
     function schedule() {
       if (timer) clearTimeout(timer);
@@ -237,5 +265,29 @@
     if (ready()) timer = setTimeout(run, 600);
   }
 
-  window.BSRAddrValidate = { validate: validate, checkAndConfirm: checkAndConfirm, attachLive: attachLive };
+  /* Silent submit-time check: validate, fold any corrections into the
+     payload, then save. No confirmation dialog. Never blocks saving. */
+  function silentCheck(form, payload, doSave) {
+    validate(payload).then(function (j) {
+      var out = payload;
+      if (j && j.ok && j.address &&
+          (j.corrected || (j.corrections && j.corrections.length)) &&
+          differs(j.address, payload)) {
+        var a = j.address;
+        out = {
+          address1: a.street || payload.address1,
+          address2: a.street2 || '',
+          city: a.city || payload.city,
+          state: a.state || payload.state,
+          postal: a.zip || payload.postal,
+          country: a.country || payload.country,
+          is_default_shipping: payload.is_default_shipping,
+          is_default_billing: payload.is_default_billing,
+        };
+      }
+      doSave(out);
+    }).catch(function () { doSave(payload); });
+  }
+
+  window.BSRAddrValidate = { validate: validate, checkAndConfirm: checkAndConfirm, attachLive: attachLive, silentCheck: silentCheck };
 })();
