@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clear cart — Bay Shore Relics LLC</title></head>
+<body style="font-family:system-ui;text-align:center;padding:40px">
+<h2>Clearing your cart…</h2>
+<script>
+// Clear all known cart storage keys
+['bsr-cart','bsr_cart','cart','bsrCart'].forEach(function(k){
+  try { localStorage.removeItem(k); } catch(e){}
+  try { sessionStorage.removeItem(k); } catch(e){}
+});
+// Also clear via BSR.cart if available
+document.write('<p>Cart cleared. <a href="/shop/">Back to shop</a></p>');
+setTimeout(function(){ location.href='/shop/'; }, 1500);
+</script>
+</body></html>
