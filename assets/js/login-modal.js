@@ -74,7 +74,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '.bsr-forgot{text-align:right;margin:-16px 0 30px}',
     '.bsr-link{background:none;border:none;color:#2a241b;font-size:.88rem;cursor:pointer;',
     'text-decoration:underline;padding:0;font-family:inherit}',
-    '.bsr-captcha-note{text-align:center;font-size:.74rem;color:#8a8172;margin:28px 0 0;line-height:1.6}',
+    '.bsr-captcha-note{text-align:center;font-size:.74rem;color:#8a8172;margin:28px 0 0;line-height:1.6;text-wrap:balance}',
     '.bsr-captcha-note a{color:#2a241b}',
     '.bsr-cf-brand{white-space:nowrap}',
     '.bsr-cf-brand img{height:1.1em;width:auto;vertical-align:-0.2em;margin-right:.35em;border-radius:2px}',
