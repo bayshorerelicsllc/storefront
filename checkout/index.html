@@ -345,6 +345,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
     window.paypal.Buttons({
+      style: { color: 'gold', shape: 'rect', label: 'checkout', height: 44 },
       createOrder: function () {
         var ship = collectShipping();
         if (!ship) return Promise.reject(new Error('Please complete the shipping form.'));
