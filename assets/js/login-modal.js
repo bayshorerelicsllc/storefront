@@ -30,9 +30,10 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     'max-height:92vh;overflow-y:auto;position:relative;padding:42px 38px 32px;',
     'box-shadow:0 18px 60px rgba(0,0,0,.28);animation:bsrLoginPop .22s ease}',
     '@keyframes bsrLoginPop{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:none;opacity:1}}',
-    '.bsr-login-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border:none;background:transparent;',
-    'font-size:20px;line-height:1;color:#2a241b;cursor:pointer;border-radius:50%}',
-    '.bsr-login-close:hover{background:rgba(42,36,27,.08)}',
+    '.bsr-login-close{position:absolute;top:14px;right:14px;width:36px;height:36px;border:1px solid rgba(30,77,51,.25);',
+    'background:#fff;font-size:20px;line-height:1;color:#1e4d33;cursor:pointer;border-radius:50%;',
+    'display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.12);font-weight:700}',
+    '.bsr-login-close:hover{background:#1e4d33;color:#fff;border-color:#1e4d33}',
     '@media(min-width:768px){.bsr-login-overlay{align-items:flex-start;justify-content:flex-end;padding:76px 24px 24px}',
     '.bsr-login-card{margin:0;max-width:400px}}',
     /* Shared Logitech-style form */
@@ -245,7 +246,6 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
 
   function buildForm(container) {
     container.innerHTML =
-      '<div class="bsr-backline"><a href="/" class="bsr-back">&larr; Back to home</a></div>' +
       '<div class="bsr-loginform">' +
       '<div class="bsr-error" data-el="error" role="alert"></div>' +
       '<div class="bsr-brand"><img src="/assets/img/logo.png" alt="Bay Shore Relics logo"><span>Bay Shore Relics LLC</span></div>' +
