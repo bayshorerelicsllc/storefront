@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop all slides — Bay Shore Relics LLC</title>
+<meta name="description" content="Browse our catalog of vintage 35mm railroad slides. Each slide is a single physical item, sold once.">
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap">
+  <div class="page-head">
+    <h1>Shop all slides</h1>
+    <p class="lede">Every slide is a single physical item, sold once. When it's gone, it's gone — browse the catalog below.</p>
+  </div>
+
+  <div class="toolbar" role="search" aria-label="Filter slides">
+    <span class="search-wrap">
+      <input type="search" id="q" placeholder="Search slides…" aria-label="Search slides" autocomplete="off">
+    </span>
+    <select id="railroad" aria-label="Filter by railroad">
+      <option value="">All railroads</option>
+    </select>
+    <select id="sort" aria-label="Sort slides">
+      <option value="newest">Newest</option>
+      <option value="price-asc">Price: Low to High</option>
+      <option value="price-desc">Price: High to Low</option>
+    </select>
+    <span class="spacer"></span>
+    <span class="count-note" id="count-note" aria-live="polite"></span>
+  </div>
+
+  <div class="grid" id="grid" aria-live="polite"></div>
+
+  <nav class="pager" id="pager" aria-label="Pagination" hidden></nav>
+</div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: 'shop' });
+
+  var PER = 24;
+  var state = { q: '', page: 1, railroad: '', sort: 'newest' };
+  var railroadsSeen = {}; // distinct railroad values collected across fetches
+  var pageCache = {};     // key: page|q -> api response
+
+  var gridEl = document.getElementById('grid');
+  var pagerEl = document.getElementById('pager');
+  var countEl = document.getElementById('count-note');
+  var qEl = document.getElementById('q');
+  var railroadEl = document.getElementById('railroad');
+  var sortEl = document.getElementById('sort');
+  var debounce = null;
+
+  function apiUrl(page) {
+    var qs = '/api/catalog/products?page=' + page + '&per=' + PER;
+    if (state.q) qs += '&q=' + encodeURIComponent(state.q);
+    return qs;
+  }
+
+  function cardHtml(p) {
+    var url = '/product.html?slug=' + encodeURIComponent(p.slug);
+    var img = p.image
+      ? '<img src="' + BSR.esc(p.image) + '" alt="' + BSR.esc(p.title) + '" loading="lazy">'
+      : '<span class="no-photo">' + BSR.icon('eye', 'ic-lg') + '</span>';
+    var meta = [p.railroad, p.item_number ? '#' + p.item_number : '']
+      .filter(Boolean).map(BSR.esc).join(' · ');
+    var onSale = p.compare_at_cents && p.compare_at_cents > p.price_cents;
+    var price = BSR.money(p.price_cents) +
+      (onSale ? '<s>' + BSR.money(p.compare_at_cents) + '</s>' : '');
+    var badge = onSale ? ' <span class="badge badge-sale">Sale</span>' : '';
+    return '<article class="card"><a class="card-link" href="' + url + '">' +
+      '<div class="card-img">' + img + '</div>' +
+      '<div class="card-body">' +
+        '<h3 class="card-title">' + BSR.esc(p.title) + '</h3>' +
+        (meta ? '<div class="card-meta">' + meta + '</div>' : '') +
+        '<div class="card-price">' + price + badge + '</div>' +
+      '</div></a></article>';
+  }
+
+  function renderSkeletons() {
+    var h = '';
+    for (var i = 0; i < 8; i++) h += '<div class="sk" style="aspect-ratio:1/1.35"></div>';
+    gridEl.innerHTML = h;
+    pagerEl.hidden = true;
+    countEl.textContent = '';
+  }
+
+  function collectRailroads(products) {
+    var changed = false;
+    products.forEach(function (p) {
+      if (p.railroad && !railroadsSeen[p.railroad]) { railroadsSeen[p.railroad] = true; changed = true; }
+    });
+    if (changed) {
+      var keep = railroadEl.value;
+      var opts = ['<option value="">All railroads</option>'];
+      Object.keys(railroadsSeen).sort().forEach(function (r) {
+        opts.push('<option value="' + BSR.esc(r) + '"' +
+          (r === keep ? ' selected' : '') + '>' + BSR.esc(r) + '</option>');
+      });
+      railroadEl.innerHTML = opts.join('');
+    }
+  }
+
+  function applySort(products) {
+    var sorted = products.slice();
+    if (state.sort === 'price-asc') sorted.sort(function (a, b) { return a.price_cents - b.price_cents; });
+    else if (state.sort === 'price-desc') sorted.sort(function (a, b) { return b.price_cents - a.price_cents; });
+    return sorted;
+  }
+
+  function render(j) {
+    collectRailroads(j.products || []);
+    var products = applySort((j.products || []).filter(function (p) {
+      return !state.railroad || p.railroad === state.railroad;
+    }));
+    var total = j.total || 0;
+    countEl.textContent = total + (total === 1 ? ' slide' : ' slides');
+
+    if (total === 0) {
+      gridEl.innerHTML =
+        '<div class="empty" style="grid-column:1/-1">' +
+          BSR.icon('box', 'ic-lg') +
+          '<h2>New slides arriving soon</h2>' +
+          '<p>We\'re cataloging fresh collections — check back shortly.</p>' +
+          '<a class="btn btn-primary" href="/">Join the launch list</a>' +
+        '</div>';
+      pagerEl.hidden = true;
+      return;
+    }
+
+    if (!products.length) {
+      gridEl.innerHTML =
+        '<div class="empty" style="grid-column:1/-1">' +
+          BSR.icon('search', 'ic-lg') +
+          '<h2>No slides match your filters</h2>' +
+          '<p>Try a different search or railroad.</p>' +
+          '<button class="btn btn-secondary" id="clear-filters">Clear filters</button>' +
+        '</div>';
+      var clear = document.getElementById('clear-filters');
+      if (clear) clear.addEventListener('click', resetFilters);
+    } else {
+      gridEl.innerHTML = products.map(cardHtml).join('');
+    }
+    renderPager(j.pages || 1, state.page);
+  }
+
+  function renderPager(pages, current) {
+    if (pages <= 1) { pagerEl.hidden = true; return; }
+    pagerEl.hidden = false;
+    var h = '<button data-p="' + (current - 1) + '"' + (current <= 1 ? ' disabled' : '') +
+      ' aria-label="Previous page">' + BSR.icon('chev-left', 'ic-sm') + '</button>';
+    var lo = Math.max(1, current - 2), hi = Math.min(pages, current + 2);
+    if (lo > 1) h += '<button data-p="1">1</button>' + (lo > 2 ? '<span aria-hidden="true">…</span>' : '');
+    for (var p = lo; p <= hi; p++) {
+      h += '<button data-p="' + p + '"' + (p === current ? ' class="active" aria-current="page"' : '') + '>' + p + '</button>';
+    }
+    if (hi < pages) h += (hi < pages - 1 ? '<span aria-hidden="true">…</span>' : '') + '<button data-p="' + pages + '">' + pages + '</button>';
+    h += '<button data-p="' + (current + 1) + '"' + (current >= pages ? ' disabled' : '') +
+      ' aria-label="Next page">' + BSR.icon('chev-right', 'ic-sm') + '</button>';
+    pagerEl.innerHTML = h;
+    pagerEl.querySelectorAll('button[data-p]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = parseInt(b.getAttribute('data-p'), 10);
+        if (p >= 1 && p <= pages && p !== current) loadPage(p);
+      });
+    });
+  }
+
+  function loadPage(page) {
+    state.page = page;
+    renderSkeletons();
+    var key = state.q + '|' + page;
+    var done = function (j) {
+      if (j && j.ok) { pageCache[key] = j; render(j); }
+      else {
+        gridEl.innerHTML =
+          '<div class="empty" style="grid-column:1/-1">' +
+            BSR.icon('info', 'ic-lg') +
+            '<h2>Couldn\'t load the catalog</h2>' +
+            '<p>Something went wrong on our end — please try again.</p>' +
+            '<button class="btn btn-secondary" id="retry">Try again</button>' +
+          '</div>';
+        var r = document.getElementById('retry');
+        if (r) r.addEventListener('click', function () { loadPage(state.page); });
+      }
+    };
+    if (pageCache[key] && !state.railroad) done(pageCache[key]);
+    else BSR.api(apiUrl(page)).then(done);
+  }
+
+  function resetFilters() {
+    state.q = ''; state.railroad = ''; state.page = 1;
+    qEl.value = ''; railroadEl.value = '';
+    loadPage(1);
+  }
+
+  qEl.addEventListener('input', function () {
+    clearTimeout(debounce);
+    debounce = setTimeout(function () {
+      state.q = qEl.value.trim();
+      loadPage(1);
+    }, 350);
+  });
+  railroadEl.addEventListener('change', function () { state.railroad = railroadEl.value; state.page = 1; loadPage(1); });
+  sortEl.addEventListener('change', function () {
+    state.sort = sortEl.value;
+    var key = state.q + '|' + state.page;
+    if (pageCache[key]) render(pageCache[key]); else loadPage(1);
+  });
+
+  loadPage(1);
+});
+</script>
+</body>
+</html>

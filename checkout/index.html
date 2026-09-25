@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout — Bay Shore Relics LLC</title>
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap">
+<div class="page-head">
+<h1>Checkout</h1>
+<p>Each slide is a single physical item, sold once.</p>
+</div>
+<div id="checkout-root"></div>
+</div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: '' });
+  var root = document.getElementById('checkout-root');
+  var slugs = BSR.cart.list();
+  if (!slugs.length) {
+    root.innerHTML =
+      '<div class="empty"><div class="empty-icon">' + BSR.icon('cart') + '</div>' +
+      '<h2>Your cart is empty</h2>' +
+      '<p>Add a slide to your cart before checking out.</p>' +
+      '<a class="btn btn-primary" href="/shop/">Browse slides</a></div>';
+    return;
+  }
+
+  var COUNTRIES = [
+    ['US', 'United States'], ['CA', 'Canada'], ['GB', 'United Kingdom'], ['AU', 'Australia'],
+    ['DE', 'Germany'], ['FR', 'France'], ['JP', 'Japan'], ['AT', 'Austria'], ['BE', 'Belgium'],
+    ['BR', 'Brazil'], ['BG', 'Bulgaria'], ['HR', 'Croatia'], ['CY', 'Cyprus'], ['CZ', 'Czechia'],
+    ['DK', 'Denmark'], ['EE', 'Estonia'], ['FI', 'Finland'], ['GR', 'Greece'], ['HU', 'Hungary'],
+    ['IS', 'Iceland'], ['IE', 'Ireland'], ['IT', 'Italy'], ['LV', 'Latvia'], ['LI', 'Liechtenstein'],
+    ['LT', 'Lithuania'], ['LU', 'Luxembourg'], ['MT', 'Malta'], ['MX', 'Mexico'], ['NL', 'Netherlands'],
+    ['NZ', 'New Zealand'], ['NO', 'Norway'], ['PL', 'Poland'], ['PT', 'Portugal'], ['RO', 'Romania'],
+    ['SG', 'Singapore'], ['SK', 'Slovakia'], ['SI', 'Slovenia'], ['KR', 'South Korea'], ['ES', 'Spain'],
+    ['SE', 'Sweden'], ['CH', 'Switzerland'], ['TW', 'Taiwan'], ['UA', 'Ukraine'], ['IN', 'India'],
+    ['IL', 'Israel'], ['ZA', 'South Africa'], ['AR', 'Argentina'], ['CL', 'Chile'], ['CO', 'Colombia'],
+    ['PE', 'Peru'], ['TH', 'Thailand'], ['MY', 'Malaysia'], ['PH', 'Philippines'], ['HK', 'Hong Kong'],
+    ['CN', 'China']
+  ];
+
+  function savedPromo() {
+    try {
+      var p = JSON.parse(sessionStorage.getItem('bsr-promo') || 'null');
+      return (p && p.code) ? p : null;
+    } catch (e) { return null; }
+  }
+
+  root.innerHTML =
+    '<div class="checkout-layout">' +
+    '<div class="checkout-main">' +
+    '<section class="card"><h2><span class="step-num">1</span> Contact</h2>' +
+    '<div class="field"><label for="f-email">Email</label>' +
+    '<input type="email" id="f-email" autocomplete="email" placeholder="you@example.com">' +
+    '<div class="error" id="e-email" style="display:none"></div></div></section>' +
+    '<section class="card"><h2><span class="step-num">2</span> Shipping address</h2>' +
+    '<div class="field"><label for="f-name">Full name</label>' +
+    '<input type="text" id="f-name" autocomplete="name">' +
+    '<div class="error" id="e-name" style="display:none"></div></div>' +
+    '<div class="field"><label for="f-line1">Address</label>' +
+    '<input type="text" id="f-line1" autocomplete="street-address">' +
+    '<div class="error" id="e-line1" style="display:none"></div></div>' +
+    '<div class="form-row"><div class="field"><label for="f-city">City</label>' +
+    '<input type="text" id="f-city" autocomplete="address-level2">' +
+    '<div class="error" id="e-city" style="display:none"></div></div>' +
+    '<div class="field"><label for="f-state">State / Province</label>' +
+    '<input type="text" id="f-state" autocomplete="address-level1">' +
+    '<div class="error" id="e-state" style="display:none"></div></div></div>' +
+    '<div class="form-row"><div class="field"><label for="f-postal">Postal code</label>' +
+    '<input type="text" id="f-postal" autocomplete="postal-code">' +
+    '<div class="error" id="e-postal" style="display:none"></div></div>' +
+    '<div class="field"><label for="f-country">Country</label>' +
+    '<select id="f-country">' + COUNTRIES.map(function (c) {
+      return '<option value="' + c[0] + '"' + (c[0] === 'US' ? ' selected' : '') + '>' + BSR.esc(c[1]) + '</option>';
+    }).join('') + '</select></div></div></section>' +
+    '<section class="card"><h2><span class="step-num">3</span> Promo code</h2>' +
+    '<div class="promo-row"><input type="text" id="f-promo" class="field" placeholder="Promo code" aria-label="Promo code" value="' + BSR.esc(savedPromo() ? savedPromo().code : '') + '">' +
+    '<button class="btn btn-secondary btn-sm" id="promo-apply" type="button">Apply</button></div>' +
+    '<div class="hint" id="promo-ok" style="display:none"></div>' +
+    '<div class="error" id="promo-err" style="display:none"></div></section>' +
+    '<section class="card"><h2><span class="step-num">4</span> Payment</h2>' +
+    '<div class="pay-tabs" role="tablist">' +
+    '<button class="pay-tab" id="tab-paypal" type="button" role="tab" aria-selected="true" data-tab="paypal">PayPal</button>' +
+    '<button class="pay-tab" id="tab-card" type="button" role="tab" aria-selected="false" data-tab="card">Card</button></div>' +
+    '<div id="pay-paypal" role="tabpanel"><div id="paypal-buttons"></div><div class="hint" id="paypal-msg"></div></div>' +
+    '<div id="pay-card" role="tabpanel" style="display:none"><div id="stripe-element"></div>' +
+    '<div class="error" id="stripe-err" style="display:none"></div>' +
+    '<button class="btn btn-primary btn-block" id="stripe-pay" type="button">Pay securely</button></div>' +
+    '<div class="secure-note">' + BSR.icon('lock', 'ic-sm') + '<span>Payments are encrypted. We never see your card number.</span></div>' +
+    '</section></div>' +
+    '<aside class="card summary"><h2>Order summary</h2>' +
+    '<div class="cart-lines" id="sum-lines"></div>' +
+    '<div id="sum-rows"></div></aside></div>';
+
+  /* ---------- summary lines ---------- */
+  var sumLines = document.getElementById('sum-lines');
+  var sumRows = document.getElementById('sum-rows');
+  var products = [];
+  var pending = slugs.length;
+  var stripeBreakdown = null;
+
+  function renderTotals(breakdown) {
+    var subtotal = products.reduce(function (a, p) { return a + (p.price_cents || 0); }, 0);
+    var saved = savedPromo();
+    var discount = saved ? (saved.discount_cents || 0) : 0;
+    var html = '<div class="sum-row"><span>Subtotal</span><span>' + BSR.money(subtotal) + '</span></div>';
+    if (discount) html += '<div class="sum-row"><span>Discount</span><span>−' + BSR.money(discount) + '</span></div>';
+    if (breakdown) {
+      if (breakdown.ship_cents != null) html += '<div class="sum-row"><span>Shipping</span><span>' + BSR.money(breakdown.ship_cents) + '</span></div>';
+      if (breakdown.tax_cents != null) html += '<div class="sum-row"><span>Tax</span><span>' + BSR.money(breakdown.tax_cents) + '</span></div>';
+      if (breakdown.total_cents != null) html += '<div class="sum-row total"><span>Total</span><span>' + BSR.money(breakdown.total_cents) + '</span></div>';
+    } else {
+      html += '<div class="sum-row"><span>Shipping &amp; tax</span><span>Calculated at payment</span></div>';
+      html += '<div class="sum-row total"><span>Total</span><span>' + BSR.money(Math.max(0, subtotal - discount)) + '</span></div>';
+    }
+    sumRows.innerHTML = html;
+  }
+
+  slugs.forEach(function (slug) {
+    BSR.api('/api/catalog/products/' + encodeURIComponent(slug)).then(function (j) {
+      products.push((j && j.ok && j.product) ? j.product : { slug: slug, title: slug, price_cents: 0, image: '' });
+      if (--pending === 0) {
+        products.sort(function (a, b) { return slugs.indexOf(a.slug) - slugs.indexOf(b.slug); });
+        sumLines.innerHTML = products.map(function (p) {
+          var img = p.image
+            ? '<img src="' + BSR.esc(p.image) + '" alt="' + BSR.esc(p.title) + '" loading="lazy">'
+            : '<div class="empty-icon">' + BSR.icon('box') + '</div>';
+          return '<div class="cart-line"><a class="t" href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' + img + '</a>' +
+            '<div class="m"><div class="t">' + BSR.esc(p.title) + '</div><div class="hint">Qty 1</div></div>' +
+            '<div class="p">' + BSR.money(p.price_cents) + '</div></div>';
+        }).join('');
+        renderTotals(stripeBreakdown);
+      }
+    });
+  });
+
+  /* ---------- promo ---------- */
+  document.getElementById('promo-apply').addEventListener('click', function () {
+    var code = document.getElementById('f-promo').value.trim();
+    var okEl = document.getElementById('promo-ok');
+    var errEl = document.getElementById('promo-err');
+    okEl.style.display = 'none'; errEl.style.display = 'none';
+    if (!code) { errEl.textContent = 'Enter a promo code.'; errEl.style.display = ''; return; }
+    var subtotal = products.reduce(function (a, p) { return a + (p.price_cents || 0); }, 0);
+    var btn = document.getElementById('promo-apply');
+    btn.disabled = true; btn.textContent = 'Checking…';
+    BSR.api('/api/catalog/discounts/validate', {
+      method: 'POST',
+      body: { code: code, subtotal_cents: subtotal, item_count: products.length }
+    }).then(function (j) {
+      btn.disabled = false; btn.textContent = 'Apply';
+      if (j.ok) {
+        try { sessionStorage.setItem('bsr-promo', JSON.stringify({ code: j.code, discount_cents: j.discount_cents, label: j.label || '' })); } catch (e) {}
+        okEl.textContent = j.code + ' applied' + (j.label ? ' — ' + j.label : '') + '.';
+        okEl.style.display = '';
+        BSR.toast('Promo applied.');
+        renderTotals(stripeBreakdown);
+      } else {
+        errEl.textContent = j.error || 'That code is not valid.';
+        errEl.style.display = '';
+      }
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Apply';
+      errEl.textContent = 'Could not validate the code right now.';
+      errEl.style.display = '';
+    });
+  });
+
+  /* ---------- validation ---------- */
+  function fieldErr(id, msg) {
+    var el = document.getElementById(id);
+    if (!msg) { el.style.display = 'none'; return false; }
+    el.textContent = msg; el.style.display = '';
+    return true;
+  }
+  function collectShipping() {
+    var bad = false;
+    var email = document.getElementById('f-email').value.trim();
+    var name = document.getElementById('f-name').value.trim();
+    var line1 = document.getElementById('f-line1').value.trim();
+    var city = document.getElementById('f-city').value.trim();
+    var state = document.getElementById('f-state').value.trim();
+    var postal = document.getElementById('f-postal').value.trim();
+    var country = document.getElementById('f-country').value;
+    bad = fieldErr('e-email', !email ? 'Email is required.' : (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Enter a valid email address.' : '')) || bad;
+    bad = fieldErr('e-name', !name ? 'Full name is required.' : '') || bad;
+    bad = fieldErr('e-line1', !line1 ? 'Street address is required.' : '') || bad;
+    bad = fieldErr('e-city', !city ? 'City is required.' : '') || bad;
+    bad = fieldErr('e-state', !state ? 'State / province is required.' : '') || bad;
+    bad = fieldErr('e-postal', !postal ? 'Postal code is required.' : '') || bad;
+    if (bad) return null;
+    return {
+      name: name, email: email,
+      address: { line1: line1, city: city, state: state, postal: postal, country: country }
+    };
+  }
+
+  /* ---------- payment tabs ---------- */
+  var currentTab = 'paypal';
+  var tabs = document.querySelectorAll('.pay-tab');
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      if (t.disabled) return;
+      currentTab = t.getAttribute('data-tab');
+      tabs.forEach(function (x) {
+        var on = x === t;
+        x.classList.toggle('active', on);
+        x.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      document.getElementById('pay-paypal').style.display = currentTab === 'paypal' ? '' : 'none';
+      document.getElementById('pay-card').style.display = currentTab === 'card' ? '' : 'none';
+    });
+  });
+  function setTabEnabled(which, enabled, msg) {
+    var tab = document.getElementById(which === 'paypal' ? 'tab-paypal' : 'tab-card');
+    tab.disabled = !enabled;
+    tab.classList.toggle('disabled', !enabled);
+    if (!enabled && msg) {
+      var msgEl = document.getElementById(which === 'paypal' ? 'paypal-msg' : 'stripe-err');
+      msgEl.textContent = msg;
+      msgEl.style.display = '';
+    }
+  }
+
+  function promoCode() {
+    var s = savedPromo();
+    return s ? s.code : null;
+  }
+
+  function finishOrder(orderID) {
+    BSR.cart.clear();
+    try { sessionStorage.setItem('bsr-last-order', orderID); } catch (e) {}
+    window.location = '/thank-you/';
+  }
+
+  /* ---------- load provider config ---------- */
+  BSR.api('/api/catalog/config').then(function (cfg) {
+    var paypalKey = cfg && cfg.ok ? cfg.paypal_client_id : null;
+    var stripeKey = cfg && cfg.ok ? cfg.stripe_publishable_key : null;
+    if (!paypalKey) {
+      setTabEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
+    } else {
+      var s = document.createElement('script');
+      s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(paypalKey) + '&currency=USD&intent=capture';
+      s.onload = renderPayPalButtons;
+      s.onerror = function () {
+        document.getElementById('paypal-msg').textContent = 'PayPal could not load. Please try the card option.';
+      };
+      document.head.appendChild(s);
+    }
+    if (!stripeKey) {
+      setTabEnabled('card', false, "Card payments aren't connected yet — please check back soon.");
+    } else {
+      initStripe(stripeKey);
+    }
+    // If the first tab is disabled, switch to the other one.
+    var ppTab = document.getElementById('tab-paypal');
+    if (ppTab.disabled && !document.getElementById('tab-card').disabled) {
+      document.getElementById('tab-card').click();
+    }
+  }).catch(function () {
+    setTabEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
+    setTabEnabled('card', false, "Card payments aren't connected yet — please check back soon.");
+  });
+
+  function renderPayPalButtons() {
+    if (!window.paypal) {
+      document.getElementById('paypal-msg').textContent = 'PayPal could not load. Please try the card option.';
+      return;
+    }
+    window.paypal.Buttons({
+      createOrder: function () {
+        var ship = collectShipping();
+        if (!ship) return Promise.reject(new Error('Please complete the shipping form.'));
+        return BSR.api('/api/checkout/create', {
+          method: 'POST',
+          body: { slugs: slugs, promo_code: promoCode(), shipping: ship }
+        }).then(function (j) {
+          if (!j.ok) throw new Error(j.error || 'Could not create the PayPal order.');
+          return j.orderID;
+        });
+      },
+      onApprove: function (data) {
+        return BSR.api('/api/checkout/capture', {
+          method: 'POST',
+          body: { orderID: data.orderID }
+        }).then(function (j) {
+          if (j.ok) { finishOrder(data.orderID); }
+          else { BSR.toast(j.error || 'Payment could not be captured.', 'err'); }
+        });
+      },
+      onCancel: function () { BSR.toast('PayPal payment cancelled.'); },
+      onError: function (err) { BSR.toast('PayPal error: ' + (err && err.message ? err.message : 'please try again.'), 'err'); }
+    }).render('#paypal-buttons');
+  }
+
+  /* ---------- Stripe ---------- */
+  var stripe = null, elements = null, stripeMounted = false, stripeIntent = null;
+  function initStripe(pk) {
+    var s = document.createElement('script');
+    s.src = 'https://js.stripe.com/v3/';
+    s.onload = function () {
+      stripe = window.Stripe(pk);
+      document.getElementById('stripe-pay').addEventListener('click', onStripePay);
+    };
+    s.onerror = function () {
+      setTabEnabled('card', false, 'Card payments could not load — please try PayPal.');
+    };
+    document.head.appendChild(s);
+  }
+  function onStripePay() {
+    var errEl = document.getElementById('stripe-err');
+    errEl.style.display = 'none';
+    if (!stripe) { errEl.textContent = 'Card payments are still loading — try again in a moment.'; errEl.style.display = ''; return; }
+    var ship = collectShipping();
+    if (!ship) return;
+    var btn = document.getElementById('stripe-pay');
+    btn.disabled = true; btn.textContent = 'Preparing payment…';
+    BSR.api('/api/stripe/create-intent', {
+      method: 'POST',
+      body: { slugs: slugs, promo_code: promoCode(), shipping: ship }
+    }).then(function (j) {
+      if (!j.ok) throw new Error(j.error || 'Could not start the card payment.');
+      stripeIntent = j;
+      stripeBreakdown = j.breakdown || { total_cents: j.amount_cents };
+      renderTotals(stripeBreakdown);
+      if (!stripeMounted) {
+        elements = stripe.elements({ clientSecret: j.client_secret });
+        var paymentEl = elements.create('payment');
+        paymentEl.mount('#stripe-element');
+        stripeMounted = true;
+      }
+      return stripe.confirmPayment({
+        elements: elements,
+        confirmParams: { return_url: window.location.origin + '/thank-you/' },
+        redirect: 'if_required'
+      });
+    }).then(function (result) {
+      var err = result && result.error;
+      if (err) {
+        errEl.textContent = err.message || 'The card payment failed.';
+        errEl.style.display = '';
+        btn.disabled = false; btn.textContent = 'Pay securely';
+        return;
+      }
+      var pi = result && result.paymentIntent;
+      if (pi && pi.status === 'succeeded') {
+        try { sessionStorage.setItem('bsr-last-order', stripeIntent.order_token || pi.id); } catch (e) {}
+        finishOrder(stripeIntent.order_token || pi.id);
+      } else {
+        errEl.textContent = 'Payment status: ' + (pi ? pi.status : 'unknown') + '. Please try again.';
+        errEl.style.display = '';
+        btn.disabled = false; btn.textContent = 'Pay securely';
+      }
+    }).catch(function (e) {
+      errEl.textContent = e.message || 'Could not start the card payment.';
+      errEl.style.display = '';
+      btn.disabled = false; btn.textContent = 'Pay securely';
+    });
+  }
+});
+</script>
+</body>
+</html>

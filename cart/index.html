@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cart — Bay Shore Relics LLC</title>
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap">
+<div class="page-head">
+<h1>Your cart</h1>
+<p>Each slide is a single physical item, sold once.</p>
+</div>
+<div id="cart-root"></div>
+</div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: '' });
+  var root = document.getElementById('cart-root');
+
+  function renderEmpty() {
+    root.innerHTML =
+      '<div class="empty"><div class="empty-icon">' + BSR.icon('cart') + '</div>' +
+      '<h2>Your cart is empty</h2>' +
+      '<p>Browse the collection — every slide is one of a kind.</p>' +
+      '<a class="btn btn-primary" href="/shop/">Browse slides</a></div>';
+  }
+
+  function promoState() {
+    try {
+      var p = JSON.parse(sessionStorage.getItem('bsr-promo') || 'null');
+      return (p && p.code) ? p : null;
+    } catch (e) { return null; }
+  }
+  function setPromo(p) {
+    if (p) { try { sessionStorage.setItem('bsr-promo', JSON.stringify(p)); } catch (e) {} }
+    else { try { sessionStorage.removeItem('bsr-promo'); } catch (e) {} }
+  }
+
+  function applyPromo(code, subtotalCents, itemCount, cb) {
+    BSR.api('/api/catalog/discounts/validate', {
+      method: 'POST',
+      body: { code: code, subtotal_cents: subtotalCents, item_count: itemCount }
+    }).then(function (j) {
+      if (j.ok) {
+        setPromo({ code: j.code, discount_cents: j.discount_cents, label: j.label || '' });
+        cb(null);
+      } else {
+        cb(j.error || 'That code is not valid.');
+      }
+    }).catch(function () { cb('Could not validate the code right now.'); });
+  }
+
+  function renderPromo(subtotalCents, itemCount) {
+    var host = document.getElementById('promo-host');
+    if (!host) return;
+    var saved = promoState();
+    if (saved) {
+      host.innerHTML =
+        '<span class="promo-ok">' + BSR.icon('tag', 'ic-sm') + '<span>' +
+        BSR.esc(saved.code) + (saved.label ? ' — ' + BSR.esc(saved.label) : '') + '</span></span>' +
+        '<button class="btn btn-ghost btn-sm" id="promo-remove" type="button">Remove</button>';
+      document.getElementById('promo-remove').addEventListener('click', function () {
+        setPromo(null);
+        renderLines();
+      });
+      return;
+    }
+    host.innerHTML =
+      '<div class="promo-row">' +
+      '<input type="text" id="promo-input" class="field" placeholder="Promo code" aria-label="Promo code">' +
+      '<button class="btn btn-secondary btn-sm" id="promo-apply" type="button">Apply</button></div>' +
+      '<div class="hint error" id="promo-err" style="display:none"></div>';
+    function doApply() {
+      var code = document.getElementById('promo-input').value.trim();
+      var errEl = document.getElementById('promo-err');
+      errEl.style.display = 'none';
+      if (!code) { errEl.textContent = 'Enter a promo code.'; errEl.style.display = ''; return; }
+      var btn = document.getElementById('promo-apply');
+      btn.disabled = true; btn.textContent = 'Checking…';
+      applyPromo(code, subtotalCents, itemCount, function (err) {
+        if (err) {
+          btn.disabled = false; btn.textContent = 'Apply';
+          errEl.textContent = err; errEl.style.display = '';
+        } else {
+          BSR.toast('Promo applied.');
+          renderLines();
+        }
+      });
+    }
+    document.getElementById('promo-apply').addEventListener('click', doApply);
+    document.getElementById('promo-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); doApply(); }
+    });
+  }
+
+  function renderLines() {
+    var slugs = BSR.cart.list();
+    if (!slugs.length) { setPromo(null); renderEmpty(); return; }
+    root.innerHTML =
+      '<div class="cart-layout">' +
+      '<div class="cart-lines" id="cart-lines"><div class="empty"><p>Loading your cart…</p></div></div>' +
+      '<aside class="card summary"><h2>Summary</h2>' +
+      '<div id="promo-host"></div>' +
+      '<div id="sum-rows"></div>' +
+      '<a class="btn btn-primary btn-block" href="/checkout/">Proceed to checkout</a>' +
+      '<div class="hint">Shipping &amp; taxes calculated at checkout.</div></aside></div>';
+    var lineHost = document.getElementById('cart-lines');
+    var products = [];
+    var pending = slugs.length;
+    slugs.forEach(function (slug) {
+      BSR.api('/api/catalog/products/' + encodeURIComponent(slug)).then(function (j) {
+        var p = (j && j.ok && j.product) ? j.product : { slug: slug, title: slug, price_cents: 0, image: '' };
+        products.push(p);
+        if (--pending === 0) finish(products, slugs);
+      }).catch(function () {
+        products.push({ slug: slug, title: slug, price_cents: 0, image: '' });
+        if (--pending === 0) finish(products, slugs);
+      });
+    });
+
+    function finish(list, order) {
+      list.sort(function (a, b) { return order.indexOf(a.slug) - order.indexOf(b.slug); });
+      var subtotal = 0;
+      lineHost.innerHTML = list.map(function (p) {
+        subtotal += (p.price_cents || 0);
+        var img = p.image
+          ? '<img src="' + BSR.esc(p.image) + '" alt="' + BSR.esc(p.title) + '" loading="lazy">'
+          : '<div class="empty-icon">' + BSR.icon('box') + '</div>';
+        return '<div class="cart-line" data-slug="' + BSR.esc(p.slug) + '">' +
+          '<a class="t" href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' + img + '</a>' +
+          '<div class="m"><div class="t"><a href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' + BSR.esc(p.title) + '</a></div>' +
+          '<div class="hint">Item ' + BSR.esc(p.slug) + ' · Qty 1</div></div>' +
+          '<div class="p">' + BSR.money(p.price_cents) + '</div>' +
+          '<button class="rm" type="button" data-rm="' + BSR.esc(p.slug) + '">' + BSR.icon('trash', 'ic-sm') + '<span>Remove</span></button></div>';
+      }).join('');
+      lineHost.querySelectorAll('[data-rm]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          BSR.cart.remove(btn.getAttribute('data-rm'));
+          BSR.toast('Removed from cart.');
+          renderLines();
+        });
+      });
+      var saved = promoState();
+      var discount = saved ? (saved.discount_cents || 0) : 0;
+      document.getElementById('sum-rows').innerHTML =
+        '<div class="sum-row"><span>Subtotal</span><span>' + BSR.money(subtotal) + '</span></div>' +
+        (discount ? '<div class="sum-row"><span>Discount</span><span>−' + BSR.money(discount) + '</span></div>' : '') +
+        '<div class="sum-row"><span>Shipping &amp; taxes</span><span>At checkout</span></div>' +
+        '<div class="sum-row total"><span>Total</span><span>' + BSR.money(Math.max(0, subtotal - discount)) + '</span></div>';
+      renderPromo(subtotal, list.length);
+    }
+  }
+
+  renderLines();
+});
+</script>
+</body>
+</html>

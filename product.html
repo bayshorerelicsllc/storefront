@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slide details — Bay Shore Relics LLC</title>
+<meta name="description" id="meta-desc" content="Vintage 35mm railroad slide — a single physical item, sold once.">
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap" id="page"></div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: 'shop' });
+
+  var pageEl = document.getElementById('page');
+  var params = new URLSearchParams(location.search);
+  var slug = params.get('slug');
+
+  function cardHtml(p) {
+    var url = '/product.html?slug=' + encodeURIComponent(p.slug);
+    var img = p.image
+      ? '<img src="' + BSR.esc(p.image) + '" alt="' + BSR.esc(p.title) + '" loading="lazy">'
+      : '<span class="no-photo">' + BSR.icon('eye', 'ic-lg') + '</span>';
+    var meta = [p.railroad, p.item_number ? '#' + p.item_number : '']
+      .filter(Boolean).map(BSR.esc).join(' · ');
+    var onSale = p.compare_at_cents && p.compare_at_cents > p.price_cents;
+    var price = BSR.money(p.price_cents) +
+      (onSale ? '<s>' + BSR.money(p.compare_at_cents) + '</s>' : '');
+    var badge = onSale ? ' <span class="badge badge-sale">Sale</span>' : '';
+    return '<article class="card"><a class="card-link" href="' + url + '">' +
+      '<div class="card-img">' + img + '</div>' +
+      '<div class="card-body">' +
+        '<h3 class="card-title">' + BSR.esc(p.title) + '</h3>' +
+        (meta ? '<div class="card-meta">' + meta + '</div>' : '') +
+        '<div class="card-price">' + price + badge + '</div>' +
+      '</div></a></article>';
+  }
+
+  function unavailable() {
+    pageEl.innerHTML =
+      '<div class="empty">' +
+        BSR.icon('box', 'ic-lg') +
+        '<h2>This slide isn\'t available</h2>' +
+        '<p>It may have been sold, or the link isn\'t quite right.</p>' +
+        '<a class="btn btn-primary" href="/shop/">Browse the shop</a>' +
+      '</div>';
+  }
+
+  function renderProduct(p) {
+    var imgs = (p.images && p.images.length ? p.images : (p.image ? [{ url: p.image, alt: p.title }] : []));
+    var gallery = imgs.length
+      ? '<div class="gallery-main" id="gallery-main"><img src="' + BSR.esc(imgs[0].url) +
+        '" alt="' + BSR.esc(imgs[0].alt || p.title) + '"></div>' +
+        (imgs.length > 1
+          ? '<div class="gallery-thumbs" id="gallery-thumbs">' +
+            imgs.map(function (im, i) {
+              return '<button data-i="' + i + '"' + (i === 0 ? ' class="active"' : '') +
+                ' aria-label="View photo ' + (i + 1) + '">' +
+                '<img src="' + BSR.esc(im.url) + '" alt=""></button>';
+            }).join('') + '</div>'
+          : '')
+      : '<div class="gallery-main"><span class="no-photo">' + BSR.icon('eye', 'ic-lg') + '</span></div>';
+
+    var onSale = p.compare_at_cents && p.compare_at_cents > p.price_cents;
+    var price = BSR.money(p.price_cents) +
+      (onSale ? '<s>' + BSR.money(p.compare_at_cents) + '</s>' : '') +
+      (onSale ? ' <span class="badge badge-sale">Sale</span>' : '');
+
+    var metaRows =
+      '<tr><th>Item #</th><td>' + BSR.esc(p.item_number || '—') + '</td></tr>' +
+      '<tr><th>Railroad</th><td>' + BSR.esc(p.railroad || '—') + '</td></tr>' +
+      (p.collection_id ? '<tr><th>Collection</th><td>' + BSR.esc(p.collection_id) + '</td></tr>' : '');
+
+    var desc = p.description
+      ? '<div class="prose"><h2>About this slide</h2><p>' +
+        BSR.esc(p.description).replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>') + '</p></div>'
+      : '';
+
+    pageEl.innerHTML =
+      '<nav class="crumbs" aria-label="Breadcrumb">' +
+        '<a href="/shop/">Shop</a> <span aria-hidden="true">/</span> ' + BSR.esc(p.title) +
+      '</nav>' +
+      '<div class="product-layout">' +
+        '<div>' + gallery + '</div>' +
+        '<div class="product-info">' +
+          '<span class="badge badge-one">One of a kind</span>' +
+          '<h1>' + BSR.esc(p.title) + '</h1>' +
+          '<div class="price">' + price + '</div>' +
+          '<table class="meta-table"><tbody>' + metaRows + '</tbody></table>' +
+          '<p class="stock-note">' + BSR.icon('check', 'ic-sm') +
+            ' Only 1 available — when it\'s gone, it\'s gone</p>' +
+          '<div class="buy-row" id="buy-row"></div>' +
+          '<div class="trust-row">' +
+            '<span>' + BSR.icon('shield', 'ic-sm') + ' Secure checkout</span>' +
+            '<span>' + BSR.icon('truck', 'ic-sm') + ' Ships from Wisconsin</span>' +
+            '<span>' + BSR.icon('box', 'ic-sm') + ' Carefully packed</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      desc +
+      '<div id="related"></div>';
+
+    // Gallery thumbs
+    var thumbs = document.getElementById('gallery-thumbs');
+    if (thumbs) {
+      thumbs.querySelectorAll('button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var i = parseInt(b.getAttribute('data-i'), 10);
+          var main = document.getElementById('gallery-main');
+          main.innerHTML = '<img src="' + BSR.esc(imgs[i].url) + '" alt="' + BSR.esc(imgs[i].alt || p.title) + '">';
+          thumbs.querySelectorAll('button').forEach(function (x) { x.classList.remove('active'); });
+          b.classList.add('active');
+        });
+      });
+    }
+
+    renderBuyRow(p);
+
+    // Related slides: same railroad, excluding self
+    BSR.api('/api/catalog/products?per=12').then(function (j) {
+      if (!j || !j.ok || !p.railroad) return;
+      var rel = (j.products || []).filter(function (x) {
+        return x.slug !== p.slug && x.railroad === p.railroad;
+      }).slice(0, 4);
+      if (!rel.length) return;
+      document.getElementById('related').innerHTML =
+        '<h2>You may also like</h2><div class="grid">' + rel.map(cardHtml).join('') + '</div>';
+    });
+  }
+
+  function renderBuyRow(p) {
+    var row = document.getElementById('buy-row');
+    var inCart = BSR.cart.has(p.slug);
+    if (inCart) {
+      row.innerHTML =
+        '<a class="btn btn-primary" href="/cart/">' + BSR.icon('check', 'ic-sm') + ' In your cart — view cart</a>';
+      return;
+    }
+    row.innerHTML =
+      '<button class="btn btn-primary" id="add-btn">' + BSR.icon('cart', 'ic-sm') + ' Add to cart</button>' +
+      '<a class="btn btn-secondary" href="/cart/">View cart</a>';
+    document.getElementById('add-btn').addEventListener('click', function () {
+      BSR.cart.add(p.slug);
+      BSR.updateCartBadge();
+      BSR.toast('Added to your cart');
+      row.innerHTML =
+        '<a class="btn btn-primary" href="/cart/">' + BSR.icon('check', 'ic-sm') + ' In your cart — view cart</a>';
+    });
+  }
+
+  if (!slug) { unavailable(); return; }
+
+  pageEl.innerHTML =
+    '<div class="product-layout">' +
+      '<div><div class="sk" style="aspect-ratio:1"></div></div>' +
+      '<div class="product-info"><div class="sk" style="height:24px;margin-bottom:16px"></div>' +
+      '<div class="sk" style="height:42px;width:70%;margin-bottom:16px"></div>' +
+      '<div class="sk" style="height:90px"></div></div>' +
+    '</div>';
+
+  BSR.api('/api/catalog/products/' + encodeURIComponent(slug)).then(function (j) {
+    if (!j || !j.ok || !j.product) { unavailable(); return; }
+    var p = j.product;
+    document.title = (p.seo_title || p.title) + ' — Bay Shore Relics LLC';
+    var meta = document.getElementById('meta-desc');
+    if (meta) meta.setAttribute('content', p.seo_description || (p.description || '').slice(0, 155) || 'Vintage 35mm railroad slide — a single physical item, sold once.');
+    renderProduct(p);
+  });
+});
+</script>
+</body>
+</html>

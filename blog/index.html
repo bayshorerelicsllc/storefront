@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog — Bay Shore Relics LLC</title>
+<meta name="description" content="News and notes from Bay Shore Relics.">
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content"><div class="wrap"><h1>Blog</h1><div id="posts" class="stack"><p class="muted">Loading…</p></div></div></main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init();
+  var box = document.getElementById('posts');
+  BSR.api('/api/catalog/posts').then(function (j) {
+    var items = (j && j.ok && j.posts) || [];
+    box.innerHTML = items.length ? items.map(function (p) {
+      var d = p.published_at ? new Date(p.published_at).toLocaleDateString() : '';
+      return '<div class="card"><div class="card-body"><p class="muted">' + BSR.esc(d) + '</p>' +
+        '<h3><a href="/post.html?slug=' + encodeURIComponent(p.slug) + '">' + BSR.esc(p.title) + '</a></h3></div></div>';
+    }).join('') : '<div class="empty"><h2>No posts yet</h2><p>Check back soon.</p></div>';
+  }).catch(function () {
+    box.innerHTML = '<div class="empty"><h2>Something went wrong</h2><p>Please try again.</p></div>';
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact — Bay Shore Relics LLC</title>
+<meta name="description" content="Contact Bay Shore Relics LLC about an order, a slide, or a return. We reply within 1–2 business days.">
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap">
+<header class="page-head">
+<h1>Contact us</h1>
+<p class="lede">Questions about an order, a slide, or a return? Send us a message below.</p>
+</header>
+<div class="prose">
+<p>We reply within 1–2 business days.</p>
+<form action="https://formsubmit.co/hello@bayshorerelicsllc.com" method="POST" style="max-width:560px">
+<input type="hidden" name="_subject" value="[Store Contact] Bay Shore Relics LLC">
+<input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+<div class="form-row">
+<div class="field">
+<label for="cf-name">Name</label>
+<input type="text" id="cf-name" name="name" required autocomplete="name">
+</div>
+<div class="field">
+<label for="cf-email">Email</label>
+<input type="email" id="cf-email" name="email" required autocomplete="email">
+<p class="hint">We'll reply to this address.</p>
+</div>
+</div>
+<div class="field">
+<label for="cf-subject">Subject</label>
+<select id="cf-subject" name="subject" required>
+<option value="Order question">Order question</option>
+<option value="Slide question">Slide question</option>
+<option value="Returns">Returns</option>
+<option value="Other">Other</option>
+</select>
+</div>
+<div class="field">
+<label for="cf-message">Message</label>
+<textarea id="cf-message" name="message" rows="6" required></textarea>
+<p class="hint">If this is about an order, please include your order number.</p>
+</div>
+<button class="btn btn-primary" type="submit">Send message</button>
+</form>
+</div>
+</div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: 'contact' });
+});
+</script>
+</body>
+</html>

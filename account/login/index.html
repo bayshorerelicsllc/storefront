@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in — Bay Shore Relics LLC</title>
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap">
+  <div class="auth-card">
+    <h1>Sign in</h1>
+    <form id="login-form" novalidate>
+      <div class="error" id="form-error" role="alert" style="display:none;margin:0 0 16px;font-size:0.85rem;color:var(--danger)"></div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Sign in</button>
+    </form>
+    <p style="margin-top:18px;text-align:center">
+      <a href="/account/register/">New here? Create an account</a>
+    </p>
+    <p style="margin-top:6px;text-align:center">
+      <a href="/shop/">Continue as guest</a>
+    </p>
+  </div>
+</div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: 'account' });
+  var form = document.getElementById('login-form');
+  var errBox = document.getElementById('form-error');
+  var btn = document.getElementById('submit-btn');
+  function showError(msg) {
+    errBox.textContent = msg;
+    errBox.style.display = 'block';
+  }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    errBox.style.display = 'none';
+    var email = document.getElementById('email').value.trim();
+    var password = document.getElementById('password').value;
+    if (!email || !password) {
+      showError('Please enter your email and password.');
+      return;
+    }
+    btn.disabled = true;
+    BSR.api('/api/account/login', { method: 'POST', body: { email: email, password: password } })
+      .then(function (j) {
+        if (j && j.ok) {
+          window.location = '/account/';
+        } else {
+          showError((j && j.error) || 'Sign in failed. Please try again.');
+          btn.disabled = false;
+        }
+      });
+  });
+});
+</script>
+</body>
+</html>

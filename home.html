@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bay Shore Relics LLC — Vintage 35mm Railroad Slides</title>
+<meta name="description" content="One-of-a-kind vintage 35mm railroad slides. Each listing is a single physical item, sold once.">
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+  <div class="wrap">
+    <section class="hero" data-hero>
+      <div class="hero-inner">
+        <h1 data-hero-headline>Real steel. Real history.</h1>
+        <p data-hero-subtext>Vintage 35mm railroad slides — steam, diesel, depots, and yards. Every slide is a single physical item: when it's gone, it's gone.</p>
+        <a class="btn btn-primary" href="/shop/">Shop the collection</a>
+      </div>
+    </section>
+    <section class="section" id="featured" data-featured>
+      <div class="section-head"><h2>Featured slides</h2><a href="/shop/">View all</a></div>
+      <div class="grid" id="featured-grid"></div>
+    </section>
+    <section class="section">
+      <div class="feature-strip" data-trust-badges>
+        <div class="feature"><span id="fi-1"></span><div><h3>One of a kind</h3><p>Every listing is a single physical slide. Sold once, then it's history.</p></div></div>
+        <div class="feature"><span id="fi-2"></span><div><h3>Secure checkout</h3><p>Pay with PayPal or card through encrypted, PCI-compliant checkout.</p></div></div>
+        <div class="feature"><span id="fi-3"></span><div><h3>Careful shipping</h3><p>Slides ship protected in rigid mailers from Green Bay, Wisconsin.</p></div></div>
+      </div>
+    </section>
+    <section class="section" id="latest">
+      <div class="section-head"><h2>New arrivals</h2><a href="/shop/">View all</a></div>
+      <div class="grid" id="latest-grid"></div>
+    </section>
+  </div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: 'shop' });
+  document.getElementById('fi-1').innerHTML = BSR.icon('ticket', 'ic-lg');
+  document.getElementById('fi-2').innerHTML = BSR.icon('lock', 'ic-lg');
+  document.getElementById('fi-3').innerHTML = BSR.icon('truck', 'ic-lg');
+  function card(p) {
+    var img = p.image ? '<img src="' + BSR.esc(p.image) + '" alt="' + BSR.esc(p.title) + '" loading="lazy">'
+      : '<span class="no-photo">' + BSR.icon('eye', 'ic-lg') + '</span>';
+    var sale = p.compare_at_cents > p.price_cents
+      ? ' <s>' + BSR.money(p.compare_at_cents) + '</s>' : '';
+    return '<div class="card"><a class="card-link" href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' +
+      '<div class="card-img">' + img + '</div><div class="card-body">' +
+      '<p class="card-title">' + BSR.esc(p.title) + '</p>' +
+      '<p class="card-meta">' + BSR.esc(p.railroad || '') + (p.item_number ? ' · #' + BSR.esc(p.item_number) : '') + '</p>' +
+      '<p class="card-price">' + BSR.money(p.price_cents) + sale + '</p>' +
+      '</div></a></div>';
+  }
+  BSR.api('/api/catalog/products?per=4').then(function (j) {
+    var grid = document.getElementById('featured-grid');
+    var items = (j && j.ok && j.products || []).filter(function (p) { return p.featured; });
+    if (!items.length) items = (j && j.ok && j.products || []).slice(0, 4);
+    grid.innerHTML = items.length ? items.map(card).join('')
+      : '<div class="empty" style="grid-column:1/-1"><h2>New slides arriving soon</h2><p>We\'re cataloging fresh collections — check back shortly.</p><a class="btn btn-primary" href="/shop/">Browse the shop</a></div>';
+  });
+  BSR.api('/api/catalog/products?per=8').then(function (j) {
+    var grid = document.getElementById('latest-grid');
+    var items = (j && j.ok && j.products || []).slice(0, 8);
+    grid.innerHTML = items.length ? items.map(card).join('')
+      : '<div class="empty" style="grid-column:1/-1"><h2>New slides arriving soon</h2><p>We\'re cataloging fresh collections — check back shortly.</p></div>';
+  });
+});
+</script>
+</body>
+</html>

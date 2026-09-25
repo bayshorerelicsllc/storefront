@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cookie Policy — Bay Shore Relics LLC</title>
+<meta name="description" content="Cookie and local storage policy for Bay Shore Relics LLC. Analytics load only after you accept.">
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap">
+<header class="page-head">
+<h1>Cookie policy</h1>
+<p class="lede">We use a handful of strictly-necessary cookies — and analytics only if you say yes.</p>
+</header>
+<div class="prose">
+<h2>Your current choice</h2>
+<p id="consent-status">Checking…</p>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+<button class="btn btn-primary btn-sm" id="consent-accept" type="button">Accept analytics</button>
+<button class="btn btn-secondary btn-sm" id="consent-reject" type="button">Reject analytics</button>
+</div>
+<p class="hint" style="font-size:0.85rem;color:var(--text-faint)">Rejecting removes the consent banner and never loads analytics. Accepting loads Google Analytics and Microsoft Clarity.</p>
+
+<h2>Cookies and local storage we use</h2>
+<table>
+<thead><tr><th>Name</th><th>Purpose</th><th>Required?</th></tr></thead>
+<tbody>
+<tr><td><code>bsr-cart</code></td><td>Remembers the slides in your shopping cart (browser local storage; slugs only, no personal data).</td><td>Yes — the cart can't work without it.</td></tr>
+<tr><td><code>bsr-consent</code></td><td>Remembers your Accept/Reject choice on the analytics banner so we don't ask every visit.</td><td>Yes.</td></tr>
+<tr><td><code>bsr-a11y</code></td><td>Remembers your accessibility toolbar choices (larger text, contrast, dark mode, reduced motion).</td><td>Yes.</td></tr>
+<tr><td><code>sf_session</code></td><td>Keeps you signed in to your account and protects checkout against forgery.</td><td>Yes, when you sign in.</td></tr>
+<tr><td><code>__cf_bm</code>, <code>_cfuvid</code></td><td>Cloudflare security cookies that protect the site from bots and abuse.</td><td>Yes — strictly necessary.</td></tr>
+<tr><td><code>_ga</code>, <code>_gid</code> (Google), <code>_clck</code> / <code>_clsk</code> (Clarity)</td><td>Privacy-friendly analytics: which pages are visited, so we can improve the shop. <strong>Loaded only after you tap Accept.</strong></td><td>No — consent only.</td></tr>
+</tbody>
+</table>
+<h2>Change your mind</h2>
+<p>You can switch analytics on or off at any time with the buttons above. You can also clear any of these in your browser's settings — clearing <code>bsr-cart</code> simply empties your cart.</p>
+<p>Questions? <a href="/contact/">Contact us</a>.</p>
+</div>
+</div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: '' });
+  var statusEl = document.getElementById('consent-status');
+  function renderState() {
+    var s = BSR.consentState();
+    statusEl.innerHTML = s === 'accepted'
+      ? '<strong>Analytics: ON</strong> — you accepted on this device.'
+      : s === 'rejected'
+        ? '<strong>Analytics: OFF</strong> — you rejected on this device; no analytics are loaded.'
+        : '<strong>Not chosen yet</strong> — you will see the consent banner on your next visit.';
+  }
+  document.getElementById('consent-accept').addEventListener('click', function () {
+    BSR.setConsent('accepted');
+    renderState();
+    BSR.toast('Analytics enabled. Thank you.');
+  });
+  document.getElementById('consent-reject').addEventListener('click', function () {
+    BSR.setConsent('rejected');
+    renderState();
+    BSR.toast('Analytics disabled.');
+  });
+  renderState();
+});
+</script>
+</body>
+</html>

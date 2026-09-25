@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your account — Bay Shore Relics LLC</title>
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+<style>
+.acct-nav-btn { display:flex; align-items:center; gap:10px; padding:10px 12px; width:100%;
+  border-radius:var(--radius-sm); color:var(--text); background:none; border:0; font:inherit;
+  cursor:pointer; text-align:left; }
+.acct-nav-btn:hover { background:var(--bg-soft); }
+.order-item { display:flex; justify-content:space-between; gap:14px; padding:8px 0;
+  border-top:1px solid var(--line); }
+.order-item .oi-name { font-size:0.94rem; }
+.order-item .oi-price { white-space:nowrap; font-weight:600; }
+.order-track { display:flex; align-items:center; gap:8px; margin-top:10px;
+  font-size:0.9rem; color:var(--text-soft); }
+.order-track .ic { flex:none; }
+</style>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap" id="account-root"></div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: 'account' });
+  var root = document.getElementById('account-root');
+
+  function shortId(id) {
+    id = String(id == null ? '' : id);
+    return id.length > 12 ? '\u2026' + id.slice(-8) : id;
+  }
+
+  function fmtDate(d) {
+    if (!d) return '';
+    var t = new Date(d);
+    return isNaN(t.getTime()) ? String(d) : t.toLocaleDateString();
+  }
+
+  function orderCard(o) {
+    var paid = String(o.payment_status || '').toLowerCase() === 'paid';
+    var shipped = String(o.fulfillment_status || '').toLowerCase() === 'shipped';
+    var pills = '';
+    if (paid) pills += '<span class="status-pill paid">Paid</span>';
+    if (shipped) pills += '<span class="status-pill shipped">Shipped</span>';
+    var items = '';
+    (o.items || []).forEach(function (it) {
+      var title = it.title || it.name || 'Item';
+      items += '<div class="order-item"><span class="oi-name">' + BSR.esc(title) + '</span>' +
+        '<span class="oi-price">' + BSR.money(it.price_cents || 0) + '</span></div>';
+    });
+    var track = '';
+    if (o.tracking_number) {
+      track = '<div class="order-track">' + BSR.icon('truck') +
+        '<span>Tracking: ' + BSR.esc((o.carrier || '') + ' ' + o.tracking_number).trim() + '</span></div>';
+    }
+    return '<div class="order-card">' +
+      '<div class="oh"><strong>Order ' + BSR.esc(shortId(o.id)) + '</strong>' +
+      '<span>' + BSR.esc(fmtDate(o.date)) + '</span>' +
+      '<span>' + BSR.money((o.total || 0) * 100) + '</span>' + pills + '</div>' +
+      items + track + '</div>';
+  }
+
+  function renderSignedOut() {
+    root.innerHTML =
+      '<div class="auth-card"><h1>Your account</h1>' +
+      '<p>Sign in to see your orders and check out faster.</p>' +
+      '<a class="btn btn-primary btn-block" href="/account/login/" style="margin-top:14px">Sign in</a>' +
+      '<a class="btn btn-secondary btn-block" href="/account/register/" style="margin-top:10px">Create account</a>' +
+      '</div>';
+  }
+
+  function renderDashboard(customer) {
+    var first = String(customer.name || '').trim().split(/\s+/)[0] || 'there';
+    root.innerHTML =
+      '<div class="page-head"><h1>Hi, ' + BSR.esc(first) + '</h1></div>' +
+      '<div class="account-layout">' +
+      '<nav class="account-nav" aria-label="Account">' +
+      '<a href="/account/" class="active">' + BSR.icon('package', 'ic-sm') + 'Orders</a>' +
+      '<button type="button" class="acct-nav-btn" id="signout-btn">' + BSR.icon('logout', 'ic-sm') + 'Sign out</button>' +
+      '</nav>' +
+      '<section id="orders-col" aria-label="Order history"><p>Loading orders\u2026</p></section>' +
+      '</div>';
+    document.getElementById('signout-btn').addEventListener('click', function () {
+      BSR.api('/api/account/logout', { method: 'POST' }).then(function () {
+        window.location.reload();
+      });
+    });
+    BSR.api('/api/account/orders').then(function (j) {
+      var col = document.getElementById('orders-col');
+      if (!col) return;
+      var orders = (j && j.ok && Array.isArray(j.orders)) ? j.orders : [];
+      if (!orders.length) {
+        col.innerHTML =
+          '<div class="empty">' + BSR.icon('package') +
+          '<h2>No orders yet</h2>' +
+          '<p>When you buy a slide, it will show up here.</p>' +
+          '<a class="btn btn-primary" href="/shop/" style="margin-top:14px">Start shopping</a></div>';
+        return;
+      }
+      col.innerHTML = orders.map(orderCard).join('');
+    });
+  }
+
+  BSR.me().then(function (customer) {
+    if (customer) renderDashboard(customer);
+    else renderSignedOut();
+  });
+});
+</script>
+</body>
+</html>

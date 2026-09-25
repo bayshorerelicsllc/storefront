@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bay Shore Relics LLC</title>
+<meta name="description" content="">
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content"><div class="wrap"><div class="page-narrow" id="post-body"><p class="muted">Loading…</p></div></div></main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init();
+  var slug = new URLSearchParams(location.search).get('slug') || '';
+  var box = document.getElementById('post-body');
+  BSR.api('/api/catalog/posts/' + encodeURIComponent(slug)).then(function (j) {
+    if (j && j.ok && j.post) {
+      document.title = j.post.seo_title || j.post.title;
+      var d = j.post.published_at ? new Date(j.post.published_at).toLocaleDateString() : '';
+      box.innerHTML = '<p class="muted">' + BSR.esc(d) + '</p><h1>' + BSR.esc(j.post.title) + '</h1><div class="rich-text">' + (j.post.body || '') + '</div>';
+    } else {
+      box.innerHTML = '<h1>Post not found</h1><p class="muted">That post doesn\'t exist.</p>';
+    }
+  }).catch(function () {
+    box.innerHTML = '<h1>Something went wrong</h1><p class="muted">Please try again.</p>';
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coming Soon — Bay Shore Relics LLC</title>
+<meta name="description" content="Vintage 35mm railroad slides. Our new online store is on its way — join the list to be notified at launch.">
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+<style>
+  .gate { background: #101018; color: #eceaf4; min-height: 100vh; display: flex;
+    flex-direction: column; font-family: var(--font-body); }
+  .gate .wrap { max-width: 880px; }
+  .gate-hero { text-align: center; padding: 70px 20px 30px; }
+  .board { display: inline-block; background: #1b1b26; border: 1px solid #33334a;
+    border-radius: 10px; padding: 14px 30px; letter-spacing: 0.35em; font-weight: 800;
+    font-size: clamp(1.1rem, 4vw, 1.7rem); color: #ffd76a;
+    text-shadow: 0 0 18px rgba(255, 215, 106, 0.45); animation: flicker 4s infinite; }
+  @keyframes flicker { 0%, 100% { opacity: 1; } 92% { opacity: 1; } 93% { opacity: 0.6; } 94% { opacity: 1; } }
+  .gate-hero h1 { color: #fff; margin: 26px 0 10px; font-size: clamp(1.9rem, 5vw, 3rem); }
+  .gate-hero p.lede { color: #b9b9cf; font-size: 1.1rem; max-width: 56ch; margin: 0 auto; }
+  .film { overflow: hidden; border-top: 1px solid #2a2a3a; border-bottom: 1px solid #2a2a3a;
+    background: #16161f; margin: 34px 0; }
+  .film-track { display: flex; gap: 18px; padding: 22px 0; width: max-content; animation: roll 30s linear infinite; }
+  @keyframes roll { to { transform: translateX(-50%); } }
+  .frame { width: 190px; height: 128px; border-radius: 6px; flex: none;
+    border-top: 12px dotted #3a3a52; border-bottom: 12px dotted #3a3a52;
+    background: linear-gradient(135deg, #2b2b40, #45456a); display: flex;
+    align-items: center; justify-content: center; color: #8f8fb0; font-size: 0.8rem; }
+  .ticket-div { display: flex; align-items: center; gap: 14px; margin: 8px auto 30px; max-width: 520px; color: #8f8fb0; }
+  .ticket-div::before, .ticket-div::after { content: ""; flex: 1; border-top: 2px dashed #3a3a52; }
+  .ticket-div span { letter-spacing: 0.3em; font-size: 0.8rem; font-weight: 700; }
+  .signup { max-width: 520px; margin: 0 auto; text-align: center; padding: 0 20px 30px; }
+  .signup form { display: flex; gap: 8px; margin-top: 16px; }
+  .signup input { flex: 1; padding: 13px 16px; border-radius: 999px; border: 1px solid #3a3a52;
+    background: #1b1b26; color: #fff; font-size: 1rem; }
+  .signup input:focus { outline: 2px solid var(--accent); }
+  .gate-foot { margin-top: auto; border-top: 1px solid #23232f; padding: 22px 20px;
+    display: flex; flex-wrap: wrap; gap: 8px 26px; justify-content: center;
+    font-size: 0.85rem; color: #8f8fb0; }
+  .gate-foot a { color: #b9b9cf; }
+  .notified { background: #17301f; border: 1px solid #2c5c3a; color: #bfe6cc;
+    border-radius: 12px; padding: 22px; margin-top: 16px; }
+  @media (max-width: 560px) { .signup form { flex-direction: column; } }
+  @media (prefers-reduced-motion: reduce) { .film-track, .board { animation: none; } }
+</style>
+</head>
+<body>
+<div class="gate">
+  <div class="gate-hero wrap">
+    <div class="board">COMING&nbsp;SOON</div>
+    <h1 data-store-name>Bay Shore Relics LLC</h1>
+    <p class="lede">Vintage 35mm railroad slides — each one a single physical item, sold once.
+      Our new shop is being built. Join the list and you'll be first through the door.</p>
+  </div>
+  <div class="film" aria-hidden="true"><div class="film-track" id="film-track"></div></div>
+  <div class="ticket-div"><span>ADMIT ONE</span></div>
+  <div class="signup" id="signup">
+    <h2 style="color:#fff">Notify me at launch</h2>
+    <form id="gate-form" action="https://formsubmit.co/hello@bayshorerelicsllc.com" method="POST">
+      <input type="hidden" name="_subject" value="[Launch List] Notify me at launch — Bay Shore Relics LLC">
+      <input type="hidden" name="_next" value="https://bayshorerelicsllc.com/?notified=1">
+      <input type="email" name="email" placeholder="Email address" required aria-label="Email address">
+      <button class="btn btn-primary" type="submit">Join the list</button>
+    </form>
+  </div>
+  <div class="gate-foot">
+    <a href="/policies/privacy/">Privacy</a><a href="/policies/terms/">Terms</a>
+    <a href="/policies/cookies/">Cookies</a><a href="/contact/">Contact</a>
+    <span>© <span data-year></span> <span data-store-name>Bay Shore Relics LLC</span></span>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init();
+  var track = document.getElementById('film-track');
+  var labels = ['Steam at dawn', 'Freight consist', 'Depot scene', 'Diesel power', 'Yard action', 'Mainline run'];
+  var html = '';
+  for (var r = 0; r < 2; r++) for (var i = 0; i < labels.length; i++) html += '<div class="frame">' + labels[i] + '</div>';
+  track.innerHTML = html;
+  if (new URLSearchParams(location.search).get('notified') === '1') {
+    document.getElementById('signup').innerHTML =
+      '<div class="notified"><h2 style="color:#fff;margin-top:0">You\'re on the list!</h2>' +
+      '<p style="margin:0">We\'ll email you the moment the shop opens.</p></div>';
+  }
+});
+</script>
+</body>
+</html>

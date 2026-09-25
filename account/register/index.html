@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create account — Bay Shore Relics LLC</title>
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap">
+  <div class="auth-card">
+    <h1>Create account</h1>
+    <form id="register-form" novalidate>
+      <div class="error" id="form-error" role="alert" style="display:none;margin:0 0 16px;font-size:0.85rem;color:var(--danger)"></div>
+      <div class="field">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" autocomplete="name" required>
+        <div class="error" id="err-name" style="display:none"></div>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" autocomplete="email" required>
+        <div class="error" id="err-email" style="display:none"></div>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="new-password" required>
+        <div class="hint">At least 8 characters.</div>
+        <div class="error" id="err-password" style="display:none"></div>
+      </div>
+      <div class="field checkbox-row">
+        <input type="checkbox" id="accepts_marketing" name="accepts_marketing" value="1">
+        <label for="accepts_marketing">Email me about new slides</label>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Create account</button>
+    </form>
+    <p style="margin-top:18px;text-align:center">
+      <a href="/account/login/">Already have an account? Sign in</a>
+    </p>
+  </div>
+</div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: 'account' });
+  var form = document.getElementById('register-form');
+  var formErr = document.getElementById('form-error');
+  var btn = document.getElementById('submit-btn');
+  function fieldError(id, msg) {
+    var el = document.getElementById(id);
+    if (msg) { el.textContent = msg; el.style.display = 'block'; }
+    else { el.textContent = ''; el.style.display = 'none'; }
+  }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    formErr.style.display = 'none';
+    var name = document.getElementById('name').value.trim();
+    var email = document.getElementById('email').value.trim();
+    var password = document.getElementById('password').value;
+    var marketing = document.getElementById('accepts_marketing').checked ? 1 : 0;
+    var valid = true;
+    if (!name) { fieldError('err-name', 'Please enter your name.'); valid = false; }
+    else fieldError('err-name');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fieldError('err-email', 'Please enter a valid email address.'); valid = false; }
+    else fieldError('err-email');
+    if (password.length < 8) { fieldError('err-password', 'Password must be at least 8 characters.'); valid = false; }
+    else fieldError('err-password');
+    if (!valid) return;
+    btn.disabled = true;
+    BSR.api('/api/account/register', {
+      method: 'POST',
+      body: { name: name, email: email, password: password, accepts_marketing: marketing }
+    }).then(function (j) {
+      if (j && j.ok) {
+        window.location = '/account/';
+      } else {
+        formErr.textContent = (j && j.error) || 'Could not create your account. Please try again.';
+        formErr.style.display = 'block';
+        btn.disabled = false;
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>

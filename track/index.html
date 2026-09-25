@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Track Your Order — Bay Shore Relics LLC</title>
+<meta name="description" content="Track your Bay Shore Relics LLC order: status, tracking number, and carrier.">
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap">
+<header class="page-head">
+<h1>Track your order</h1>
+<p class="lede">Sign in to see your orders, tracking numbers, and delivery status.</p>
+</header>
+<div id="track-body"><div class="empty"><p>Loading…</p></div></div>
+</div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: 'track' });
+  var body = document.getElementById('track-body');
+
+  function notLoggedIn() {
+    body.innerHTML = '<div class="auth-card">' + BSR.icon('package', 'ic-lg') +
+      '<h2>Sign in to track your orders</h2>' +
+      '<p>Your orders, tracking numbers, and delivery status live in your account.</p>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">' +
+      '<a class="btn btn-primary" href="/account/login/">Sign in</a>' +
+      '<a class="btn btn-secondary" href="/account/register/">Create account</a>' +
+      '</div></div>';
+  }
+
+  function orderCard(o) {
+    var num = o.number || o.order_number || o.id;
+    var date = o.created_at || o.date || '';
+    if (date) { try { date = new Date(date).toLocaleDateString(); } catch (e) {} }
+    var status = (o.status || 'processing').toLowerCase();
+    var pill = status === 'shipped' ? ' shipped' : (status === 'paid' || status === 'complete' ? ' paid' : '');
+    var tracking = o.tracking_number || o.tracking || '';
+    var carrier = o.carrier || '';
+    var trackLine = tracking
+      ? '<p>' + BSR.icon('truck', 'ic-sm') + ' <strong>Tracking:</strong> ' + BSR.esc(tracking) +
+        (carrier ? ' (' + BSR.esc(carrier) + ')' : '') + '</p>'
+      : '<p style="color:var(--text-faint)">' + BSR.icon('info', 'ic-sm') + ' Tracking will appear here once your order ships.</p>';
+    var total = (o.total != null) ? BSR.money(Number(o.total) * 100) : '';
+    var items = o.items || o.lines || [];
+    var itemList = items.length
+      ? '<ul>' + items.map(function (it) {
+          return '<li>' + BSR.esc(it.title || it.name || it.slug || 'Slide') + '</li>';
+        }).join('') + '</ul>'
+      : '';
+    return '<div class="order-card"><div class="oh">' +
+      '<strong>Order ' + BSR.esc(String(num)) + '</strong>' +
+      (date ? '<span style="color:var(--text-faint)">' + BSR.esc(date) + '</span>' : '') +
+      '<span class="status-pill' + pill + '">' + BSR.esc(status) + '</span>' +
+      (total ? '<span style="margin-left:auto;font-weight:700">' + total + '</span>' : '') +
+      '</div>' + itemList + trackLine + '</div>';
+  }
+
+  BSR.me().then(function (me) {
+    if (!me) { notLoggedIn(); return; }
+    body.innerHTML = '<div class="empty"><p>Loading your orders…</p></div>';
+    BSR.api('/api/account/orders').then(function (j) {
+      var orders = (j && j.ok && (j.orders || j.data)) ? (j.orders || j.data) : [];
+      if (!orders.length) {
+        body.innerHTML = '<div class="empty">' + BSR.icon('package', '') +
+          '<h2>No orders yet</h2><p>When you buy a slide, it will show up here with tracking.</p>' +
+          '<a class="btn btn-primary" href="/shop/">Start shopping</a></div>';
+        return;
+      }
+      body.innerHTML = orders.map(orderCard).join('');
+    }).catch(function () {
+      body.innerHTML = '<div class="empty">' + BSR.icon('info', '') +
+        '<h2>Could not load your orders</h2><p>Please try again in a moment.</p></div>';
+    });
+  }).catch(function () { notLoggedIn(); });
+});
+</script>
+</body>
+</html>

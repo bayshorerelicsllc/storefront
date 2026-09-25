@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thank you — Bay Shore Relics LLC</title>
+<link rel="icon" href="/assets/img/logo-icon.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
+</head>
+<body>
+<div id="bsr-header"></div>
+<main id="content">
+<div class="wrap">
+<div id="thanks-root"></div>
+</div>
+</main>
+<div id="bsr-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  BSR.init({ active: '' });
+  BSR.cart.clear();
+  var root = document.getElementById('thanks-root');
+  var orderRef = null;
+  try { orderRef = sessionStorage.getItem('bsr-last-order'); } catch (e) {}
+  if (orderRef) {
+    root.innerHTML =
+      '<div class="card" style="text-align:center;max-width:560px;margin:40px auto;padding:40px 32px">' +
+      '<div class="empty-icon">' + BSR.icon('check') + '</div>' +
+      '<h1>Thank you — order confirmed!</h1>' +
+      '<p>Your order reference is <strong>' + BSR.esc(orderRef) + '</strong>.</p>' +
+      '<p class="hint">A confirmation email is on its way. Each slide is a single physical item, sold once — your slides are reserved for you.</p>' +
+      '<div class="promo-row" style="justify-content:center">' +
+      '<a class="btn btn-primary" href="/track/">' + BSR.icon('truck', 'ic-sm') + ' Track your order</a>' +
+      '<a class="btn btn-secondary" href="/shop/">Keep shopping</a></div></div>';
+  } else {
+    root.innerHTML =
+      '<div class="empty"><div class="empty-icon">' + BSR.icon('check') + '</div>' +
+      '<h2>Thanks for shopping!</h2>' +
+      '<p>No recent order found. Browse the collection — every slide is one of a kind.</p>' +
+      '<div class="promo-row" style="justify-content:center">' +
+      '<a class="btn btn-primary" href="/shop/">Browse slides</a>' +
+      '<a class="btn btn-ghost" href="/track/">Track an order</a></div></div>';
+  }
+});
+</script>
+</body>
+</html>
