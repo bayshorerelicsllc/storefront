@@ -766,15 +766,13 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       if (window.BSR && BSR.toast) BSR.toast('Using the address from your wallet.', 'info');
     } else {
-      // No wallet address — the form must be complete
-      ship = collectShipping();
-      if (!ship) {
-        event.paymentFailed({ reason: 'fail' });
-        document.getElementById('f-email').focus();
-        errEl.textContent = 'Please complete the shipping form above, or use a wallet that provides your address.';
-        errEl.style.display = '';
-        return;
-      }
+      /* No wallet address — no fallback to the form. A wallet payment without
+         a wallet address is declined; the buyer checks out with a card or
+         PayPal instead. */
+      event.paymentFailed({ reason: 'fail' });
+      errEl.textContent = 'Your wallet did not provide a shipping address. Please check out with a card or PayPal instead.';
+      errEl.style.display = '';
+      return;
     }
     expressElements.submit().then(function (submitResult) {
       if (submitResult && submitResult.error) { event.paymentFailed({ reason: 'fail' }); return; }
