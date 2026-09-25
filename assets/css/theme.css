@@ -433,3 +433,10 @@ html.a11y-motion *, html.a11y-motion *::before, html.a11y-motion *::after {
   .story { grid-template-columns: 1fr; padding: 22px; }
   .stats-band { grid-template-columns: 1fr; gap: 18px; }
 }
+
+/* Express checkout (Apple Pay / Google Pay) */
+#wallet-wrap { margin-bottom: 6px; }
+#express-checkout-element:empty { display: none; }
+.pay-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0;
+  color: var(--text-soft); font-size: 0.85rem; }
+.pay-divider::before, .pay-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
