@@ -96,7 +96,10 @@ main { min-height: 60vh; }
 .brand { display: flex; align-items: center; gap: 10px; color: #f4eedd; font-weight: 700;
   font-size: 1.1rem; font-family: var(--font-head); }
 .brand:hover { text-decoration: none; }
-.brand img { width: 38px; height: 38px; object-fit: contain; }
+.brand img { width: 56px; height: 56px; object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35)); }
+.brand .name { font-size: 1.42rem; font-weight: 800; letter-spacing: 0.015em;
+  line-height: 1.05; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); white-space: nowrap; }
 .main-nav { display: flex; gap: 4px; margin-left: 12px; }
 .main-nav a { color: #f4eedd; padding: 8px 12px; border-radius: var(--radius-sm);
   font-size: 0.95rem; }
@@ -387,7 +390,8 @@ html.a11y-motion *, html.a11y-motion *::before, html.a11y-motion *::after {
 @media (max-width: 560px) {
   .form-row { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr; }
-  .brand span.name { display: none; }
+  .brand img { width: 44px; height: 44px; }
+  .brand .name { font-size: 1.08rem; }
   .cart-line { grid-template-columns: 64px 1fr; }
   .cart-line .p { grid-column: 2; text-align: left; }
 }
