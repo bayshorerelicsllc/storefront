@@ -8,6 +8,7 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods4">
 <script src="/assets/js/bsr.js?v=20260925l" defer></script>
+<script src="/assets/js/login-modal.js?v=20260925aw" defer></script>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -110,6 +111,25 @@ document.addEventListener('DOMContentLoaded', function () {
       : '<div class="empty" style="grid-column:1/-1"><h2>New slides arriving soon</h2><p>We\'re cataloging fresh collections — check back shortly.</p></div>';
   });
 });
+</script>
+<script>
+// Open login as a popup modal over the page when ?login=1
+(function () {
+  try {
+    var q = new URLSearchParams(location.search);
+    if (q.get('login') === '1') {
+      history.replaceState(null, '', location.pathname);
+      var tries = 0;
+      var iv = setInterval(function () {
+        tries++;
+        if (window.BSR && window.BSR.showLogin) {
+          clearInterval(iv);
+          window.BSR.showLogin();
+        } else if (tries > 50) { clearInterval(iv); }
+      }, 100);
+    }
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>
