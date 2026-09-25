@@ -405,8 +405,37 @@ document.addEventListener('DOMContentLoaded', function () {
   function onExpressConfirm(event) {
     var errEl = document.getElementById('stripe-err');
     errEl.style.display = 'none';
+    // Wallet provides shipping/billing — try form first, fall back to wallet address
     var ship = collectShipping();
-    if (!ship) { event.paymentFailed({ reason: 'fail' }); return; }
+    if (!ship) {
+      // Form not filled — use wallet-provided address if available
+      var wa = (event && event.shippingAddress) || {};
+      var email = (event && event.payerEmail) || '';
+      if (wa && wa.address && wa.address.postal_code) {
+        ship = {
+          name: wa.name || '',
+          email: email,
+          address: {
+            line1: (wa.address.line1 || '') + (wa.address.line2 ? ' ' + wa.address.line2 : ''),
+            city: wa.address.city || '',
+            state: wa.address.state || '',
+            postal: wa.address.postal_code || '',
+            country: wa.address.country || 'US'
+          },
+          // Wallet flow: use default shipping rate (calculated server-side)
+          rate_ref: null, provider: null, carrier: null, service: null,
+          wallet_provided: true
+        };
+      } else {
+        // No wallet address — need the form
+        event.paymentFailed({ reason: 'fail' });
+        // Scroll to form and highlight
+        document.getElementById('f-email').focus();
+        errEl.textContent = 'Please complete the shipping form above, or use a wallet that provides your address.';
+        errEl.style.display = '';
+        return;
+      }
+    }
     expressElements.submit().then(function (submitResult) {
       if (submitResult && submitResult.error) { event.paymentFailed({ reason: 'fail' }); return; }
       return BSR.api('/api/stripe/create-intent', {
