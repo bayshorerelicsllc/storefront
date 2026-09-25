@@ -311,29 +311,35 @@
   /* Silent submit-time check: validate, fold any corrections into the
      payload, then save. No confirmation dialog. Never blocks saving. */
   function silentCheck(form, payload, doSave) {
+    /* doSave receives (payload, info); info.validated tells the caller
+       whether the validator actually verified the address. */
+    var skipped = { validated: false, corrected: false };
     /* User dismissed the suggestions: save their address exactly as typed. */
-    if (form._bsrValDismissed === '__dismissed__') { doSave(payload); return; }
+    if (form._bsrValDismissed === '__dismissed__') { doSave(payload, skipped); return; }
     var psig = [payload.address1, payload.city, payload.postal].join('|').toLowerCase();
-    if (form._bsrValDismissed && form._bsrValDismissed === psig) { doSave(payload); return; }
+    if (form._bsrValDismissed && form._bsrValDismissed === psig) { doSave(payload, skipped); return; }
     validate(payload).then(function (j) {
-      var out = payload;
-      if (j && j.ok && j.address &&
-          (j.corrected || (j.corrections && j.corrections.length)) &&
-          differs(j.address, payload)) {
+      var out = payload, info = { validated: false, corrected: false };
+      if (j && j.ok) {
+        info.validated = true;
         var a = j.address;
-        out = {
-          address1: a.street || payload.address1,
-          address2: a.street2 || '',
-          city: a.city || payload.city,
-          state: a.state || payload.state,
-          postal: a.zip || payload.postal,
-          country: a.country || payload.country,
-          is_default_shipping: payload.is_default_shipping,
-          is_default_billing: payload.is_default_billing,
-        };
+        if (a && (j.corrected || (j.corrections && j.corrections.length)) && differs(a, payload)) {
+          /* Keep every payload field (name, phone, email, ...); only
+             overwrite address fields where the validator gave a value,
+             so a user-typed apt/suite is never wiped. */
+          out = {};
+          for (var k in payload) out[k] = payload[k];
+          if (a.street) out.address1 = a.street;
+          if (a.street2) out.address2 = a.street2;
+          if (a.city) out.city = a.city;
+          if (a.state) out.state = a.state;
+          if (a.zip) out.postal = a.zip;
+          if (a.country) out.country = a.country;
+          info.corrected = true;
+        }
       }
-      doSave(out);
-    }).catch(function () { doSave(payload); });
+      doSave(out, info);
+    }).catch(function () { doSave(payload, skipped); });
   }
 
   window.BSRAddrValidate = { validate: validate, checkAndConfirm: checkAndConfirm, attachLive: attachLive, silentCheck: silentCheck };
