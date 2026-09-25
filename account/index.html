@@ -95,7 +95,22 @@
 .addr-box .sub { margin-top:0; }
 .addr-same-note { font-size:.85rem; color:var(--text-soft); font-style:italic; margin:0 0 8px; }
 .addr-form-title { margin:0 0 12px; font-size:1rem; }
-.addr-book { display:grid; gap:12px; margin-bottom:12px; }
+.addr-book { margin-bottom:12px; }
+/* Condensed saved-addresses table */
+.addr-table-wrap { overflow-x:auto; }
+table.addr-table { width:100%; border-collapse:collapse; font-size:.88rem; }
+.addr-table th { text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--text-soft); padding:8px 10px; border-bottom:2px solid var(--line); white-space:nowrap; }
+.addr-table td { padding:10px; border-bottom:1px solid var(--line); vertical-align:top; }
+.addr-table tbody tr:last-child td { border-bottom:none; }
+.addr-table .addr-cell-name { font-weight:700; }
+.addr-table .addr-cell-sub { color:var(--text-soft); font-size:.82rem; }
+.addr-table .addr-badge { display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.05em;
+  text-transform:uppercase; background:#1e4d33; color:#fff; border-radius:999px;
+  padding:3px 10px; margin:0 4px 4px 0; white-space:nowrap; }
+.addr-table .addr-badge.addr-badge-bill { background:#8a6d3b; }
+.addr-table .row-actions .btn { display:block; width:100%; margin:0 0 6px; font-size:.82rem; padding:6px 10px; }
+.addr-table .row-actions .btn:last-child { margin-bottom:0; }
 .addr-card { border:1px solid var(--line); border-radius:var(--radius-sm); padding:14px; }
 .addr-card .addr-badges { margin-bottom:8px; }
 .addr-card .addr-lines { font-size:.92rem; line-height:1.5; }
@@ -492,7 +507,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(function () { fail(); });
     }
   }
-  /* Address book: every saved address with default-role buttons. */
+  /* Address book: condensed table, one row per address, with Edit and Delete. */
   function paintAddrBook() {
     var el = document.getElementById('addr-book');
     if (!el) return;
@@ -500,49 +515,61 @@ document.addEventListener('DOMContentLoaded', function () {
       el.innerHTML = '<p style="color:var(--text-soft);font-size:.92rem">No addresses saved yet.</p>';
       return;
     }
-    el.innerHTML = addrList.map(function (a) {
+    var rows = addrList.map(function (a) {
       var badges = '';
-      if (a.is_default_shipping) badges += '<span class="addr-badge">Ship-to default</span> ';
-      if (a.is_default_billing) badges += '<span class="addr-badge addr-badge-bill">Bill-to default</span> ';
-      return '<div class="addr-card" data-book="' + esc(a.id) + '">' +
-        (badges ? '<div class="addr-badges">' + badges + '</div>' : '') +
-        '<div class="addr-lines">' + addrDisplayLines(a) + '</div>' +
-        '<div class="addr-actions">' +
-        (a.is_default_shipping ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-set-ship>Set as ship-to</button>') +
-        (a.is_default_billing ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-set-bill>Set as bill-to</button>') +
+      if (a.is_default_shipping) badges += '<span class="addr-badge">Ship-to</span>';
+      if (a.is_default_billing) badges += '<span class="addr-badge addr-badge-bill">Bill-to</span>';
+      var cell = (a.name ? '<div class="addr-cell-name">' + esc(a.name) + '</div>' : '') +
+        '<div>' + esc(a.address1 || '') + (a.address2 ? ', ' + esc(a.address2) : '') + '</div>' +
+        '<div class="addr-cell-sub">' + esc(a.city || '') + ', ' + esc(a.state || '') + ' ' + esc(a.postal || '') +
+        ((a.country && a.country !== 'US') ? ', ' + esc(a.country) : '') + '</div>';
+      if (a.company) cell += '<div class="addr-cell-sub">' + esc(a.company) + '</div>';
+      var contactBits = [];
+      if (a.phone) contactBits.push(esc(a.phone));
+      if (a.email) contactBits.push(esc(a.email));
+      if (contactBits.length) cell += '<div class="addr-cell-sub">' + contactBits.join(' &middot; ') + '</div>';
+      return '<tr data-book="' + esc(a.id) + '">' +
+        '<td>' + cell + '</td>' +
+        '<td>' + (badges || '<span class="addr-cell-sub">&mdash;</span>') + '</td>' +
+        '<td class="row-actions">' +
+        (a.is_default_shipping ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-set-ship>Set ship-to</button>') +
+        (a.is_default_billing ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-set-bill>Set bill-to</button>') +
         '<button type="button" class="btn btn-ghost btn-sm" data-book-edit>Edit</button>' +
-        '<button type="button" class="btn btn-ghost btn-sm" data-book-del style="color:#a33">Remove</button>' +
-        '</div></div>';
+        '<button type="button" class="btn btn-ghost btn-sm" data-book-del style="color:#a33">Delete</button>' +
+        '</td></tr>';
     }).join('');
-    el.querySelectorAll('[data-book]').forEach(function (card) {
-      var id = card.getAttribute('data-book');
+    el.innerHTML = '<div class="addr-table-wrap"><table class="addr-table">' +
+      '<thead><tr><th>Address</th><th>Defaults</th><th>Actions</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table></div>';
+    el.querySelectorAll('[data-book]').forEach(function (row) {
+      var id = row.getAttribute('data-book');
       var a = addrList.find(function (x) { return String(x.id) === String(id); });
       if (!a) return;
-      var setShip = card.querySelector('[data-set-ship]');
-      var setBill = card.querySelector('[data-set-bill]');
+      var setShip = row.querySelector('[data-set-ship]');
+      var setBill = row.querySelector('[data-set-bill]');
       if (setShip) setShip.addEventListener('click', function () { setAsDefault(a, 'ship'); });
       if (setBill) setBill.addEventListener('click', function () { setAsDefault(a, 'bill'); });
-      card.querySelector('[data-book-edit]').addEventListener('click', function () {
+      row.querySelector('[data-book-edit]').addEventListener('click', function () {
         var slot = document.getElementById('addr-book-form-slot');
         slot.innerHTML = addrFormHtml(a, 'book');
         bindAddrForm(slot, 'book');
         slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       });
-      card.querySelector('[data-book-del]').addEventListener('click', function () {
+      row.querySelector('[data-book-del]').addEventListener('click', function () {
         var roles = [];
         if (a.is_default_shipping) roles.push('ship-to default');
         if (a.is_default_billing) roles.push('bill-to default');
-        var msg = 'Remove this address?';
+        var msg = 'Delete this address?';
         if (roles.length && addrList.length > 1) {
-          msg = 'This is your ' + roles.join(' and ') + '. Removing it will make your oldest remaining address the new default. Continue?';
+          msg = 'This is your ' + roles.join(' and ') + '. Deleting it will make your oldest remaining address the new default. Continue?';
         }
         if (!window.confirm(msg)) return;
         BSR.api('/api/account/addresses/' + encodeURIComponent(id), { method: 'DELETE' })
           .then(function (j) {
-            if (j && j.ok) { loadAddresses(); toast('Address removed'); }
-            else { var em = (j && j.error) || 'Could not remove the address.'; showAddrMsg(false, em); toast(em, false); }
+            if (j && j.ok) { loadAddresses(); toast('Address deleted'); }
+            else { var em = (j && j.error) || 'Could not delete the address.'; showAddrMsg(false, em); toast(em, false); }
           })
-          .catch(function () { showAddrMsg(false, 'Could not remove. Check your connection.'); });
+          .catch(function () { showAddrMsg(false, 'Could not delete. Check your connection.'); });
       });
     });
   }
