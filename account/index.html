@@ -423,15 +423,83 @@ document.addEventListener('DOMContentLoaded', function () {
       '</div>';
   }
   var addrShip = null, addrBill = null, addrList = [];
+  /* Two records for the same place collapse into one: every default flag
+     and any filled contact field folds into the oldest record, the rest are
+     removed. Runs on every load but only acts when true duplicates exist,
+     so the table fixes itself with no extra taps. */
+  function addrIdentity(a) {
+    return ['name', 'company', 'address1', 'address2', 'city', 'state', 'postal', 'country']
+      .map(function (k) { return (a[k] || '').toString().trim().toLowerCase(); }).join('|');
+  }
+  function mergeDuplicateAddresses() {
+    var groups = {};
+    addrList.forEach(function (a) {
+      var k = addrIdentity(a);
+      (groups[k] = groups[k] || []).push(a);
+    });
+    var jobs = [];
+    Object.keys(groups).forEach(function (k) {
+      var g = groups[k];
+      if (g.length < 2) return;
+      g.sort(function (x, y) {
+        var xc = String(x.created_at || ''), yc = String(y.created_at || '');
+        return xc < yc ? -1 : (xc > yc ? 1 : 0);
+      });
+      var keep = g[0];
+      var body = {
+        name: keep.name || '', company: keep.company || '',
+        phone: keep.phone || '', email: keep.email || '',
+        address1: keep.address1, address2: keep.address2 || '',
+        city: keep.city, state: keep.state || '',
+        postal: keep.postal, country: keep.country || 'US',
+        is_default_shipping: false, is_default_billing: false,
+      };
+      g.forEach(function (a) {
+        if (a.is_default_shipping) body.is_default_shipping = true;
+        if (a.is_default_billing) body.is_default_billing = true;
+        ['name', 'company', 'phone', 'email'].forEach(function (f) {
+          if (!body[f] && a[f]) body[f] = a[f];
+        });
+      });
+      jobs.push(
+        BSR.api('/api/account/addresses/' + encodeURIComponent(keep.id), { method: 'PUT', body: body })
+          .then(function (jr) {
+            if (!(jr && jr.ok)) return;
+            return Promise.all(g.slice(1).map(function (d) {
+              return BSR.api('/api/account/addresses/' + encodeURIComponent(d.id), { method: 'DELETE' })
+                .catch(function () {});
+            }));
+          })
+          .catch(function () {})
+      );
+    });
+    if (!jobs.length) return Promise.resolve(false);
+    return Promise.all(jobs).then(function () { return true; });
+  }
   function loadAddresses() {
+    var authed = true;
     BSR.api('/api/account/addresses').then(function (j) {
-      if (j && j._status === 401) { window.location = '/account/login/'; return; }
+      if (j && j._status === 401) { authed = false; window.location = '/account/login/'; return null; }
       addrList = (j && j.ok && Array.isArray(j.addresses)) ? j.addresses : [];
-      addrShip = addrList.find(function (x) { return x.is_default_shipping; }) || null;
-      addrBill = addrList.find(function (x) { return x.is_default_billing; }) || null;
-      paintAddrBox('ship');
-      paintAddrBox('bill');
-      paintAddrBook();
+      return mergeDuplicateAddresses();
+    }).then(function (merged) {
+      if (!authed) return;
+      var paint = function () {
+        addrShip = addrList.find(function (x) { return x.is_default_shipping; }) || null;
+        addrBill = addrList.find(function (x) { return x.is_default_billing; }) || null;
+        paintAddrBox('ship');
+        paintAddrBox('bill');
+        paintAddrBook();
+      };
+      if (merged) {
+        BSR.api('/api/account/addresses').then(function (j2) {
+          if (j2 && j2.ok && Array.isArray(j2.addresses)) addrList = j2.addresses;
+          paint();
+          toast('Duplicate addresses merged');
+        }).catch(function () { paint(); });
+      } else {
+        paint();
+      }
     }).catch(function () {
       document.getElementById('addr-ship-box').innerHTML = '<p>Could not load addresses.</p>';
       document.getElementById('addr-bill-box').innerHTML = '';
