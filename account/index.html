@@ -584,40 +584,53 @@ document.addEventListener('DOMContentLoaded', function () {
         fieldsWrap.style.display = sameBox.checked ? 'none' : '';
       });
     }
-    /* Point one default role at the other box's address. */
-    function linkToOther(srcAddr, srcRole, dstAddr) {
-      var label = srcRole === 'bill' ? 'Bill-to' : 'Ship-to';
-      var otherLabel = srcRole === 'bill' ? 'ship-to' : 'bill-to';
-      if (!srcAddr || !srcAddr.id) {
-        showAddrMsg(false, 'Save a ' + otherLabel + ' address first.');
-        return;
-      }
-      BSR.api('/api/account/addresses/' + encodeURIComponent(srcAddr.id),
-        { method: 'PUT', body: { name: srcAddr.name, company: srcAddr.company, phone: srcAddr.phone, email: srcAddr.email, address1: srcAddr.address1, address2: srcAddr.address2, city: srcAddr.city, state: srcAddr.state, postal: srcAddr.postal, country: srcAddr.country, is_default_shipping: true, is_default_billing: true } })
-        .then(function (j) {
-          if (!(j && j.ok)) throw new Error((j && j.error) || 'Could not save.');
-          /* Remove the old separate address for this role if there was one. */
-          if (dstAddr && dstAddr.id && String(dstAddr.id) !== String(srcAddr.id)) {
-            return BSR.api('/api/account/addresses/' + encodeURIComponent(dstAddr.id), { method: 'DELETE' });
-          }
-        })
-        .then(function () {
-          slot.innerHTML = ''; loadAddresses();
-          showAddrMsg(true, label + ' address set to same as ' + otherLabel + '.');
-          toast(label + ' updated \u2713');
-        })
-        .catch(function (err) {
-          var em = (err && err.message) || 'Could not save. Check your connection.';
-          showAddrMsg(false, em); toast(em, false);
-        });
-    }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var id = form.getAttribute('data-addr-form');
       var fd = new FormData(form);
+      var verifiedNote = '';
+      var doSave = function (p) {
+        var sharedWithOther = !isBook && id !== 'new' &&
+          ((isBill && addrShip && String(addrShip.id) === String(id)) ||
+           (isShip && addrBill && String(addrBill.id) === String(id)));
+        var saveId = sharedWithOther ? 'new' : id;
+        var url = saveId === 'new' ? '/api/account/addresses' : '/api/account/addresses/' + encodeURIComponent(saveId);
+        BSR.api(url, { method: saveId === 'new' ? 'POST' : 'PUT', body: p })
+          .then(function (j) {
+            if (j && j.ok) {
+              slot.innerHTML = ''; loadAddresses();
+              var label = isBill ? 'Bill-to' : (isShip ? 'Ship-to' : 'Address');
+              showAddrMsg(true, label + ' saved.' + verifiedNote);
+              toast(label + ' saved \u2713');
+            } else {
+              var em2 = (j && j.error) || 'Could not save the address.';
+              showAddrMsg(false, em2);
+              toast(em2, false);
+            }
+          })
+          .catch(function () { showAddrMsg(false, 'Could not save. Check your connection.'); toast('Could not save. Check your connection.', false); });
+      };
       if (!isBook && !!fd.get('same_as_other')) {
-        if (isBill) { linkToOther(addrShip, 'bill', addrBill); }
-        else { linkToOther(addrBill, 'ship', addrShip); }
+        /* Copy the whole other address -- contact info included -- into this
+           role as its own record. The source address is never altered and
+           nothing is deleted. */
+        var src = isBill ? addrShip : addrBill;
+        var needLabel = isBill ? 'ship-to' : 'bill-to';
+        if (!src || !src.id) {
+          showAddrMsg(false, 'Save a ' + needLabel + ' address first.');
+          return;
+        }
+        var copy = {
+          name: src.name || '', company: src.company || '',
+          phone: src.phone || '', email: src.email || '',
+          address1: src.address1 || '', address2: src.address2 || '',
+          city: src.city || '', state: src.state || '',
+          postal: src.postal || '', country: src.country || 'US',
+        };
+        if (isBill) { copy.is_default_shipping = false; copy.is_default_billing = true; }
+        else { copy.is_default_shipping = true; copy.is_default_billing = false; }
+        verifiedNote = '';
+        doSave(copy);
         return;
       }
       var payload = {
@@ -645,28 +658,6 @@ document.addEventListener('DOMContentLoaded', function () {
         /* Keep the billing role if this address already doubles as bill-to. */
         payload.is_default_billing = !!(addrBill && addrShip && String(addrBill.id) === String(addrShip.id));
       }
-      var verifiedNote = '';
-      var doSave = function (p) {
-        var sharedWithOther = !isBook && id !== 'new' &&
-          ((isBill && addrShip && String(addrShip.id) === String(id)) ||
-           (isShip && addrBill && String(addrBill.id) === String(id)));
-        var saveId = sharedWithOther ? 'new' : id;
-        var url = saveId === 'new' ? '/api/account/addresses' : '/api/account/addresses/' + encodeURIComponent(saveId);
-        BSR.api(url, { method: saveId === 'new' ? 'POST' : 'PUT', body: p })
-          .then(function (j) {
-            if (j && j.ok) {
-              slot.innerHTML = ''; loadAddresses();
-              var label = isBill ? 'Bill-to' : (isShip ? 'Ship-to' : 'Address');
-              showAddrMsg(true, label + ' saved.' + verifiedNote);
-              toast(label + ' saved \u2713');
-            } else {
-              var em2 = (j && j.error) || 'Could not save the address.';
-              showAddrMsg(false, em2);
-              toast(em2, false);
-            }
-          })
-          .catch(function () { showAddrMsg(false, 'Could not save. Check your connection.'); toast('Could not save. Check your connection.', false); });
-      };
       /* Validate the address before saving when the validator is available. */
       var btn = form.querySelector('[type="submit"]');
       if (btn) btn.disabled = true;
