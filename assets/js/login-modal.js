@@ -248,7 +248,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
       '<div data-step="email">' +
       '<div class="bsr-field"><label for="bsr-li-email">Email address</label>' +
       '<input type="email" data-el="email" id="bsr-li-email" autocomplete="email" placeholder="you@example.com"></div>' +
-      '<p class="bsr-hint">Don\'t have an account yet? Enter your email and we\'ll help you create one!</p>' +
+      '<p class="bsr-hint">Enter your email to sign in, or we\'ll help you create an account.</p>' +
       '<button type="button" class="bsr-loginbtn" data-el="continue">CONTINUE</button>' +
       '<div data-el="passkey-mount-1"></div>' +
       '</div>' +
