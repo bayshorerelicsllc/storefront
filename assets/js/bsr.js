@@ -440,8 +440,8 @@
           e.preventDefault();
           me().then(function (c) {
             if (c) { window.location = '/account/'; }
-            else { showLogin(); }
-          }).catch(function () { showLogin(); });
+            else { window.location = '/account/login/'; }
+          }).catch(function () { window.location = '/account/login/'; });
         });
       })(btns[i]);
     }
