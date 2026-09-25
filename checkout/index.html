@@ -304,10 +304,10 @@ document.addEventListener('DOMContentLoaded', function () {
     window.location = '/thank-you/';
   }
 
-  /* ---------- load provider config ---------- */
-  BSR.api('/api/catalog/config').then(function (cfg) {
-    var paypalKey = cfg && cfg.ok ? cfg.paypal_client_id : null;
-    var stripeKey = cfg && cfg.ok ? cfg.stripe_publishable_key : null;
+  /* ---------- load provider config (keys embedded - publishable by design) ---------- */
+  (function () {
+    var paypalKey = 'BAAamSte2XC7P_gvmTGM7DNkrc0MQoL0cu7EHoHfRF7tKEF-6B3ksiHi6z6KJYAWGT-oMIvGGc0_LsT-uw';
+    var stripeKey = 'pk_live_51UJEcvPOUpe4az9TXgfdK9O8uZa2LjrM32VIHrS7BUkixPf29Ldhy8PLxnridu2Rvrhlc2GczBI3iLNHWEGnePZg00cWSPoAej';
     if (!paypalKey) {
       setPayEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
     } else {
@@ -325,10 +325,7 @@ document.addEventListener('DOMContentLoaded', function () {
       initStripe(stripeKey);
     }
     updateDividers();
-  }).catch(function () {
-    setPayEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
-    setPayEnabled('card', false, "Card payments aren't connected yet — please check back soon.");
-  });
+  })();
 
   function renderPayPalButtons() {
     if (!window.paypal) {
