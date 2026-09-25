@@ -183,10 +183,10 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.disabled = true;
       BSR.api('/api/account/profile', {
         method: 'PATCH',
-        body: JSON.stringify({
+        body: {
           name: form.name.value.trim(),
           phone: form.phone.value.trim(),
-        }),
+        },
       }).then(function (j) {
         if (j && j._status === 401) { window.location = '/account/login/'; return; }
         if (j && j.ok) {
@@ -298,11 +298,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!a) return;
         BSR.api('/api/account/addresses/' + encodeURIComponent(id), {
           method: 'PUT',
-          body: JSON.stringify({
+          body: {
             type: a.type, address1: a.address1, address2: a.address2 || '',
             city: a.city, state: a.state || '', postal: a.postal,
             country: a.country || 'US', is_default: true,
-          }),
+          },
         }).then(function (j) {
           if (j && j.ok) loadAddresses();
           else showAddrMsg(false, (j && j.error) || 'Could not set default.');
@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
         is_default: !!fd.get('is_default'),
       };
       var url = id === 'new' ? '/api/account/addresses' : '/api/account/addresses/' + encodeURIComponent(id);
-      BSR.api(url, { method: id === 'new' ? 'POST' : 'PUT', body: JSON.stringify(payload) })
+      BSR.api(url, { method: id === 'new' ? 'POST' : 'PUT', body: payload })
         .then(function (j) {
           if (j && j.ok) { slot.innerHTML = ''; loadAddresses(); showAddrMsg(true, 'Address saved.'); }
           else showAddrMsg(false, (j && j.error) || 'Could not save the address.');
@@ -413,10 +413,10 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.disabled = true;
         BSR.api('/api/account/change-password', {
           method: 'POST',
-          body: JSON.stringify({
+          body: {
             current_password: document.getElementById('pw-cur').value,
             new_password: document.getElementById('pw-new').value,
-          }),
+          },
         }).then(function (j) {
           if (j && j.ok) {
             showMsg(msg, true, 'Password updated.');
@@ -476,7 +476,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (name === null) return;
     name = String(name || '').trim().slice(0, 60) || 'Passkey';
     pkFormMsg('Starting registration — follow your device prompt…');
-    BSR.api('/api/account/passkey/register/start', { method: 'POST', body: JSON.stringify({}) })
+    BSR.api('/api/account/passkey/register/start', { method: 'POST', body: {} })
       .then(function (start) {
         if (!start || !start.ok) throw new Error((start && start.error) || 'Could not start registration.');
         return navigator.credentials.create({
@@ -501,7 +501,7 @@ document.addEventListener('DOMContentLoaded', function () {
           var resp = cred.response;
           return BSR.api('/api/account/passkey/register/finish', {
             method: 'POST',
-            body: JSON.stringify({
+            body: {
               id: cred.id,
               rawId: bytesToB64url(new Uint8Array(cred.rawId)),
               response: {
@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 clientDataJSON: bytesToB64url(new Uint8Array(resp.clientDataJSON)),
               },
               name: name,
-            }),
+            },
           });
         });
       })
