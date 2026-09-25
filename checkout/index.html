@@ -65,7 +65,8 @@ document.addEventListener('DOMContentLoaded', function () {
     '<section class="card" id="express-checkout-card"><h2>Express checkout</h2>' +
     '<p class="hint" style="margin-bottom:12px">Pay instantly — your wallet fills in shipping and billing.</p>' +
     '<div id="pay-wallets-top"><div id="express-checkout-element"><div id="wallets-loading" style="display:flex;gap:8px;justify-content:center;padding:12px;color:#8a7d5f;font-size:.85rem">Loading payment options…</div></div></div>' +
-    '<div id="pay-paypal-top" style="margin-top:8px"><div id="paypal-buttons"></div><div id="venmo-buttons" style="margin-top:8px"></div><div id="paylater-buttons" style="margin-top:8px"></div><div class="hint" id="paypal-msg"></div></div>' +
+    '<div class="pay-divider" id="wallet-divider-top"><span>or</span></div>' +
+    '<div id="pay-paypal-top"><div id="paypal-buttons"></div><div id="venmo-buttons" style="margin-top:8px"></div><div id="paylater-buttons" style="margin-top:8px"></div><div class="hint" id="paypal-msg"></div></div>' +
     '</section>' +
     '<div class="pay-divider" style="margin:4px 0 16px"><span>or</span></div>' +
     '<button id="show-card-form" type="button" style="display:block;width:100%;background:#fff;color:#1a1a1a;border:2px solid #1a1a1a;border-radius:8px;padding:14px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:16px">Pay with card</button>' +
@@ -287,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function setPayEnabled(which, enabled, msg) {
     var sec = document.getElementById(which === 'paypal' ? 'pay-paypal-top' : 'pay-card');
     if (sec) sec.style.display = enabled ? '' : 'none';
-    var div = which === 'paypal' ? null : document.getElementById('card-divider');
+    var div = document.getElementById(which === 'paypal' ? 'wallet-divider-top' : 'card-divider');
     if (!enabled) {
       var msgEl = document.getElementById(which === 'paypal' ? 'paypal-msg' : 'stripe-err');
       if (msgEl && msg) { msgEl.textContent = msg; msgEl.style.display = ''; }
@@ -301,7 +302,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var wVis = wallets && wallets.style.display !== 'none' && wallets.innerHTML.trim() !== '';
     var ppVis = pp && pp.style.display !== 'none';
     var cardVis = card && card.style.display !== 'none';
+    var wd = document.getElementById('wallet-divider-top');
     var cd = document.getElementById('card-divider');
+    if (wd) wd.style.display = (wVis && ppVis) ? '' : 'none';
     if (cd) cd.style.display = ((wVis || ppVis) && cardVis) ? '' : 'none';
     if (cd && !wVis && !ppVis && cardVis) cd.style.display = 'none';
   }
