@@ -449,7 +449,6 @@ document.addEventListener('DOMContentLoaded', function () {
         stripe = window.Stripe(pk);
         document.getElementById('stripe-pay').addEventListener('click', onStripePay);
         initExpressCheckout();
-        initCardElement();
       } catch (e) {
         setPayEnabled('card', false, 'Card payments could not load — please try PayPal.');
       }
