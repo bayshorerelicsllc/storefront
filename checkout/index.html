@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="pay-divider" id="card-divider"><span>pay with card</span></div>' +
     '<div id="pay-card"><div id="stripe-element"></div>' +
     '<div class="error" id="stripe-err" style="display:none"></div>' +
-    '<button id="stripe-pay" type="button" style="display:block;width:100%;background:#635bff;color:#fff;border:none;border-radius:8px;padding:14px;font-size:1rem;font-weight:600;cursor:pointer">Pay with Stripe</button></div>' +
+    '<button id="stripe-pay" type="button" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#635BFF;color:#fff;border:none;border-radius:8px;padding:14px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,91,255,.35)">Pay with <span style="font-weight:800;letter-spacing:-.02em">Stripe</span></button></div>' +
     '<div class="secure-note">' + BSR.icon('lock', 'ic-sm') + '<span>Payments are encrypted. We never see your card number.</span></div>' +
     '</section></div>' +
     '<aside class="card summary"><h2>Order summary</h2>' +
@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }).catch(function (e) {
       errEl.textContent = e.message || 'The card payment failed.';
       errEl.style.display = '';
-      btn.disabled = false; btn.textContent = 'Pay with Stripe';
+      btn.disabled = false; btn.innerHTML = 'Pay with <span style="font-weight:800;letter-spacing:-.02em">Stripe</span>';
     });
   }
 });
