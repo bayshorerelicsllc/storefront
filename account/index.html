@@ -907,7 +907,7 @@ document.addEventListener('DOMContentLoaded', function () {
       this.style.display = 'none';
       loadStripe().then(function (st) {
         var elements = st.elements();
-        cardEl = elements.create('card');
+        cardEl = elements.create('card', { disableLink: true });
         cardEl.mount('#stripe-card-element');
       }).catch(function (e) {
         showPmError(e.message || 'Could not load the card form. Check your connection and try again.');
