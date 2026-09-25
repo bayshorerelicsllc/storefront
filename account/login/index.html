@@ -25,8 +25,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sign in — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
-<link rel="stylesheet" href="/assets/css/theme.css">
-<script src="/assets/js/bsr.js" defer></script>
+<link rel="stylesheet" href="/assets/css/theme.css?v=20260925b">
+<script src="/assets/js/bsr.js?v=20260925b" defer></script>
 <style>
 .sdk-btn { display:flex; align-items:center; justify-content:center;
   width:100%; margin-bottom:12px; min-height:48px; }
@@ -136,6 +136,12 @@ function bsrInitOAuth(cfg) {
       });
       google.accounts.id.renderButton(document.getElementById('gsi-button'),
         { theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', width: 300 });
+      // GIS fails SILENTLY when the origin isn't authorized yet (no exception, no fallback).
+      // Verify the button actually rendered; otherwise show the server-side fallback link.
+      setTimeout(function () {
+        var el = document.getElementById('gsi-button');
+        if (el && !el.hasChildNodes()) bsrOAuthFallback('sdk-google', 'google', 'Continue with Google');
+      }, 5000);
     }).catch(function () { bsrOAuthFallback('sdk-google', 'google', 'Continue with Google'); });
   } else { document.getElementById('sdk-google').style.display = 'none'; }
 
@@ -170,7 +176,7 @@ function bsrInitOAuth(cfg) {
   if (cfg.paypal_client_id) {
     bsrLoadScript('https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(cfg.paypal_client_id) + '&components=auth-button')
       .then(function () {
-        paypal.AuthButton({
+        var renderResult = paypal.AuthButton({
           scopes: ['openid', 'profile', 'email'],
           style: { label: 'login', color: 'blue', height: 40, shape: 'pill' },
           onApprove: function (data) {
@@ -179,24 +185,27 @@ function bsrInitOAuth(cfg) {
           },
           onError: function () { bsrOAuthError('PayPal sign-in failed.'); }
         }).render('#paypal-login-button');
+        if (renderResult && typeof renderResult.catch === 'function') {
+          renderResult.catch(function () { bsrOAuthFallback('sdk-paypal', 'paypal', 'Log in with PayPal'); });
+        }
+        // If the button never appears (slow/blocked SDK), fall back to server-side flow.
+        setTimeout(function () {
+          var el = document.getElementById('paypal-login-button');
+          if (el && !el.hasChildNodes()) bsrOAuthFallback('sdk-paypal', 'paypal', 'Log in with PayPal');
+        }, 8000);
       })
       .catch(function () { bsrOAuthFallback('sdk-paypal', 'paypal', 'Log in with PayPal'); });
   } else { document.getElementById('sdk-paypal').style.display = 'none'; }
 }
 document.addEventListener('DOMContentLoaded', function () {
   BSR.init({ active: 'account' });
-  // Cache theme for instant application on next page load
-  BSR.init({ active: 'account' }).then(function() {
-    try {
-      var cs = getComputedStyle(document.documentElement);
-      var theme = {
-        color_accent: cs.getPropertyValue('--accent').trim(),
-        color_bg: cs.getPropertyValue('--bg').trim(),
-        color_text: cs.getPropertyValue('--text').trim()
-      };
-      if (theme.color_bg) localStorage.setItem('bsr-theme-cache', JSON.stringify(theme));
-    } catch(e) {}
-  });
+  // Cache the real theme object for instant application on next page load.
+  // (Uses loadTheme's promise so we never cache pre-theme defaults.)
+  if (BSR.loadTheme) {
+    BSR.loadTheme().then(function (t) {
+      try { if (t && t.color_bg) localStorage.setItem('bsr-theme-cache', JSON.stringify(t)); } catch (e) {}
+    });
+  }
   // Already signed in? Go straight to the account page.
   BSR.me().then(function (c) { if (c) window.location = '/account/'; });
   // Fetch public OAuth client IDs, then render each provider's official SDK button.
