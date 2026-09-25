@@ -51,7 +51,7 @@ body { background: var(--bg, #f8f4e9); color: var(--text, #2a241b);
   function render() {
     // Already signed in? Back to the homepage.
     if (window.BSR && BSR.me) {
-      BSR.me().then(function (c) { if (c) window.location = '/'; }).catch(function () {});
+      BSR.me().then(function (c) { if (c) window.location = '/account/'; }).catch(function () {});
     }
     // Cache the real theme object for instant application on next page load.
     if (window.BSR && BSR.loadTheme) {
