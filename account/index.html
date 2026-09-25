@@ -7,6 +7,7 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods4">
 <script src="/assets/js/bsr.js?v=20260925k" defer></script>
+<script src="/assets/js/addr-validate.js?v=20260925a"></script>
 <script src="https://js.stripe.com/v3/" defer></script>
 <style>
 .acct-nav-btn { display:flex; align-items:center; gap:10px; padding:10px 12px; width:100%;
@@ -63,6 +64,14 @@
 .addr-card .addr-badge { display:inline-block; font-size:.72rem; font-weight:700;
   letter-spacing:.05em; text-transform:uppercase; background:#1e4d33; color:#fff;
   border-radius:999px; padding:3px 10px; margin-bottom:8px; }
+.addr-badges { margin-bottom:8px; }
+.addr-val-note { font-size:.88rem; color:var(--text-soft); margin:8px 0; }
+.addr-val-ok { font-size:.88rem; color:#1e4d33; font-weight:600; margin:8px 0; }
+.addr-val-suggest, .addr-val-warn { border:1px solid var(--line); border-radius:var(--radius-sm);
+  padding:12px 14px; margin:10px 0; background:var(--bg); font-size:.9rem; }
+.addr-val-warn { border-color:#b98a2f; background:#fdf6e8; }
+.addr-val-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.addr-card .addr-badge.addr-badge-bill { background:#8a6d3b; }
 .addr-card .addr-actions { display:flex; gap:8px; margin-top:12px; }
 .addr-card .addr-actions button { font-size:.84rem; padding:6px 12px; }
 .addr-form-wrap { border:1px solid var(--line); border-radius:var(--radius-sm);
@@ -209,18 +218,25 @@ document.addEventListener('DOMContentLoaded', function () {
     if (a.address2) lines += '<br>' + esc(a.address2);
     lines += '<br>' + esc(a.city || '') + ', ' + esc(a.state || '') + ' ' + esc(a.postal || '');
     lines += '<br>' + esc(a.country || '');
-    return '<div class="addr-card' + (a.is_default ? ' is-default' : '') + '" data-addr="' + esc(a.id) + '">' +
-      (a.is_default ? '<span class="addr-badge">Default</span>' : '') +
+    var badges = '';
+    if (a.is_default_shipping) badges += '<span class="addr-badge">Default shipping</span> ';
+    if (a.is_default_billing) badges += '<span class="addr-badge addr-badge-bill">Default billing</span> ';
+    var isDef = a.is_default_shipping || a.is_default_billing;
+    return '<div class="addr-card' + (isDef ? ' is-default' : '') + '" data-addr="' + esc(a.id) + '">' +
+      (badges ? '<div class="addr-badges">' + badges + '</div>' : '') +
       '<div class="addr-lines">' + lines + '</div>' +
       '<div class="addr-actions">' +
       '<button type="button" class="btn btn-ghost btn-sm" data-addr-edit="' + esc(a.id) + '">Edit</button>' +
-      (a.is_default ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-addr-default="' + esc(a.id) + '">Set default</button>') +
       '<button type="button" class="btn btn-ghost btn-sm" data-addr-del="' + esc(a.id) + '" style="color:#9c2b1e">Remove</button>' +
       '</div></div>';
   }
-  function addrFormHtml(a, type) {
+  function addrFormHtml(a) {
     a = a || {};
-    return '<div class="addr-form-wrap"><form class="addr-form" data-addr-form="' + (a.id || 'new') + '" data-type="' + type + '">' +
+    var isNew = !a.id;
+    /* First address saved becomes default for both. */
+    var checkShip = isNew ? (addrCache.length === 0) : !!a.is_default_shipping;
+    var checkBill = isNew ? (addrCache.length === 0) : !!a.is_default_billing;
+    return '<div class="addr-form-wrap"><form class="addr-form" data-addr-form="' + (a.id || 'new') + '">' +
       '<div class="addr-form-grid two-col">' +
       '<div class="acct-field"><label>Street address</label><input name="address1" required maxlength="200" autocomplete="street-address" value="' + esc(a.address1 || '') + '"></div>' +
       '<div class="acct-field"><label>Apt, suite, etc. (optional)</label><input name="address2" maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
@@ -229,23 +245,20 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="acct-field"><label>ZIP / Postal code</label><input name="postal" required maxlength="20" autocomplete="postal-code" value="' + esc(a.postal || '') + '"></div>' +
       '<div class="acct-field"><label>Country</label><input name="country" maxlength="10" autocomplete="country-name" value="' + esc(a.country || 'US') + '"></div>' +
       '</div>' +
-      '<label class="checkbox-row"><input type="checkbox" name="is_default"' + (a.is_default ? ' checked' : '') + '> Make this my default ' + type + ' address</label>' +
+      '<div id="addr-validate-msg"></div>' +
+      '<label class="checkbox-row"><input type="checkbox" name="is_default_shipping"' + (checkShip ? ' checked' : '') + '> Use as default shipping address</label>' +
+      '<label class="checkbox-row"><input type="checkbox" name="is_default_billing"' + (checkBill ? ' checked' : '') + '> Use as default billing address</label>' +
       '<div class="acct-actions"><button type="submit" class="btn btn-primary btn-sm">Save address</button>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-addr-cancel>Cancel</button></div>' +
       '</form></div>';
   }
   function renderAddresses() {
     return '<div class="acct-section"><h2>Addresses</h2>' +
-      '<p class="sec-desc">Saved addresses for faster checkout. Your default is pre-filled at checkout.</p>' +
+      '<p class="sec-desc">Saved addresses for faster checkout. Your defaults are pre-filled at checkout.</p>' +
       '<div id="addr-msg"></div>' +
-      '<h3 class="sub">Shipping addresses</h3>' +
-      '<div class="addr-grid" id="ship-list"><p>Loading&hellip;</p></div>' +
-      '<div id="ship-form-slot"></div>' +
-      '<div class="acct-actions"><button type="button" class="btn btn-secondary btn-sm" id="ship-add">Add shipping address</button></div>' +
-      '<h3 class="sub">Billing addresses</h3>' +
-      '<div class="addr-grid" id="bill-list"><p>Loading&hellip;</p></div>' +
-      '<div id="bill-form-slot"></div>' +
-      '<div class="acct-actions"><button type="button" class="btn btn-secondary btn-sm" id="bill-add">Add billing address</button></div>' +
+      '<div class="addr-grid" id="addr-list"><p>Loading&hellip;</p></div>' +
+      '<div id="addr-form-slot"></div>' +
+      '<div class="acct-actions"><button type="button" class="btn btn-secondary btn-sm" id="addr-add">Add address</button></div>' +
       '</div>';
   }
   var addrCache = [];
@@ -253,20 +266,16 @@ document.addEventListener('DOMContentLoaded', function () {
     BSR.api('/api/account/addresses').then(function (j) {
       if (j && j._status === 401) { window.location = '/account/login/'; return; }
       addrCache = (j && j.ok && Array.isArray(j.addresses)) ? j.addresses : [];
-      paintAddrLists();
+      paintAddrList();
     }).catch(function () {
-      document.getElementById('ship-list').innerHTML = '<p>Could not load addresses.</p>';
-      document.getElementById('bill-list').innerHTML = '';
+      document.getElementById('addr-list').innerHTML = '<p>Could not load addresses.</p>';
     });
   }
-  function paintAddrLists() {
-    ['shipping', 'billing'].forEach(function (type) {
-      var list = addrCache.filter(function (a) { return (a.type || 'shipping') === type; });
-      var el = document.getElementById(type === 'shipping' ? 'ship-list' : 'bill-list');
-      if (!el) return;
-      el.innerHTML = list.length ? list.map(addrCard).join('')
-        : '<p style="color:var(--text-soft);font-size:.92rem">No ' + type + ' addresses saved yet.</p>';
-    });
+  function paintAddrList() {
+    var el = document.getElementById('addr-list');
+    if (!el) return;
+    el.innerHTML = addrCache.length ? addrCache.map(addrCard).join('')
+      : '<p style="color:var(--text-soft);font-size:.92rem">No addresses saved yet.</p>';
     bindAddrButtons();
   }
   function bindAddrButtons() {
@@ -274,39 +283,36 @@ document.addEventListener('DOMContentLoaded', function () {
       b.addEventListener('click', function () {
         var a = addrCache.find(function (x) { return x.id === b.getAttribute('data-addr-edit'); });
         if (!a) return;
-        var slot = document.getElementById(a.type === 'billing' ? 'bill-form-slot' : 'ship-form-slot');
-        slot.innerHTML = addrFormHtml(a, a.type || 'shipping');
+        var slot = document.getElementById('addr-form-slot');
+        slot.innerHTML = addrFormHtml(a);
         bindAddrForm(slot);
         slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       });
     });
     root.querySelectorAll('[data-addr-del]').forEach(function (b) {
       b.addEventListener('click', function () {
-        if (!window.confirm('Remove this address?')) return;
         var id = b.getAttribute('data-addr-del');
+        var a = addrCache.find(function (x) { return x.id === id; });
+        var roles = [];
+        if (a) {
+          if (a.is_default_shipping) roles.push('default shipping');
+          if (a.is_default_billing) roles.push('default billing');
+        }
+        var msg = 'Remove this address?';
+        if (roles.length && addrCache.length > 1) {
+          msg = 'This is your ' + roles.join(' and ') + ' address. Removing it will make your oldest remaining address the new default. Continue?';
+        }
+        if (!window.confirm(msg)) return;
         BSR.api('/api/account/addresses/' + encodeURIComponent(id), { method: 'DELETE' })
           .then(function (j) {
-            if (j && j.ok) loadAddresses();
+            if (j && j.ok) {
+              loadAddresses();
+              if (j.promoted && j.promoted.length) {
+                showAddrMsg(true, 'Address removed. Your oldest remaining address is now the default ' + j.promoted.join(' and ') + ' address.');
+              }
+            }
             else showAddrMsg(false, (j && j.error) || 'Could not remove the address.');
           });
-      });
-    });
-    root.querySelectorAll('[data-addr-default]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var id = b.getAttribute('data-addr-default');
-        var a = addrCache.find(function (x) { return x.id === id; });
-        if (!a) return;
-        BSR.api('/api/account/addresses/' + encodeURIComponent(id), {
-          method: 'PUT',
-          body: {
-            type: a.type, address1: a.address1, address2: a.address2 || '',
-            city: a.city, state: a.state || '', postal: a.postal,
-            country: a.country || 'US', is_default: true,
-          },
-        }).then(function (j) {
-          if (j && j.ok) loadAddresses();
-          else showAddrMsg(false, (j && j.error) || 'Could not set default.');
-        });
       });
     });
   }
@@ -321,37 +327,40 @@ document.addEventListener('DOMContentLoaded', function () {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var id = form.getAttribute('data-addr-form');
-      var type = form.getAttribute('data-type');
       var fd = new FormData(form);
       var payload = {
-        type: type,
         address1: (fd.get('address1') || '').toString().trim(),
         address2: (fd.get('address2') || '').toString().trim(),
         city: (fd.get('city') || '').toString().trim(),
         state: (fd.get('state') || '').toString().trim(),
         postal: (fd.get('postal') || '').toString().trim(),
         country: (fd.get('country') || 'US').toString().trim() || 'US',
-        is_default: !!fd.get('is_default'),
+        is_default_shipping: !!fd.get('is_default_shipping'),
+        is_default_billing: !!fd.get('is_default_billing'),
       };
-      var url = id === 'new' ? '/api/account/addresses' : '/api/account/addresses/' + encodeURIComponent(id);
-      BSR.api(url, { method: id === 'new' ? 'POST' : 'PUT', body: payload })
-        .then(function (j) {
-          if (j && j.ok) { slot.innerHTML = ''; loadAddresses(); showAddrMsg(true, 'Address saved.'); }
-          else showAddrMsg(false, (j && j.error) || 'Could not save the address.');
-        })
-        .catch(function () { showAddrMsg(false, 'Could not save. Check your connection.'); });
+      var doSave = function (p) {
+        var url = id === 'new' ? '/api/account/addresses' : '/api/account/addresses/' + encodeURIComponent(id);
+        BSR.api(url, { method: id === 'new' ? 'POST' : 'PUT', body: p })
+          .then(function (j) {
+            if (j && j.ok) { slot.innerHTML = ''; loadAddresses(); showAddrMsg(true, 'Address saved.'); }
+            else showAddrMsg(false, (j && j.error) || 'Could not save the address.');
+          })
+          .catch(function () { showAddrMsg(false, 'Could not save. Check your connection.'); });
+      };
+      /* Validate the address before saving when the validator is available. */
+      if (window.BSRAddrValidate && BSRAddrValidate.checkAndConfirm) {
+        BSRAddrValidate.checkAndConfirm(form, payload, doSave);
+      } else {
+        doSave(payload);
+      }
     });
   }
   function bindAddresses() {
-    document.getElementById('ship-add').addEventListener('click', function () {
-      var slot = document.getElementById('ship-form-slot');
-      slot.innerHTML = addrFormHtml(null, 'shipping');
+    document.getElementById('addr-add').addEventListener('click', function () {
+      var slot = document.getElementById('addr-form-slot');
+      slot.innerHTML = addrFormHtml(null);
       bindAddrForm(slot);
-    });
-    document.getElementById('bill-add').addEventListener('click', function () {
-      var slot = document.getElementById('bill-form-slot');
-      slot.innerHTML = addrFormHtml(null, 'billing');
-      bindAddrForm(slot);
+      slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
     loadAddresses();
   }
