@@ -165,6 +165,14 @@ document.addEventListener('DOMContentLoaded', function () {
   var customer = null;
 
   function esc(s) { return BSR.esc(s); }
+  /* Phone numbers are stored as plain digits -- no parentheses, dashes,
+     or spaces. A leading "+" is kept: it is part of an international
+     number, not formatting. */
+  function cleanPhone(v) {
+    var s = (v || '').toString().trim();
+    var plus = s.charAt(0) === '+' ? '+' : '';
+    return plus + s.replace(/\D/g, '');
+  }
 
   function showMsg(el, ok, text) {
     el.innerHTML = '<div class="acct-msg ' + (ok ? 'ok' : 'err') + '">' + esc(text) + '</div>';
@@ -285,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function () {
         method: 'PATCH',
         body: {
           name: form.name.value.trim(),
-          phone: form.phone.value.trim(),
+          phone: cleanPhone(form.phone.value),
         },
       }).then(function (j) {
         if (j && j._status === 401) { window.location = '/account/login/'; return; }
@@ -479,7 +487,9 @@ document.addEventListener('DOMContentLoaded', function () {
           is_default_shipping: false, is_default_billing: false,
         };
         ['name', 'company', 'phone', 'email'].forEach(function (f) {
-          for (var i = 0; i < cl.length; i++) { if (cl[i][f]) { body[f] = cl[i][f]; break; } }
+          for (var i = 0; i < cl.length; i++) {
+            if (cl[i][f]) { body[f] = (f === 'phone') ? cleanPhone(cl[i][f]) : cl[i][f]; break; }
+          }
         });
         cl.forEach(function (a) {
           if (a.is_default_shipping) body.is_default_shipping = true;
@@ -668,7 +678,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function setAsDefault(a, role) {
     var body = {
-      name: a.name || '', company: a.company || '', phone: a.phone || '', email: a.email || '',
+      name: a.name || '', company: a.company || '', phone: cleanPhone(a.phone), email: a.email || '',
       address1: a.address1, address2: a.address2 || '', city: a.city, state: a.state || '',
       postal: a.postal, country: a.country || 'US',
       is_default_shipping: role === 'ship' ? true : !!a.is_default_shipping,
@@ -754,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         var linkBody = {
           name: src.name || '', company: src.company || '',
-          phone: src.phone || '', email: src.email || '',
+          phone: cleanPhone(src.phone), email: src.email || '',
           address1: src.address1, address2: src.address2 || '',
           city: src.city, state: src.state || '',
           postal: src.postal, country: src.country || 'US',
@@ -791,7 +801,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var payload = {
         name: fv('name'),
         company: fv('company'),
-        phone: fv('phone'),
+        phone: cleanPhone(fv('phone')),
         email: fv('email'),
         address1: fv('address1'),
         address2: fv('address2'),
