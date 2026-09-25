@@ -902,6 +902,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!j.ok || !j.client_secret) throw new Error((j && j.error) || 'Could not start the card payment.');
       stripeCard.intent = j;
       stripeCard.billing = inputs.billing;
+      if (!stripe) throw new Error('Card payments are still loading — please wait a moment and try again.');
       stripeCard.elements = stripe.elements({ clientSecret: j.client_secret });
       stripeCard.elements.create('payment').mount('#stripe-element');
       stripeMounted = true;
@@ -915,6 +916,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function onStripePay() {
     var btn = document.getElementById('stripe-pay');
+    var errEl = document.getElementById('stripe-err');
+    if (!stripe) {
+      if (errEl) { errEl.textContent = 'Card payments are still loading — please wait a moment and try again.'; errEl.style.display = ''; }
+      return;
+    }
     /* Step 2: card form is mounted — confirm the payment. */
     if (stripeCard.elements && stripeCard.intent) {
       /* If the form changed since the intent was built, rebuild first. */
