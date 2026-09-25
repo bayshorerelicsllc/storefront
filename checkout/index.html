@@ -166,8 +166,8 @@ document.addEventListener('DOMContentLoaded', function () {
     '<section class="card" id="card-payment-section" style="display:none"><h2><span class="step-num">5</span> Payment</h2>' +
     '<div class="pay-divider" id="card-divider"><span>pay with card</span></div>' +
     '<div style="display:flex;gap:8px;margin-bottom:14px" role="tablist" aria-label="Card processor">' +
-    '<button type="button" id="proc-stripe" class="proc-btn proc-active" style="flex:1;height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid #635BFF;border-radius:8px;background:#f0efff;font-weight:700;cursor:pointer">Card via Stripe</button>' +
-    '<button type="button" id="proc-paypal" class="proc-btn" style="flex:1;height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid #ddd;border-radius:8px;background:#fff;font-weight:700;cursor:pointer">Card via PayPal</button>' +
+    '<button type="button" id="proc-stripe" class="proc-btn proc-active" style="flex:1;height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:8px;border:2px solid #635BFF;border-radius:8px;background:#635BFF;color:#fff;font-weight:700;cursor:pointer"><img src="/assets/img/payments/stripe-mark.svg" alt="Stripe" style="height:22px;width:auto;border-radius:4px"><span>Card</span></button>' +
+    '<button type="button" id="proc-paypal" class="proc-btn" style="flex:1;height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:8px;border:2px solid #ddd;border-radius:8px;background:#003087;color:#fff;font-weight:700;cursor:pointer;opacity:0.55"><img src="/assets/img/payments/paypal.svg" alt="PayPal" style="height:16px;width:auto;filter:brightness(0) invert(1)"><span style="display:inline-flex;gap:4px;align-items:center;background:#fff;border-radius:4px;padding:3px 6px"><img src="/assets/img/payments/visa.svg" alt="Visa" style="height:10px;width:auto"><img src="/assets/img/payments/mastercard.svg" alt="Mastercard" style="height:11px;width:auto"><img src="/assets/img/payments/amex.svg" alt="Amex" style="height:10px;width:auto"><img src="/assets/img/payments/discover.svg" alt="Discover" style="height:10px;width:auto"></span></button>' +
     '</div>' +
     '<div id="pay-card-stripe"><div id="stripe-element"></div>' +
     '<div class="error" id="stripe-err" style="display:none"></div>' +
@@ -857,12 +857,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var sPane = document.getElementById('pay-card-stripe');
     var pPane = document.getElementById('pay-card-paypal');
     if (which === 'stripe') {
-      sBtn.style.border = '2px solid #635BFF'; sBtn.style.background = '#f0efff';
-      pBtn.style.border = '2px solid #ddd'; pBtn.style.background = '#fff';
+      sBtn.style.border = '2px solid #635BFF'; sBtn.style.opacity = '1';
+      pBtn.style.border = '2px solid #ddd'; pBtn.style.opacity = '0.55';
       sPane.style.display = ''; pPane.style.display = 'none';
     } else {
-      pBtn.style.border = '2px solid #003087'; pBtn.style.background = '#e8f0fe';
-      sBtn.style.border = '2px solid #ddd'; sBtn.style.background = '#fff';
+      pBtn.style.border = '2px solid #003087'; pBtn.style.opacity = '1';
+      sBtn.style.border = '2px solid #ddd'; sBtn.style.opacity = '0.55';
       pPane.style.display = ''; sPane.style.display = 'none';
       initPayPalCard();
     }
