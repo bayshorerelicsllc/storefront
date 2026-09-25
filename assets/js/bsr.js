@@ -431,20 +431,18 @@
   showLogin._stub = true;
   /* Account buttons: signed in → /account/, signed out → login modal. */
   function wireAccountButtons() {
-    var btns = document.querySelectorAll('[data-account-btn]');
-    for (var i = 0; i < btns.length; i++) {
-      (function (btn) {
-        if (btn._bsrWired) return;
-        btn._bsrWired = true;
-        btn.addEventListener('click', function (e) {
-          e.preventDefault();
-          me().then(function (c) {
-            if (c) { window.location = '/account/'; }
-            else { window.location = '/account/login/'; }
-          }).catch(function () { window.location = '/account/login/'; });
-        });
-      })(btns[i]);
-    }
+    /* Event delegation: works even when header renders after this runs. */
+    if (wireAccountButtons._done) return;
+    wireAccountButtons._done = true;
+    document.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('[data-account-btn]') : null;
+      if (!btn) return;
+      e.preventDefault();
+      me().then(function (c) {
+        if (c) { window.location = '/account/'; }
+        else { window.location = '/account/login/'; }
+      }).catch(function () { window.location = '/account/login/'; });
+    });
   }
 
   window.BSR = {
