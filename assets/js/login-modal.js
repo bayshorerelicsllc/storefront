@@ -35,7 +35,7 @@ var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
     '.bsr-login-close:hover{background:rgba(42,36,27,.08)}',
     /* Shared Logitech-style form */
     '.bsr-loginform{max-width:400px;margin:0 auto}',
-    '.bsr-backline{max-width:400px;margin:6px auto 26px}',
+    '.bsr-backline{max-width:400px;margin:0 auto 40px;padding-top:2px}',
     '.bsr-back{display:inline-flex;align-items:center;gap:6px;color:#6b6252;text-decoration:none;font-size:.9rem}',
     '.bsr-back:hover{color:#2a241b}',
     '.bsr-brand{display:flex;align-items:center;justify-content:center;gap:14px;margin:2px 0 10px;',
