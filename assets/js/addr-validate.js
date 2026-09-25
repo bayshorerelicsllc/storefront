@@ -212,12 +212,32 @@
   /* Live as-you-type address autocomplete. A dropdown under the street
      field shows up to 5 matching addresses; tapping one fills the form.
      Shippo still does the final validation silently at save time. */
+  /* Keep the browser's own autofill off the address fields so our
+     suggestions are the single dropdown. readonly is set here in JS (not
+     in the HTML) so a script failure can never leave the form untypeable;
+     it is lifted the moment the field is focused. */
+  function blockBrowserAutofill(form) {
+    form.setAttribute('autocomplete', 'off');
+    ['address1', 'address2', 'city', 'postal'].forEach(function (n) {
+      var el = form.querySelector('input[name="' + n + '"]');
+      if (el) { el.setAttribute('autocomplete', 'off'); el.setAttribute('readonly', 'readonly'); }
+    });
+    if (!window._bsrAutofillBlockWired) {
+      window._bsrAutofillBlockWired = true;
+      document.addEventListener('focusin', function (e) {
+        var el = e.target;
+        if (el && el.matches && el.matches('form.addr-form input[readonly]')) el.removeAttribute('readonly');
+      });
+    }
+  }
+
   function attachLive(form) {
     var streetEl = form.querySelector('input[name="address1"]');
     var cityEl = form.querySelector('input[name="city"]');
     if (!streetEl || form._bsrLiveAttached) return;
     form._bsrLiveAttached = true;
     ensureLiveCss();
+    blockBrowserAutofill(form);
 
     var anchor = streetEl.closest('.acct-field') || streetEl.parentNode;
     var dd = document.createElement('div');
