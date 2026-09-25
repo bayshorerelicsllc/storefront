@@ -718,6 +718,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       expressCheckoutEl = expressElements.create('expressCheckout', {
         layout: { maxColumns: 2, maxRows: 3 },
+        buttonHeight: 44,
         paymentMethods: { applePay: 'auto', googlePay: 'auto', link: 'auto', amazonPay: 'auto', paypal: 'auto' }
       });
       expressCheckoutEl.on('ready', function (e) {
