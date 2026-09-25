@@ -375,9 +375,11 @@ document.addEventListener('DOMContentLoaded', function () {
       '<h4 class="addr-form-title">' + title + '</h4>' +
       ((!isBook) ? '<label class="checkbox-row"><input type="checkbox" name="same_as_other"' + (sameChecked ? ' checked' : '') + '> ' + sameLabel + '</label>' : '') +
       '<div class="addr-form-grid two-col" data-addr-fields' + (sameChecked ? ' style="display:none"' : '') + '>' +
-      '<div class="acct-field"><label>Full name' + req + '</label><input name="name" required maxlength="120" autocomplete="name" value="' + esc(a.name || '') + '"></div>' +
-      '<div class="acct-field"><label>Company <span class="opt">(optional)</span></label><input name="company" maxlength="120" autocomplete="organization" value="' + esc(a.company || '') + '"></div>' +
-      '<div class="acct-field"><label>Phone' + req + '</label><input name="phone" type="tel" required maxlength="40" autocomplete="tel" value="' + esc(a.phone || '') + '"></div>' +
+      (isBook ?
+        '<div class="acct-field"><label>Full name' + req + '</label><input name="name" required maxlength="120" autocomplete="name" value="' + esc(a.name || '') + '"></div>' +
+        '<div class="acct-field"><label>Company <span class="opt">(optional)</span></label><input name="company" maxlength="120" autocomplete="organization" value="' + esc(a.company || '') + '"></div>' +
+        '<div class="acct-field"><label>Phone' + req + '</label><input name="phone" type="tel" required maxlength="40" autocomplete="tel" value="' + esc(a.phone || '') + '"></div>'
+      : '') +
       '<div class="acct-field"><label>' + emailLabel + (isBill ? req : ' <span class="opt">(optional)</span>') + '</label><input name="email" type="email"' + (isBill ? ' required' : '') + ' maxlength="160" autocomplete="email" value="' + esc(a.email || '') + '"><div class="hint">' + emailHint + '</div></div>' +
       '<div class="acct-field"><label>Street address' + req + '</label><input name="address1" required maxlength="200" autocomplete="street-address" value="' + esc(a.address1 || '') + '"></div>' +
       '<div class="acct-field"><label>Apt, suite, etc.' + req + '</label><input name="address2" required maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
@@ -639,17 +641,29 @@ document.addEventListener('DOMContentLoaded', function () {
         doSave(copy);
         return;
       }
+      /* The bill/ship cards no longer collect name/company/phone. When those
+         inputs are absent from the form, keep whatever is already stored
+         instead of blanking it -- the book form still manages them. */
+      var keepSrc = null;
+      if (id !== 'new') {
+        keepSrc = (addrList || []).find(function (x) { return String(x.id) === String(id); }) || null;
+      }
+      var fv = function (n) {
+        var v = fd.get(n);
+        if (v !== null && v !== undefined) return v.toString().trim();
+        return (keepSrc && keepSrc[n]) ? String(keepSrc[n]).trim() : '';
+      };
       var payload = {
-        name: (fd.get('name') || '').toString().trim(),
-        company: (fd.get('company') || '').toString().trim(),
-        phone: (fd.get('phone') || '').toString().trim(),
-        email: (fd.get('email') || '').toString().trim(),
-        address1: (fd.get('address1') || '').toString().trim(),
-        address2: (fd.get('address2') || '').toString().trim(),
-        city: (fd.get('city') || '').toString().trim(),
-        state: (fd.get('state') || '').toString().trim(),
-        postal: (fd.get('postal') || '').toString().trim(),
-        country: (fd.get('country') || 'US').toString().trim() || 'US',
+        name: fv('name'),
+        company: fv('company'),
+        phone: fv('phone'),
+        email: fv('email'),
+        address1: fv('address1'),
+        address2: fv('address2'),
+        city: fv('city'),
+        state: fv('state'),
+        postal: fv('postal'),
+        country: fv('country') || 'US',
       };
       if (isBook) {
         /* Editing from the address book: keep whatever default roles it has. */
