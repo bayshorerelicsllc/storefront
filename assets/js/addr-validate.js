@@ -55,7 +55,10 @@
     }));
   }
 
-  /* Main entry: validate, then either save directly or ask the user. */
+  /* Main entry: validate, then either save directly or ask the user.
+     doSave receives (payload, info); info.validated says whether the
+     validator confirmed the address, info.corrected whether a Shippo
+     correction was applied. */
   function checkAndConfirm(form, payload, doSave) {
     var box = msgEl(form);
     var btn = form.querySelector('[type="submit"]');
@@ -63,25 +66,39 @@
     if (box) box.innerHTML = '<p class="addr-val-note">Checking address&hellip;</p>';
 
     function done() { if (btn) btn.disabled = false; }
+    /* Merge a Shippo correction over the payload without losing contact
+       fields; only overwrite address fields the validator filled in. */
+    function applyCorrection(a) {
+      var out = {};
+      for (var k in payload) out[k] = payload[k];
+      if (a.street) out.address1 = a.street;
+      if (a.street2) out.address2 = a.street2;
+      if (a.city) out.city = a.city;
+      if (a.state) out.state = a.state;
+      if (a.zip) out.postal = a.zip;
+      if (a.country) out.country = a.country;
+      return out;
+    }
 
     validate(payload).then(function (j) {
-      done();
       /* Validator unreachable or errored: don't block the save. */
-      if (!j || !j.ok) { doSave(payload); return; }
+      if (!j || !j.ok) { done(); doSave(payload, { validated: false, corrected: false }); return; }
 
       var corrected = j.address || null;
       var suggested = (j.corrected || (j.corrections && j.corrections.length)) && differs(corrected, payload);
 
       if (j.deliverable && !suggested) {
+        done();
         if (box) box.innerHTML = '<p class="addr-val-ok">&#10003; Address looks good.</p>';
-        doSave(payload);
+        doSave(payload, { validated: true, corrected: false });
         return;
       }
 
       if (suggested) {
-        /* Offer the corrected version. */
+        /* Offer the corrected version; keep the save button disabled
+           until the user picks. */
         if (box) box.innerHTML =
-          '<div class="addr-val-suggest"><p><strong>Did you mean:</strong><br>' + fmtAddr({
+          '<div class="addr-val-suggest"><p><strong>Shippo suggests:</strong><br>' + fmtAddr({
             address1: corrected.street, address2: corrected.street2,
             city: corrected.city, state: corrected.state,
             postal: corrected.zip, country: corrected.country || payload.country,
@@ -93,22 +110,15 @@
         var useBtn = box.querySelector('[data-val-use]');
         var keepBtn = box.querySelector('[data-val-keep]');
         if (useBtn) useBtn.addEventListener('click', function () {
-          var fixed = {
-            address1: corrected.street || payload.address1,
-            address2: corrected.street2 || '',
-            city: corrected.city || payload.city,
-            state: corrected.state || payload.state,
-            postal: corrected.zip || payload.postal,
-            country: corrected.country || payload.country,
-            is_default_shipping: payload.is_default_shipping,
-            is_default_billing: payload.is_default_billing,
-          };
+          var fixed = applyCorrection(corrected);
           if (box) box.innerHTML = '<p class="addr-val-ok">&#10003; Using the verified address.</p>';
-          doSave(fixed);
+          done();
+          doSave(fixed, { validated: true, corrected: true });
         });
         if (keepBtn) keepBtn.addEventListener('click', function () {
           if (box) box.innerHTML = '';
-          doSave(payload);
+          done();
+          doSave(payload, { validated: true, corrected: false });
         });
         return;
       }
@@ -126,16 +136,18 @@
       var editBtn = box.querySelector('[data-val-edit]');
       if (saveBtn) saveBtn.addEventListener('click', function () {
         if (box) box.innerHTML = '';
-        doSave(payload);
+        done();
+        doSave(payload, { validated: false, corrected: false });
       });
       if (editBtn) editBtn.addEventListener('click', function () {
         if (box) box.innerHTML = '';
+        done();
         var first = form.querySelector('input[name="address1"]');
         if (first) first.focus();
       });
     }).catch(function () {
       done();
-      doSave(payload); /* never block on validator failure */
+      doSave(payload, { validated: false, corrected: false }); /* never block on validator failure */
     });
   }
 
