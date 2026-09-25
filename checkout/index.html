@@ -88,21 +88,21 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div id="manual-form-wrap" style="display:none">' +
     '<section class="card"><h2><span class="step-num">1</span> Contact</h2>' +
     '<div class="field"><label for="f-email">Email</label>' +
-    '<input type="email" id="f-email" autocomplete="email" placeholder="you@example.com">' +
+    '<input type="email" id="f-email" name="email" autocomplete="bsr-no-autofill" placeholder="you@example.com">' +
     '<div class="error" id="e-email" style="display:none"></div></div></section>' +
     '<section class="card"><h2><span class="step-num">2</span> Shipping address</h2>' +
     '<div id="ship-addr-picker"></div>' +
     '<div class="field"><label for="f-name">Full name</label>' +
-    '<input type="text" id="f-name" autocomplete="name">' +
+    '<input type="text" id="f-name" name="name" autocomplete="name">' +
     '<div class="error" id="e-name" style="display:none"></div></div>' +
     '<div class="field"><label for="f-company">Company <span class="opt">(optional)</span></label>' +
-    '<input type="text" id="f-company" autocomplete="organization">' +
+    '<input type="text" id="f-company" name="company" autocomplete="organization">' +
     '</div>' +
     '<div class="form-row"><div class="field"><label for="f-ship-phone">Phone</label>' +
-    '<input type="tel" id="f-ship-phone" autocomplete="tel" placeholder="(555) 123-4567">' +
+    '<input type="tel" id="f-ship-phone" name="phone" autocomplete="tel" placeholder="(555) 123-4567">' +
     '<div class="error" id="e-ship-phone" style="display:none"></div></div>' +
     '<div class="field"><label for="f-ship-email">Email for tracking <span class="opt">(optional)</span></label>' +
-    '<input type="email" id="f-ship-email" autocomplete="email" placeholder="Leave blank to use contact email">' +
+    '<input type="email" id="f-ship-email" name="email" autocomplete="email" placeholder="Leave blank to use contact email">' +
     '<div class="error" id="e-ship-email" style="display:none"></div>' +
     '<div class="hint">Order updates go here if different.</div></div></div>' +
     '<div class="field"><label for="f-line1">Address</label>' +
@@ -132,10 +132,10 @@ document.addEventListener('DOMContentLoaded', function () {
     '<span>Same as shipping address</span></label></div>' +
     '<div id="bill-fields" style="display:none">' +
     '<div class="field"><label for="f-bill-name">Billing name</label>' +
-    '<input type="text" id="f-bill-name" autocomplete="cc-name">' +
+    '<input type="text" id="f-bill-name" name="name" autocomplete="cc-name">' +
     '<div class="error" id="e-bill-name" style="display:none"></div></div>' +
     '<div class="field"><label for="f-bill-company">Company <span class="opt">(optional)</span></label>' +
-    '<input type="text" id="f-bill-company" autocomplete="organization"></div>' +
+    '<input type="text" id="f-bill-company" name="company" autocomplete="organization"></div>' +
     '<div class="field"><label for="f-bill-line1">Address</label>' +
     '<input type="text" id="f-bill-line1" name="address1" autocomplete="billing street-address">' +
     '<div class="addr-validate-msg" id="bill-val-msg"></div>' +
@@ -154,10 +154,10 @@ document.addEventListener('DOMContentLoaded', function () {
       return '<option value="' + cc[0] + '"' + (cc[0] === 'US' ? ' selected' : '') + '>' + BSR.esc(cc[1]) + '</option>';
     }).join('') + '</select></div></div>' +
     '<div class="form-row"><div class="field"><label for="f-bill-phone">Phone</label>' +
-    '<input type="tel" id="f-bill-phone" autocomplete="tel">' +
+    '<input type="tel" id="f-bill-phone" name="phone" autocomplete="tel">' +
     '<div class="error" id="e-bill-phone" style="display:none"></div></div>' +
     '<div class="field"><label for="f-bill-email">Email <span class="opt">(optional)</span></label>' +
-    '<input type="email" id="f-bill-email" autocomplete="email">' +
+    '<input type="email" id="f-bill-email" name="email" autocomplete="email">' +
     '<div class="error" id="e-bill-email" style="display:none"></div></div></div>' +
     '</div></section>' +
     '<section class="card"><h2><span class="step-num">5</span> Promo code</h2>' +
@@ -437,6 +437,13 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('bill-fields').style.display = this.checked ? 'none' : '';
   });
   initAddressPickers();
+  /* Same as the account address book: Geoapify suggestions while typing,
+     and the bsr-no-autofill token + readonly-until-focus that keeps the
+     browser's own autofill from hijacking the address fields. */
+  if (window.BSRAddrValidate && BSRAddrValidate.attachLive) {
+    BSRAddrValidate.attachLive(shipSection);
+    BSRAddrValidate.attachLive(billSection);
+  }
   document.getElementById('show-card-form').addEventListener('click', function () {
     document.getElementById('manual-form-wrap').style.display = '';
     document.getElementById('card-payment-section').style.display = '';
@@ -451,6 +458,8 @@ document.addEventListener('DOMContentLoaded', function () {
     setV(prefix + 'postal', p.postal);
     if (p.country) setSel(prefix + 'country', p.country);
   }
+  var shipSection = document.getElementById('ship-find').closest('section');
+  var billSection = document.getElementById('bill-fields').closest('section');
   document.getElementById('ship-find').addEventListener('click', function () {
     var errEl = document.getElementById('e-ship');
     errEl.style.display = 'none';
@@ -505,8 +514,7 @@ document.addEventListener('DOMContentLoaded', function () {
     /* Validate with Shippo first (ask on correction), then fetch rates. */
     if (window.BSRAddrValidate && BSRAddrValidate.checkAndConfirm) {
       btn.disabled = true; btn.textContent = 'Checking address…';
-      var shipSection = btn.closest('section');
-      var billSection = document.getElementById('bill-fields').closest('section');
+
       var shipPayload = {
         address1: document.getElementById('f-line1').value.trim(), address2: '',
         city: document.getElementById('f-city').value.trim(),

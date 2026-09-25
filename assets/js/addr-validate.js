@@ -245,13 +245,14 @@
       el.setAttribute('autocomplete', 'bsr-no-autofill');
       if (n !== 'name' && n !== 'company' && n !== 'phone' && n !== 'email') {
         el.setAttribute('readonly', 'readonly');
+        el.setAttribute('data-bsr-ro', '1');
       }
     });
     if (!window._bsrAutofillBlockWired) {
       window._bsrAutofillBlockWired = true;
       document.addEventListener('focusin', function (e) {
         var el = e.target;
-        if (el && el.matches && el.matches('form.addr-form input[readonly]')) el.removeAttribute('readonly');
+        if (el && el.matches && el.matches('input[data-bsr-ro]')) el.removeAttribute('readonly');
       });
     }
   }
@@ -367,5 +368,5 @@
     }).catch(function () { doSave(payload, skipped); });
   }
 
-  window.BSRAddrValidate = { validate: validate, checkAndConfirm: checkAndConfirm, attachLive: attachLive, silentCheck: silentCheck };
+  window.BSRAddrValidate = { validate: validate, checkAndConfirm: checkAndConfirm, attachLive: attachLive, silentCheck: silentCheck, blockBrowserAutofill: blockBrowserAutofill };
 })();
