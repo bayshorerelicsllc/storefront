@@ -351,23 +351,48 @@ document.addEventListener('DOMContentLoaded', function () {
     var ppConfig = {
       createOrder: function () {
         var ship = collectShipping();
-        // If form not filled, PayPal will provide address — use minimal placeholder
-        // The server will use cheapest shipping; onApprove will have the real address
-        if (!ship) {
-          ship = {
-            name: 'PayPal Customer', email: '',
-            address: { line1: '123 Main St', city: 'Green Bay', state: 'WI', postal: '54311', country: 'US' },
-            rate_ref: null, provider: null, carrier: null, service: null,
-            wallet_provided: true
-          };
-          BSR.toast('Using default shipping — PayPal will provide your address.', 'info');
+        var isWallet = !ship;
+        if (isWallet) {
+          BSR.toast('PayPal will provide your shipping address.', 'info');
         }
         return BSR.api('/api/checkout/create', {
           method: 'POST',
-          body: { slugs: slugs, promo_code: promoCode(), shipping: ship }
+          body: { slugs: slugs, promo_code: promoCode(), shipping: ship, wallet_order: isWallet }
         }).then(function (j) {
           if (!j.ok) throw new Error(j.error || 'Could not create the PayPal order.');
           return j.orderID;
+        });
+      },
+      onShippingChange: function (data, actions) {
+        // PayPal provided the buyer's address — calculate live shipping and patch the order
+        var addr = data.shipping_address || {};
+        return BSR.api('/api/checkout/shipping-quote', {
+          method: 'POST',
+          body: { slugs: slugs, address: addr }
+        }).then(function (q) {
+          if (!q.ok) throw new Error(q.error || 'Could not calculate shipping.');
+          var shipCents = q.cheapest_cents;
+          var taxCents = 0;
+          // WI tax if applicable (q.tax_bps is basis points)
+          if (q.tax_bps > 0) {
+            // Need item total — get from the order, or calculate
+            // For now, use the stashed values; the backend verifies on capture
+            taxCents = Math.round((q.item_cents || 0) * q.tax_bps / 10000);
+          }
+          var newTotal = (q.item_cents || 0) - (q.discount_cents || 0) + shipCents + taxCents;
+          return actions.order.patch([{
+            op: 'replace',
+            path: "/purchase_units/@reference_id=='cart'/amount",
+            value: {
+              currency_code: 'USD',
+              value: (newTotal / 100).toFixed(2),
+              breakdown: {
+                item_total: { currency_code: 'USD', value: ((q.item_cents || 0) / 100).toFixed(2) },
+                shipping: { currency_code: 'USD', value: (shipCents / 100).toFixed(2) },
+                tax_total: { currency_code: 'USD', value: (taxCents / 100).toFixed(2) },
+              }
+            }
+          }]);
         });
       },
       onApprove: function (data) {
