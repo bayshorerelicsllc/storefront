@@ -5,7 +5,7 @@
  * The Secret Key goes in the commerce-manager worker's environment variables
  * as TURNSTILE_SECRET_KEY (NOT in this file).
  */
-var TURNSTILE_SITE_KEY = 'TURNSTILE_SITE_KEY'; // TODO: replace with your Turnstile site key
+var TURNSTILE_SITE_KEY = '0x4AAAAAAFDXwhByfdKoDTPH';
 
 (function () {
   'use strict';
