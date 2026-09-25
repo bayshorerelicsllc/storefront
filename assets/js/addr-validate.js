@@ -50,7 +50,7 @@
   function validate(payload) {
     if (!window.BSR || !BSR.api) return Promise.resolve({ ok: false, error: 'unavailable' });
     return BSR.api(ENDPOINT + '?' + qs({
-      street: payload.address1, city: payload.city, state: payload.state,
+      street: payload.address1, street2: payload.address2, city: payload.city, state: payload.state,
       zip: payload.postal, country: payload.country || 'US',
     }));
   }
@@ -140,7 +140,7 @@
   }
 
 
-  /* Apply a validator correction straight into the form fields. */
+  /* Write a validator correction straight into the form fields. */
   function applyCorrection(form, corrected, payload) {
     function setField(name, val) {
       var el = form.querySelector('[name="' + name + '"]');
@@ -158,70 +158,79 @@
     setField('postal', corrected.zip || payload.postal);
   }
 
-  function correctionKey(corrected) {
-    return [corrected.street, corrected.street2, corrected.city,
-            corrected.state, corrected.zip].join('|').toLowerCase();
+  function ensureLiveCss() {
+    if (document.getElementById('bsr-addr-live-css')) return;
+    var st = document.createElement('style');
+    st.id = 'bsr-addr-live-css';
+    st.textContent =
+      '.addr-live-dd{position:relative;margin-top:6px;background:#fff;border:1px solid #d8cdb4;' +
+      'border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.12);overflow:hidden}' +
+      '.addr-live-item{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;' +
+      'text-align:left;background:#fff;border:0;padding:10px 12px;cursor:pointer;font:inherit;color:#222}' +
+      '.addr-live-item:active{background:#f4efe2}' +
+      '.addr-live-addr{line-height:1.4;font-size:14px}' +
+      '.addr-live-use{flex:none;background:#1d4d2b;color:#fff;border-radius:999px;padding:5px 14px;font-size:13px}' +
+      '.addr-live-x{position:absolute;top:0;right:2px;border:0;background:none;color:#999;' +
+      'font-size:15px;cursor:pointer;padding:6px 8px;line-height:1}' +
+      '.addr-live-ok{padding:10px 12px;color:#1d4d2b;font-size:14px}';
+    document.head.appendChild(st);
   }
 
-  /* Live as-you-type validation with auto-fill. When the validator returns
-     a corrected address it is written straight into the fields — no
-     suggestion box. If the user changes it back, we stop auto-applying and
-     show the suggestion instead of fighting them. Never blocks typing. */
+  /* Live as-you-type suggestions. A dropdown appears directly under the
+     street field with the verified address as a tappable choice; tapping
+     it fills the whole form. No popups, no end-of-form confirmation. */
   function attachLive(form) {
-    var box = msgEl(form);
-    if (!box || form._bsrLiveAttached) return;
-    form._bsrLiveAttached = true;
     var streetEl = form.querySelector('input[name="address1"]');
     var cityEl = form.querySelector('input[name="city"]');
     var zipEl = form.querySelector('input[name="postal"]');
-    if (!streetEl) return;
-    var timer = null, lastSig = '', appliedSig = '', appliedKey = '';
+    if (!streetEl || form._bsrLiveAttached) return;
+    form._bsrLiveAttached = true;
+    ensureLiveCss();
+
+    var anchor = streetEl.closest('.acct-field') || streetEl.parentNode;
+    var dd = document.createElement('div');
+    dd.className = 'addr-live-dd';
+    dd.style.display = 'none';
+    anchor.appendChild(dd);
+
+    var timer = null, lastSig = '', dismissedSig = '';
 
     function sig() {
       return [streetEl.value, cityEl ? cityEl.value : '', zipEl ? zipEl.value : ''].join('|').toLowerCase();
     }
-    function ready() {
-      var st = streetEl.value.trim();
-      var zp = zipEl ? zipEl.value.trim() : '';
-      var ct = cityEl ? cityEl.value.trim() : '';
-      return st.length >= 5 && (zp.length >= 3 || ct.length >= 2);
-    }
+    function ready() { return streetEl.value.trim().length >= 5; }
     function fieldVal(name) {
       var el = form.querySelector('[name="' + name + '"]');
       return el ? el.value : '';
     }
-    function showSuggest(corrected, payload) {
-      box.innerHTML =
-        '<div class="addr-val-suggest"><p><strong>Did you mean:</strong><br>' + fmtAddr({
-          address1: corrected.street, address2: corrected.street2,
-          city: corrected.city, state: corrected.state,
-          postal: corrected.zip, country: corrected.country || payload.country,
-        }) + '</p>' +
-        '<div class="addr-val-actions">' +
-        '<button type="button" class="btn btn-primary btn-sm" data-live-use>Use this address</button> ' +
-        '<button type="button" class="btn btn-ghost btn-sm" data-live-keep>Keep mine</button>' +
-        '</div></div>';
-      var useBtn = box.querySelector('[data-live-use]');
-      var keepBtn = box.querySelector('[data-live-keep]');
-      if (useBtn) useBtn.addEventListener('click', function () {
+    function hideDd() { dd.style.display = 'none'; dd.innerHTML = ''; }
+    function showDd(corrected, payload) {
+      dd.innerHTML =
+        '<button type="button" class="addr-live-item" data-pick>' +
+          '<span class="addr-live-addr">' + fmtAddr({
+            address1: corrected.street, address2: corrected.street2,
+            city: corrected.city, state: corrected.state,
+            postal: corrected.zip, country: corrected.country || payload.country,
+          }) + '</span><span class="addr-live-use">Use</span>' +
+        '</button>' +
+        '<button type="button" class="addr-live-x" data-dismiss aria-label="Dismiss">&times;</button>';
+      dd.style.display = 'block';
+      dd.querySelector('[data-pick]').addEventListener('click', function () {
         applyCorrection(form, corrected, payload);
-        box.innerHTML = '<p class="addr-val-ok">&#10003; Address updated.</p>';
-        appliedSig = sig(); appliedKey = correctionKey(corrected); lastSig = appliedSig;
-      });
-      if (keepBtn) keepBtn.addEventListener('click', function () {
-        box.innerHTML = '';
+        dd.innerHTML = '<div class="addr-live-ok">&#10003; Address filled in.</div>';
+        setTimeout(hideDd, 1300);
         lastSig = sig();
+      });
+      dd.querySelector('[data-dismiss]').addEventListener('click', function () {
+        dismissedSig = sig();
+        hideDd();
       });
     }
     function run() {
       var s = sig();
       if (s === lastSig) return;
       lastSig = s;
-      if (!ready()) {
-        if (box.querySelector('.addr-val-ok,.addr-val-note')) box.innerHTML = '';
-        return;
-      }
-      box.innerHTML = '<p class="addr-val-note">Checking address&hellip;</p>';
+      if (!ready() || s === dismissedSig) { hideDd(); return; }
       var payload = {
         address1: streetEl.value.trim(),
         address2: fieldVal('address2'),
@@ -232,36 +241,21 @@
       };
       validate(payload).then(function (j) {
         if (sig() !== s) return; /* user kept typing; stale result */
-        if (!j || !j.ok) { box.innerHTML = ''; return; }
+        if (!j || !j.ok) { hideDd(); return; }
         var corrected = j.address || null;
         var suggested = (j.corrected || (j.corrections && j.corrections.length)) && differs(corrected, payload);
-        if (j.deliverable && !suggested) {
-          box.innerHTML = '<p class="addr-val-ok">&#10003; Address looks good.</p>';
-          return;
-        }
-        if (suggested) {
-          var key = correctionKey(corrected);
-          if (key === appliedKey && s !== appliedSig) {
-            /* User changed it back after an auto-fill: offer, don't fight. */
-            showSuggest(corrected, payload);
-            return;
-          }
-          applyCorrection(form, corrected, payload);
-          appliedSig = sig(); appliedKey = key; lastSig = appliedSig;
-          box.innerHTML = '<p class="addr-val-ok">&#10003; Address verified.</p>';
-          return;
-        }
-        box.innerHTML = '';
-      }).catch(function () { /* stay silent; saving still works */ });
+        if (suggested && s !== dismissedSig) showDd(corrected, payload);
+        else hideDd();
+      }).catch(function () { hideDd(); });
     }
     function schedule() {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(run, 800);
+      timer = setTimeout(run, 700);
     }
-    [streetEl, cityEl, zipEl].forEach(function (el) {
+    [streetEl, cityEl, zipEl, form.querySelector('input[name="address2"]')].forEach(function (el) {
       if (el) el.addEventListener('input', schedule);
     });
-    /* Validate pre-filled values right away (e.g. editing a saved address). */
+    /* Suggest for pre-filled values too (e.g. editing a saved address). */
     if (ready()) timer = setTimeout(run, 600);
   }
 
