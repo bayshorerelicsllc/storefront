@@ -210,25 +210,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------------- shell ---------------- */
   function shell(contentHtml) {
-    var avatar = customer.avatar_url
-      ? '<img src="' + esc(customer.avatar_url) + '" alt="">'
-      : '<div class="ph-avatar-fallback">' + esc((customer.name || '?').trim().charAt(0).toUpperCase()) + '</div>';
-    var tabs = [
-      ['profile', 'user', 'Profile'],
-      ['addresses', 'truck', 'Addresses'],
-      ['security', 'shield', 'Security'],
-      ['orders', 'package', 'Orders'],
-      ['wishlist', 'heart', 'Wishlist'],
-      ['cards', 'card', 'Payment methods'],
-    ];
+    var isGuest = !customer;
+    var avatar = isGuest
+      ? '<div class="ph-avatar-fallback">' + BSR.icon('heart', 'ic-sm') + '</div>'
+      : (customer.avatar_url
+        ? '<img src="' + esc(customer.avatar_url) + '" alt="">'
+        : '<div class="ph-avatar-fallback">' + esc((customer.name || '?').trim().charAt(0).toUpperCase()) + '</div>');
+    var tabs = isGuest
+      ? [['wishlist', 'heart', 'Wishlist']]
+      : [
+        ['profile', 'user', 'Profile'],
+        ['addresses', 'truck', 'Addresses'],
+        ['security', 'shield', 'Security'],
+        ['orders', 'package', 'Orders'],
+        ['wishlist', 'heart', 'Wishlist'],
+        ['cards', 'card', 'Payment methods'],
+      ];
     var nav = tabs.map(function (t) {
       return '<button type="button" class="acct-nav-btn' + (tab === t[0] ? ' active' : '') + '" data-tab="' + t[0] + '">' +
         BSR.icon(t[1], 'ic-sm') + esc(t[2]) + '</button>';
     }).join('') +
-      '<button type="button" class="acct-nav-btn" id="signout-btn">' + BSR.icon('logout', 'ic-sm') + 'Sign out</button>';
-    var firstName = (customer.name || '').trim().split(/\s+/)[0] || 'there';
+      (isGuest
+        ? '<a class="acct-nav-btn" href="/account/login/">' + BSR.icon('account', 'ic-sm') + 'Sign in</a>'
+        : '<button type="button" class="acct-nav-btn" id="signout-btn">' + BSR.icon('logout', 'ic-sm') + 'Sign out</button>');
+    var headName = isGuest
+      ? 'Browsing as guest'
+      : 'Hello, ' + esc((customer.name || '').trim().split(/\s+/)[0] || 'there');
     return '<div class="page-head"><div class="profile-head">' + avatar +
-      '<div><div class="ph-name">Hello, ' + esc(firstName) + '</div></div></div></div>' +
+      '<div><div class="ph-name">' + headName + '</div></div></div></div>' +
       '<div class="account-layout">' +
       '<nav class="account-nav" aria-label="Account">' + nav + '</nav>' +
       '<section id="acct-col" aria-label="Account details">' + contentHtml + '</section>' +
@@ -236,9 +245,14 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function bindShell() {
     root.querySelectorAll('[data-tab]').forEach(function (b) {
-      b.addEventListener('click', function () { tab = b.getAttribute('data-tab'); render(); });
+      b.addEventListener('click', function () {
+        var t = b.getAttribute('data-tab');
+        if (!customer && t !== 'wishlist') { window.location = '/account/login/'; return; }
+        tab = t; render();
+      });
     });
-    document.getElementById('signout-btn').addEventListener('click', function () {
+    var signoutBtn = document.getElementById('signout-btn');
+    if (signoutBtn) signoutBtn.addEventListener('click', function () {
       BSR.api('/api/account/logout', { method: 'POST' }).then(function () {
         window.location = '/account/login/';
       });
@@ -1356,6 +1370,16 @@ document.addEventListener('DOMContentLoaded', function () {
     var qtab = new URLSearchParams(window.location.search).get('tab');
     if (['profile', 'addresses', 'security', 'orders', 'wishlist', 'cards'].indexOf(qtab) !== -1) tab = qtab;
   } catch (e) {}
+  if (tab === 'wishlist') {
+    /* The wishlist lives in this browser's local storage, so guests see it
+       too. Render immediately, then upgrade to the full account shell if a
+       signed-in session is found. */
+    render();
+    BSR.api('/api/account/me').then(function (j) {
+      if (j && j.ok && j.customer) { customer = j.customer; render(); }
+    }).catch(function () {});
+    return;
+  }
   BSR.api('/api/account/me').then(function (j) {
     if (j && j._status === 401) { window.location = '/account/login/'; return; }
     if (j && j.ok && j.customer) { customer = j.customer; render(); }
