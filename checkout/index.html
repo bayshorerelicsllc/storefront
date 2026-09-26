@@ -23,6 +23,7 @@
 <section class="card" id="bill-section">
 <h2><span class="step-num">1</span> Billing address</h2>
 <div id="bill-addr-picker"></div>
+<div class="addr-validate-msg" id="bill-val-msg"></div>
 <div class="field"><label for="f-bill-name">Full name</label><input type="text" id="f-bill-name" class="input"></div>
 <div class="field"><label for="f-bill-company">Company</label><input type="text" id="f-bill-company" class="input"></div>
 <div class="field-row">
@@ -44,6 +45,7 @@
 <section class="card" id="ship-section">
 <h2><span class="step-num">2</span> Shipping address</h2>
 <div id="ship-addr-picker"></div>
+<div class="addr-validate-msg" id="ship-val-msg"></div>
 <div class="field"><label><input type="checkbox" id="f-ship-same" checked> Same as billing</label></div>
 <div id="ship-fields" style="display:none">
 <div class="field"><label for="f-ship-name">Full name</label><input type="text" id="f-ship-name" class="input"></div>
@@ -120,18 +122,80 @@ document.getElementById('sum-lines').innerHTML=html||'<p>Cart empty</p>';
 document.getElementById('sum-total').textContent='$'+t.toFixed(2);
 document.getElementById('f-ship-same').addEventListener('change',function(){document.getElementById('ship-fields').style.display=this.checked?'none':'block';});
 document.getElementById('continue-to-payment').addEventListener('click',function(){
+var btn=this;
 var err=document.getElementById('continue-err');err.style.display='none';
 if(!cart.length){err.textContent='Cart is empty';err.style.display='block';return;}
 var email=document.getElementById('f-bill-email').value.trim();
 if(!email){err.textContent='Enter billing email';err.style.display='block';return;}
+// Shippo address validation before proceeding
+if (window.BSRAddrValidate && BSRAddrValidate.checkAndConfirm) {
+  btn.disabled=true; btn.textContent='Validating addresses…';
+  var resetBtn=function(){btn.disabled=false;btn.textContent='Continue to payment →';};
+  var billSection=document.getElementById('bill-section');
+  var shipSection=document.getElementById('ship-section');
+  var same=document.getElementById('f-ship-same').checked;
+  var billPayload={
+    address1:document.getElementById('f-bill-line1').value.trim(),
+    address2:document.getElementById('f-bill-line2').value.trim(),
+    city:document.getElementById('f-bill-city').value.trim(),
+    state:document.getElementById('f-bill-state').value.trim(),
+    postal:document.getElementById('f-bill-postal').value.trim(),
+    country:document.getElementById('f-bill-country').value
+  };
+  var shipPayload={
+    address1:document.getElementById('f-line1').value.trim(),
+    address2:document.getElementById('f-line2').value.trim(),
+    city:document.getElementById('f-city').value.trim(),
+    state:document.getElementById('f-state').value.trim(),
+    postal:document.getElementById('f-postal').value.trim(),
+    country:document.getElementById('f-country').value
+  };
+  var writeBack=function(fixed, prefix){
+    if(!fixed) return;
+    var set=function(id, v){var el=document.getElementById(prefix+id); if(el&&v!==undefined) el.value=v;};
+    set('line1', fixed.address1); set('line2', fixed.address2);
+    set('city', fixed.city); set('state', fixed.state);
+    set('postal', fixed.postal||fixed.zip); set('country', fixed.country);
+  };
+  var doProceed=function(){
+    resetBtn();
+    proceedToPayment();
+  };
+  var validateBill=function(){
+    BSRAddrValidate.checkAndConfirm(billSection, billPayload, function(fixedBill){
+      writeBack(fixedBill, 'f-bill-');
+      // Update payload with corrected values
+      if(fixedBill){
+        billPayload.address1=fixedBill.address1||billPayload.address1;
+        billPayload.city=fixedBill.city||billPayload.city;
+      }
+      doProceed();
+    }, resetBtn);
+  };
+  if(same){
+    // Only validate billing (shipping same as billing)
+    validateBill();
+  } else {
+    BSRAddrValidate.checkAndConfirm(shipSection, shipPayload, function(fixedShip){
+      writeBack(fixedShip, 'f-');
+      validateBill();
+    }, resetBtn);
+  }
+  return; // Don't proceed yet, wait for validation
+}
+// Fallback if validator not available
+proceedToPayment();
+});
+function proceedToPayment(){
+var _cart=[]; try{_cart=JSON.parse(localStorage.getItem('bsr-cart')||'[]');}catch(e){}
 var same=document.getElementById('f-ship-same').checked;
-var p={slugs:cart.map(function(i){return i.slug;}),
+var p={slugs:_cart.map(function(i){return i.slug;}),
 bill:{name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:document.getElementById('f-bill-phone').value,street:document.getElementById('f-bill-line1').value,street2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,zip:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value},
 ship:null};
 if(same){p.ship=p.bill;}else{p.ship={name:document.getElementById('f-ship-name').value,company:document.getElementById('f-ship-company').value,email:document.getElementById('f-ship-email').value,phone:document.getElementById('f-ship-phone').value,street:document.getElementById('f-line1').value,street2:document.getElementById('f-line2').value,city:document.getElementById('f-city').value,state:document.getElementById('f-state').value,zip:document.getElementById('f-postal').value,country:document.getElementById('f-country').value};}
 sessionStorage.setItem('bsr-checkout-payload',JSON.stringify(p));
 location.href='/checkout/payment/';
-});
+}
 });
 
 // Saved address dropdowns (signed-in only)
