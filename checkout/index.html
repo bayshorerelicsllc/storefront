@@ -285,89 +285,120 @@ function showWarningPopup(results, warnings, onDone){
 
 function showValidationModal(results, onDone){
   var root=document.getElementById('bsr-val-modal-root');
+  
   var fmtAddr=function(a){
     var lines=[];
     if(a.address1||a.street) lines.push(a.address1||a.street);
     if(a.address2||a.street2) lines.push(a.address2||a.street2);
-    var csz=[a.city||'',a.state||'',a.postal||a.zip||''].filter(Boolean).join(' ').trim();
+    var csz='';
     if(a.city&&a.state) csz=a.city+', '+a.state+' '+(a.postal||a.zip||'');
+    else csz=[a.city||'',a.state||'',a.postal||a.zip||''].filter(Boolean).join(' ');
     if(csz) lines.push(csz);
     if(a.country) lines.push(a.country);
     return lines.join('<br>');
   };
-  var billR=results.find(function(r){return r.kind==='bill';});
-  var shipR=results.find(function(r){return r.kind==='ship';});
-  var sameAddr=false;
-  if(billR&&shipR){
-    var bb=billR.original,ss=shipR.original;
-    sameAddr=(bb.address1===ss.address1&&(bb.address2||'')===(ss.address2||'')&&bb.city===ss.city&&bb.state===ss.state&&(bb.postal||bb.zip)===(ss.postal||ss.zip));
-  }
-  var displayResults=sameAddr?[billR]:results;
-  // Simple flex layout: two equal columns, each with stacked content
-  // Use flexbox with stretch to keep boxes aligned
-  var isMobile=window.innerWidth<600;
-  var cols=displayResults.map(function(r, idx){
-    var kindLabel;
-    if(sameAddr){kindLabel='<span class="val-kind">Bill to</span> <span class="val-kind">Ship to</span>';}
-    else{kindLabel='<div style="text-align:center;"><span class="val-kind">'+(r.kind==='bill'?'Bill to':'Ship to')+'</span></div>';}
-    var unitWarning='';
+  
+  var hasSuggestions=results.some(function(r){return r.suggested;});
+  
+  // Build address cards - professional, symmetrical layout
+  var cards=results.map(function(r, idx){
+    var label=r.kind==='bill'?'Billing address':'Shipping address';
+    var icon=r.kind==='bill'?'▣':'▢';
+    
     var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
     var unitInOrig=unitAlreadyInAddress(suggUnit, r.original.address1||r.original.street, r.original.address2||r.original.street2);
+    
+    var warnHtml='';
     if(r.suggested&&suggUnit&&!unitInOrig){
-      unitWarning='<div class="val-warn" style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;margin:0 0 12px 0;font-size:13px;color:#856404;">'+
-      '<strong>⚠ Unit number detected:</strong> Our address validator found a unit/apartment number for this address. Without it, you may not receive your item.</div>';
+      warnHtml='<div style="background:#fff8e1;border:1px solid #ffd54f;border-radius:10px;padding:12px 14px;margin:0 0 16px 0;font-size:13px;line-height:1.5;color:#5d4037;text-align:left;">'+
+        '<div style="font-weight:700;margin-bottom:4px;color:#e65100;">⚠ Unit number needed</div>'+
+        'Our validator found a unit number for this address. Without it, your package may not arrive.</div>';
     }
+    
     var suggestedHtml='';
+    var buttonsHtml='';
     if(r.suggested){
-      suggestedHtml='<div class="val-addr" style="margin:0 0 12px 0;text-align:left;width:100%;box-sizing:border-box;"><strong>Suggested:</strong><br>'+fmtAddr(r.suggested)+'</div>'+
-      '<div class="val-choice" style="display:flex;gap:8px;margin:0 0 12px 0;justify-content:center;width:100%;">'+
-      '<button type="button" class="val-use" data-use="'+idx+'" style="flex:1;">Use suggested</button>'+
-      '<button type="button" class="val-keep" data-keep="'+idx+'" style="flex:1;">Keep mine</button></div>';
+      suggestedHtml=
+        '<div style="margin-bottom:14px;">'+
+          '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#1a3c22;margin-bottom:8px;">Suggested correction</div>'+
+          '<div style="background:#f1f8e9;border:2px solid #aed581;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#1a3c22;">'+fmtAddr(r.suggested)+'</div>'+
+        '</div>';
+      buttonsHtml=
+        '<div style="display:flex;gap:10px;margin-bottom:14px;">'+
+          '<button type="button" data-use="'+idx+'" style="flex:1;padding:11px 16px;background:#1a3c22;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Use suggested</button>'+
+          '<button type="button" data-keep="'+idx+'" style="flex:1;padding:11px 16px;background:#fff;color:#1a3c22;border:2px solid #1a3c22;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Keep mine</button>'+
+        '</div>';
     }
-    var yoursHtml='<div class="val-addr" style="margin:0;text-align:left;width:100%;box-sizing:border-box;"><strong>'+(r.suggested?'Yours:':'Address:')+'</strong><br>'+fmtAddr(r.original)+'</div>';
-    return '<div data-idx="'+idx+'" style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;">'+
-      '<div style="margin-bottom:12px;width:100%;">'+kindLabel+'</div>'+
-      unitWarning+suggestedHtml+yoursHtml+
+    
+    var yoursHtml=
+      '<div>'+
+        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#666;margin-bottom:8px;">'+(r.suggested?'Your entry':'Address')+'</div>'+
+        '<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#333;">'+fmtAddr(r.original)+'</div>'+
       '</div>';
+    
+    return ''+
+    '<div style="flex:1;min-width:260px;max-width:100%;">'+
+      '<div style="text-align:center;margin-bottom:18px;">'+
+        '<div style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;letter-spacing:0.3px;">'+label+'</div>'+
+      '</div>'+
+      warnHtml+suggestedHtml+buttonsHtml+yoursHtml+
+    '</div>';
   }).join('');
-  var containerStyle=isMobile?
-    'display:flex;flex-direction:column;gap:20px;':
-    'display:flex;gap:20px;align-items:stretch;';
-  cols='<div style="'+containerStyle+'">'+cols+'</div>';
-  var hasSuggestions=results.some(function(r){return r.suggested;});
+  
+  var isMobile=window.innerWidth<640;
+  var cardsStyle=isMobile?
+    'display:flex;flex-direction:column;gap:28px;':
+    'display:flex;gap:28px;justify-content:center;align-items:flex-start;';
+  
   root.innerHTML=
-    '<div class="bsr-val-modal-overlay" id="val-overlay">'+
-    '<div class="bsr-val-modal" style="max-width:720px;max-height:90vh;overflow-y:auto;position:relative;">'+
-    '<button type="button" id="val-close-btn" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">&times;</button>'+
-    '<h3 style="text-align:center;margin-bottom:8px;">Confirm your addresses</h3>'+
-    '<p style="text-align:center;margin-bottom:20px;">'+(hasSuggestions?'Our address validator suggests corrections below. Review':'Please confirm')+' your billing and shipping addresses:</p>'+
-    '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+cols+'</div>'+
-    '<div class="val-actions" style="margin-top:16px;display:flex;justify-content:center;">'+
-    '<button type="button" class="val-use" id="val-continue-btn" style="padding:12px 32px;min-width:280px;">Continue to payment →</button>'+
-    '</div></div></div>';
+  '<div class="bsr-val-modal-overlay" id="val-overlay">'+
+    '<div class="bsr-val-modal" style="max-width:720px;">'+
+      '<button type="button" id="val-close-btn" aria-label="Close" style="position:absolute;top:16px;right:16px;width:36px;height:36px;background:#f5f5f5;border:none;border-radius:50%;font-size:20px;cursor:pointer;color:#666;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>'+
+      '<div style="text-align:center;margin-bottom:6px;">'+
+        '<h3 style="margin:0 0 8px 0;font-size:22px;font-weight:700;color:#1a3c22;letter-spacing:-0.3px;">Confirm your addresses</h3>'+
+        '<p style="margin:0;font-size:14px;color:#666;line-height:1.5;max-width:440px;margin-left:auto;margin-right:auto;">'+
+          (hasSuggestions?'We found some corrections for your addresses. Please review below.':'Please review your addresses below.')+
+        '</p>'+
+      '</div>'+
+      '<div style="height:1px;background:#e8e4d8;margin:20px 0;"></div>'+
+      '<div style="'+cardsStyle+'">'+cards+'</div>'+
+      '<div style="height:1px;background:#e8e4d8;margin:24px 0 20px 0;"></div>'+
+      '<div style="text-align:center;">'+
+        '<button type="button" id="val-continue-btn" style="padding:15px 48px;background:#1a3c22;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:0.2px;min-width:280px;">Continue to payment →</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+  
   var choices={};
-  results.forEach(function(r, idx){choices[idx]=r.suggested?'keep':'keep';});
+  results.forEach(function(r, idx){choices[idx]='keep';});
+  
   root.querySelectorAll('[data-use]').forEach(function(btn){
     btn.addEventListener('click',function(){
       var idx=btn.getAttribute('data-use');
       choices[idx]='use';
-      btn.style.background='#1a3c22';btn.style.color='#fff';
+      btn.style.background='#1a3c22';btn.style.color='#fff';btn.style.border='none';
       var kb=root.querySelector('[data-keep="'+idx+'"]');
-      if(kb){kb.style.background='#f0f0f0';kb.style.color='#333';}
+      if(kb){kb.style.background='#fff';kb.style.color='#1a3c22';kb.style.border='2px solid #1a3c22';}
+      btn.textContent='✓ Using suggested';
+      if(kb) kb.textContent='Keep mine';
     });
   });
   root.querySelectorAll('[data-keep]').forEach(function(btn){
     btn.addEventListener('click',function(){
       var idx=btn.getAttribute('data-keep');
       choices[idx]='keep';
-      btn.style.background='#1a3c22';btn.style.color='#fff';
+      btn.style.background='#1a3c22';btn.style.color='#fff';btn.style.border='none';
+      btn.textContent='✓ Keeping mine';
       var ub=root.querySelector('[data-use="'+idx+'"]');
-      if(ub){ub.style.background='#f0f0f0';ub.style.color='#333';}
+      if(ub){ub.style.background='#fff';ub.style.color='#1a3c22';ub.style.border='2px solid #1a3c22';ub.textContent='Use suggested';}
     });
   });
+  // Default: "Keep mine" selected
   root.querySelectorAll('[data-keep]').forEach(function(btn){
-    btn.style.background='#1a3c22';btn.style.color='#fff';
+    btn.style.background='#1a3c22';btn.style.color='#fff';btn.style.border='none';
+    btn.textContent='✓ Keeping mine';
   });
+  
   var closeModal=function(){root.innerHTML='';resetBtn();};
   document.getElementById('val-close-btn').addEventListener('click',closeModal);
   document.getElementById('val-overlay').addEventListener('click',function(e){
@@ -392,6 +423,8 @@ function showValidationModal(results, onDone){
     onDone(fixed);
   });
 }
+
+
 function validateRequiredFields(){
   var err=document.getElementById('continue-err');
   clearAllFieldErrs();
