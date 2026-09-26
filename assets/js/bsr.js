@@ -262,6 +262,7 @@
           '<button class="btn btn-primary btn-sm bsr-np-add" type="button">Add to cart</button>' +
           (n.url ? '<a class="btn btn-secondary btn-sm" href="' + esc(n.url) + '">View</a>' : '') +
         '</div>' +
+        '<div class="bsr-np-urgent">Act fast \u2014 it\u2019s one of a kind and could sell any minute.</div>' +
         '<div class="bsr-np-err" style="display:none"></div>';
       el.querySelector('.bsr-notif-popup-x').addEventListener('click', function (ev) { ev.stopPropagation(); dismiss(); });
       var addBtn = el.querySelector('.bsr-np-add');
@@ -374,6 +375,7 @@
       '.bsr-np-price{font-weight:700;margin-top:2px}' +
       '.bsr-notif-popup .bsr-modal-actions{margin-top:10px}' +
       '.bsr-np-err{color:#b3261e;font-size:13px;margin-top:8px}' +
+      '.bsr-np-urgent{font-size:12px;font-weight:700;color:#9a5b00;margin-top:8px}' +
       '@keyframes bsrPopIn{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}' +
       '.notif-enable{margin:8px;padding:10px;border:1px dashed var(--border,#ccc);border-radius:8px;text-align:center;font-size:13px}' +
       '.bsr-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1300;display:flex;align-items:center;justify-content:center;padding:16px}' +
