@@ -635,10 +635,10 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
     return new Promise(function(resolve){
       if(!window.BSRAddrValidate||!BSRAddrValidate.validate){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:!(j&&j.deliverable)});return;}
       BSRAddrValidate.validate(payload).then(function(j){
-        if(!j||!j.ok){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:false}).catch(function(){
+        if(!j||!j.ok){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:true,validationFailed:true}).catch(function(){
         if(timedOut) return;
         clearTimeout(timer);
-        resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:false});
+        resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:true,validationFailed:true});
       });return;}
         var corrected=j.address||null;
         var hasSuggestion=(j.corrected||(j.corrections&&j.corrections.length));
@@ -670,8 +670,10 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
           message:'Our address validator detected a unit/apartment number ('+suggUnit+') for this address that you did not include. Without it, you may not receive your item.'});
       }
       if(r.undeliverable){
-        warnings.push({kind:r.kind, address:r.original,
-          message:'Our address validator could not verify this address as deliverable. Please double-check it.'});
+        var warnMsg=r.validationFailed?
+          'Our address validator could not verify this address. Please double-check it before continuing.' :
+          'Our address validator could not verify this address as deliverable. Please double-check it.';
+        warnings.push({kind:r.kind, address:r.original, message:warnMsg});
       }
     });
     var showConfirm=function(){
