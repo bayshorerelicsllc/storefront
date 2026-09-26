@@ -562,6 +562,8 @@ if(!validateRequiredFields()){return;}
 if (window.BSRAddrValidate && BSRAddrValidate.validate) {
   btn.disabled=true; btn.textContent='Validating addresses…';
   var resetBtn=function(){btn.disabled=false;btn.textContent='Continue to payment →';};
+  // Safety: ensure shipping matches billing if "same" is checked (catches programmatic changes)
+  if(document.getElementById('f-ship-same').checked && typeof syncShipToBill==='function'){ syncShipToBill(); }
   var billSection=document.getElementById('bill-section');
   var shipSection=document.getElementById('ship-section');
   var same=document.getElementById('f-ship-same').checked;
@@ -755,7 +757,7 @@ function initAddressPickers() {
     });
     document.getElementById('bill-saved').addEventListener('change', function(){
       var a = byId[String(this.value)]; clearBillForm(); if (a) fillBillForm(a);
-    });
+    if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}});
   }).catch(function(){});
 }
 
