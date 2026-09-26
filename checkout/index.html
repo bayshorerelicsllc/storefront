@@ -126,6 +126,62 @@ if (document.readyState === 'loading') {
   setTimeout(attachBillValidator, 500);
 }
 window.addEventListener('load', function(){ setTimeout(attachBillValidator, 500); });
+
+// Minimal inline address autocomplete (bypasses external script)
+(function(){
+  var streetEl = document.getElementById('f-bill-line1');
+  if (!streetEl || streetEl._inlineValAttached) return;
+  streetEl._inlineValAttached = true;
+  
+  var dd = document.createElement('div');
+  dd.style.cssText = 'position:absolute;background:#fff;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:1000;max-height:200px;overflow-y:auto;display:none;';
+  streetEl.parentNode.style.position = 'relative';
+  streetEl.parentNode.appendChild(dd);
+  
+  var timer = null;
+  streetEl.addEventListener('input', function(){
+    var q = streetEl.value.trim();
+    if (q.length < 3) { dd.style.display='none'; return; }
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      var apiBase = 'https://cm.bayshorerelicsllc.com';
+      fetch(apiBase + '/api/shipping/autocomplete?q=' + encodeURIComponent(q), {credentials:'include'})
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          var suggestions = (j && j.suggestions) || (j && j.results) || [];
+          if (!suggestions.length) { dd.style.display='none'; return; }
+          dd.innerHTML = '';
+          suggestions.slice(0,5).forEach(function(s){
+            var label = s.label || s.formatted || s.address || JSON.stringify(s);
+            var div = document.createElement('div');
+            div.textContent = label;
+            div.style.cssText = 'padding:10px;cursor:pointer;border-bottom:1px solid #eee;';
+            div.onmousedown = function(e){
+              e.preventDefault();
+              streetEl.value = s.street || s.address1 || label.split(',')[0];
+              if (s.city) { var c=document.getElementById('f-bill-city'); if(c) c.value=s.city; }
+              if (s.state) { var st=document.getElementById('f-bill-state'); if(st) st.value=s.state; }
+              if (s.postal || s.zip) { var z=document.getElementById('f-bill-postal'); if(z) z.value=s.postal||s.zip; }
+              dd.style.display='none';
+            };
+            div.onmouseover = function(){ div.style.background='#f0f0f0'; };
+            div.onmouseout = function(){ div.style.background='#fff'; };
+            dd.appendChild(div);
+          });
+          dd.style.display='block';
+          dd.style.width = streetEl.offsetWidth + 'px';
+          dd.style.top = (streetEl.offsetTop + streetEl.offsetHeight) + 'px';
+          dd.style.left = streetEl.offsetLeft + 'px';
+        })
+        .catch(function(){ dd.style.display='none'; });
+    }, 300);
+  });
+  
+  document.addEventListener('click', function(e){
+    if (e.target !== streetEl && e.target.parentNode !== dd) dd.style.display='none';
+  });
+})();
+
 // Fallback: attach on first focus of street field (ensures script is loaded)
 document.addEventListener('focusin', function(e){
   if (e.target && e.target.id === 'f-bill-line1') {
