@@ -71,27 +71,19 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="checkout-main">' +
     '<style>@media (max-width:640px){.pay-options-grid{grid-template-columns:1fr !important}}</style>' +
     '<div class="pay-options-grid"  style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">' +
-    '<section class="card" id="express-checkout-card" style="margin:0"><h2>Express checkout</h2>' +
-    '<p class="hint" style="margin-bottom:12px">Pay instantly — your wallet fills in shipping and billing.</p>' +
+    '<section class="card" id="express-checkout-card" style="margin:0"><h2>Pay with PayPal</h2>' +
+    '<p class="hint" style="margin-bottom:12px">Secure checkout via PayPal — pay with your balance, bank, or card.</p>' +
     '<div style="width:250px;max-width:100%;margin:0 auto"><div id="pay-paypal-top">' +
     '<button type="button" id="paypal-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#FFC439;color:#003087;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(255,196,57,.35)"><img src="/assets/img/payments/paypal-official.svg" alt="" style="height:22px;width:auto"><span>Continue to PayPal</span></button>' +
     '<div class="error" id="paypal-hosted-err" style="display:none"></div>' +
     '<div class="hint" id="paypal-msg"></div></div>' +
     
     '</section>' +
-    '<section class="card" style="margin:0"><h2>Credit or debit card</h2>' +
-    '<div style="text-align:center;margin-bottom:12px"><div style="font-size:.75rem;color:#6c757d;margin-bottom:8px;letter-spacing:.5px">WE ACCEPT</div>' +
-    '<div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap">' +
-    '<img src="/assets/img/payments/visa-current.svg" alt="Visa" style="width:48px;height:auto">' +
-    '<img src="/assets/img/payments/mastercard-current.svg" alt="Mastercard" style="width:42px;height:auto">' +
-    '<img src="/assets/img/payments/amex-direct.svg" alt="American Express" style="width:48px;height:auto">' +
-    '<img src="/assets/img/payments/discover-direct.svg" alt="Discover" style="width:62px;height:auto">' +
-    '<img src="/assets/img/payments/diners-blue.svg" alt="Diners Club" style="width:62px;height:auto">' +
-    '<img src="/assets/img/payments/jcb-direct.svg" alt="JCB" style="width:42px;height:auto">' +
-    '</div></div>' +
-    '<div style="display:flex;flex-direction:column;gap:10px;width:250px;max-width:100%;margin:0 auto">' +
-    '<button id="show-card-form-stripe" type="button" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#635BFF;color:#fff;border:none;border-radius:4px;height:44px;box-sizing:border-box;padding:0 16px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,91,255,.35)"><img src="/assets/img/payments/stripe-official.svg" alt="" style="height:20px;width:auto;filter:brightness(0) invert(1)"><span>Pay with Stripe</span></button>' +
-    '<button id="show-card-form-paypal" type="button" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#003087;color:#fff;border:none;border-radius:4px;height:44px;box-sizing:border-box;padding:0 16px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,48,135,.35)"><img src="/assets/img/payments/paypal-official.svg" alt="" style="height:18px;width:auto;filter:brightness(0) invert(1)"><span>Pay with PayPal</span></button>' +
+    '<section class="card" style="margin:0"><h2>Pay with card</h2>' +
+    '<p class="hint" style="margin-bottom:12px">Secure checkout via Stripe — all major cards accepted.</p>' +
+    '<div style="width:250px;max-width:100%;margin:0 auto">' +
+    '<button type="button" id="stripe-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#635BFF;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,91,255,.35)"><img src="/assets/img/payments/stripe-official.svg" alt="" style="height:22px;width:auto;filter:brightness(0) invert(1)"><span>Continue to Stripe</span></button>' +
+    '<div class="error" id="hosted-err" style="display:none"></div>' +
     '</div></section></div>' +
     '<div id="manual-form-wrap" style="display:none">' +
     '<section class="card"><h2><span class="step-num">1</span> Contact</h2>' +
@@ -468,17 +460,7 @@ document.addEventListener('DOMContentLoaded', function () {
     BSRAddrValidate.attachLive(shipSection);
     BSRAddrValidate.attachLive(billSection);
   }
-  function revealCardForm(proc) {
-    document.getElementById('manual-form-wrap').style.display = '';
-    document.getElementById('card-payment-section').style.display = '';
-    document.getElementById('show-card-form-stripe').style.display = 'none';
-    document.getElementById('show-card-form-paypal').style.display = 'none';
-    /* PayPal card form is the only embedded option now; Stripe uses hosted checkout. */
-    document.getElementById('pay-card-paypal').style.display = '';
-    document.getElementById('f-email').focus();
-  }
-  document.getElementById('show-card-form-stripe').addEventListener('click', function () { revealCardForm(); });
-  document.getElementById('show-card-form-paypal').addEventListener('click', function () { revealCardForm(); });
+  /* Old embedded card form removed: using hosted checkout for both providers */
   /* Write a validated/corrected address back into a set of fields. */
   function writeBackAddr(p, prefix) {
     setV(prefix + 'line1', p.address1);
