@@ -1289,5 +1289,83 @@ document.addEventListener('input', function (e) {
   }
 });
 </script>
+
+<script>
+/* Postal code autofill for account address forms.
+   Polls for input[name="postal"] in .addr-form, looks up city/state/country via Zippopotam.
+   Same logic as checkout (locked in Sept 26, 2026). */
+(function(){
+  var countryMap={'united states':'us','usa':'us','canada':'ca','united kingdom':'gb','uk':'gb','great britain':'gb','germany':'de','france':'fr','australia':'au','mexico':'mx','japan':'jp','ireland':'ie','netherlands':'nl','spain':'es','italy':'it'};
+  function detectCountry(zip){
+    var z=zip.trim().toUpperCase();
+    if(/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/.test(z)) return 'ca';
+    if(/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/.test(z)) return 'gb';
+    if(/^\d{4}$/.test(z)) return 'au';
+    if(/^\d{5}(-?\d{4})?$/.test(z)) return 'us';
+    return null;
+  }
+  var seen={}; // formId -> last postal value
+  function lookup(zip, form){
+    var countrySel=form.querySelector('select[name="country"], input[name="country"]');
+    var countryRaw=countrySel?countrySel.value.trim().toLowerCase():'us';
+    var countryCode=countryMap[countryRaw]||countryRaw;
+    if(!/^[a-z]{2}$/.test(countryCode)) countryCode='us';
+    if(countryCode==='us'){
+      var detected=detectCountry(zip);
+      if(detected&&detected!=='us'){
+        countryCode=detected;
+        if(countrySel) countrySel.value=detected.toUpperCase();
+      }
+    }
+    var apiZip=zip;
+    if(countryCode==='us'){
+      var m5=/^(\d{5})(-?\d{4})?$/.exec(zip.trim());
+      if(m5) apiZip=m5[1];
+    }
+    fetch('https://api.zippopotam.us/'+countryCode+'/'+encodeURIComponent(apiZip))
+      .then(function(r){ if(!r.ok) throw new Error('not found'); return r.json(); })
+      .then(function(data){
+        var place=data.places&&data.places[0];
+        if(!place) return;
+        var cityEl=form.querySelector('input[name="city"]');
+        var stateEl=form.querySelector('input[name="state"], select[name="state"]');
+        if(cityEl) cityEl.value=place['place name']||'';
+        if(stateEl){
+          var st=place['state abbreviation']||place['state']||'';
+          if(stateEl.tagName==='SELECT'){
+            // Try to select matching option
+            for(var i=0;i<stateEl.options.length;i++){
+              if(stateEl.options[i].value===st||stateEl.options[i].text===st){stateEl.selectedIndex=i;break;}
+            }
+          } else { stateEl.value=st; }
+        }
+        if(countrySel&&data['country abbreviation']){
+          var cabbr=data['country abbreviation'];
+          if(countrySel.tagName==='SELECT'){
+            for(var j=0;j<countrySel.options.length;j++){
+              if(countrySel.options[j].value===cabbr){countrySel.selectedIndex=j;break;}
+            }
+          } else { countrySel.value=cabbr; }
+        }
+      })
+      .catch(function(){});
+  }
+  setInterval(function(){
+    var forms=document.querySelectorAll('form.addr-form');
+    for(var i=0;i<forms.length;i++){
+      var form=forms[i];
+      var postalEl=form.querySelector('input[name="postal"]');
+      if(!postalEl) continue;
+      var formId=form.getAttribute('data-addr-form')||('idx'+i);
+      var val=postalEl.value.trim();
+      if(val&&val!==seen[formId]){
+        seen[formId]=val;
+        lookup(val, form);
+      }
+      if(!val) seen[formId]='';
+    }
+  }, 1000);
+})();
+</script>
 </body>
 </html>
