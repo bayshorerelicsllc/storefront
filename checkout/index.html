@@ -155,20 +155,10 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="hint" id="promo-ok" style="display:none"></div>' +
     '<div class="error" id="promo-err" style="display:none"></div></section>' +
     '</div>' +
-    '<div class="pay-options-grid" style="display:flex;flex-direction:column;gap:16px;margin:16px 0;max-width:600px">' +
-    '<section class="card" id="express-checkout-card" style="margin:0"><h2>Pay with PayPal</h2>' +
-    '<p class="hint" style="margin-bottom:12px">Secure checkout via PayPal — pay with your balance, bank, or card.</p>' +
-    '<div style="width:250px;max-width:100%;margin:0 auto"><div id="pay-paypal-top">' +
-    '<button type="button" id="paypal-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#FFC439;color:#003087;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(255,196,57,.35)"><img src="/assets/img/payments/paypal-official.svg" alt="" style="height:22px;width:auto"><span>Continue to PayPal</span></button>' +
-    '<div class="error" id="paypal-hosted-err" style="display:none"></div>' +
-    '<div class="hint" id="paypal-msg"></div></div>' +
-    
+    '<section class="card" style="margin:16px 0;max-width:600px;text-align:center">' +
+    '<button type="button" id="continue-to-payment" class="btn btn-primary" style="font-size:1.1rem;padding:14px 32px">Continue to payment &rarr;</button>' +
+    '<div class="error" id="continue-err" style="display:none;margin-top:12px"></div>' +
     '</section>' +
-    '<section class="card" style="margin:0"><h2>Pay with card</h2>' +
-    '<p class="hint" style="margin-bottom:12px">Secure checkout via Stripe — all major cards accepted.</p>' +
-    '<div style="width:250px;max-width:100%;margin:0 auto">' +
-    '<button type="button" id="stripe-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#635BFF;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,91,255,.35)"><img src="/assets/img/payments/stripe-official.svg" alt="" style="height:22px;width:auto;filter:brightness(0) invert(1)"><span>Continue to Stripe</span></button>' +
-    '<div class="error" id="hosted-err" style="display:none"></div>' +
     '<aside class="card summary"><h2>Order summary</h2>' +
     '<div class="cart-lines" id="sum-lines"></div>' +
     '<div id="sum-rows"></div></aside></div>';
@@ -578,8 +568,28 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- load provider config (keys embedded - publishable by design) ---------- */
   (function () {
     updateDividers();
-    wireStripeHosted();
-    wirePayPalHosted();
+    var contBtn = document.getElementById('continue-to-payment');
+    if (contBtn) {
+      contBtn.addEventListener('click', function () {
+        var payload = null;
+        try { payload = buildCheckoutPayload(); } catch (e) { payload = null; }
+        var errEl = document.getElementById('continue-err');
+        if (!payload) {
+          if (errEl) {
+            errEl.textContent = 'Please complete all required fields above.';
+            errEl.style.display = '';
+          }
+          // Scroll to first error
+          var firstErr = document.querySelector('.error:not([style*="none"])');
+          if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        try {
+          sessionStorage.setItem('bsr-checkout-payload', JSON.stringify(payload));
+        } catch (e) {}
+        window.location.href = '/checkout/payment/';
+      });
+    }
   })();
 
 
