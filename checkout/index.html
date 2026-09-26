@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Checkout — Bay Shore Relics LLC</title>
 <link rel="stylesheet" href="/assets/css/theme.css">
+<script src="/assets/js/bsr.js" defer></script>
 <style>
 .checkout-wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
 .checkout-grid { display: grid; grid-template-columns: 1fr 360px; gap: 30px; }
@@ -21,6 +22,7 @@ input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radiu
 </style>
 </head>
 <body>
+<div id="bsr-header"></div>
 <div class="checkout-wrap">
 <h1>Checkout</h1>
 <div class="checkout-grid">
@@ -49,6 +51,7 @@ input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radiu
 <div><div class="card summary"><h2>Order Summary</h2><div id="lines"></div><div class="total"><span>Total</span><span id="tot">$0.00</span></div></div></div>
 </div>
 </div>
+<div id="bsr-footer"></div>
 <script>
 var cart=[]; try{cart=JSON.parse(localStorage.getItem('bsr-cart')||'[]');}catch(e){}
 var html='',t=0;
