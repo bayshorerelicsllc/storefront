@@ -211,18 +211,38 @@ function showWarningPopup(results, warnings, onDone){
   };
   var warnByKind={};
   warnings.forEach(function(w){warnByKind[w.kind]=w.message;});
-  var cols=results.map(function(r){
-    var kindLabel=r.kind==='bill'?'Bill to':'Ship to';
-    var warnHtml='';
-    if(warnByKind[r.kind]){
-      warnHtml='<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:14px;color:#856404;margin:8px 0;">'+
-      '<strong>⚠ Heads up:</strong> '+warnByKind[r.kind]+'</div>';
-    }
-    return '<div class="val-col" style="flex:1;min-width:220px;">'+
-    '<div class="val-kind">'+kindLabel+'</div>'+
-    '<div class="val-addr" style="margin:8px 0;">'+fmtAddr(r.original)+'</div>'+
-    warnHtml+'</div>';
-  }).join('');
+  // Check if billing and shipping are identical
+  var billRes=results.find(function(r){return r.kind==='bill';});
+  var shipRes=results.find(function(r){return r.kind==='ship';});
+  var identical=false;
+  if(billRes&&shipRes){
+    var b=billRes.original,s=shipRes.original;
+    identical=(b.address1===s.address1&&(b.address2||'')===(s.address2||'')&&b.city===s.city&&b.state===s.state&&(b.postal||b.zip)===(s.postal||s.zip));
+  }
+  var cols='';
+  if(identical&&billRes){
+    // Single consolidated view with both labels
+    var warnMsg=warnByKind['bill']||warnByKind['ship']||'';
+    var warnHtml=warnMsg?'<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:14px;color:#856404;margin:8px 0;">'+
+      '<strong>⚠ Heads up:</strong> '+warnMsg+'</div>':'';
+    cols='<div class="val-col" style="flex:1;">'+
+      '<div><span class="val-kind">Bill to</span> <span class="val-kind">Ship to</span></div>'+
+      '<div class="val-addr" style="margin:8px 0;">'+fmtAddr(billRes.original)+'</div>'+
+      warnHtml+'</div>';
+  } else {
+    cols=results.map(function(r){
+      var kindLabel=r.kind==='bill'?'Bill to':'Ship to';
+      var warnHtml='';
+      if(warnByKind[r.kind]){
+        warnHtml='<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:14px;color:#856404;margin:8px 0;">'+
+        '<strong>⚠ Heads up:</strong> '+warnByKind[r.kind]+'</div>';
+      }
+      return '<div class="val-col" style="flex:1;min-width:220px;">'+
+      '<div class="val-kind">'+kindLabel+'</div>'+
+      '<div class="val-addr" style="margin:8px 0;">'+fmtAddr(r.original)+'</div>'+
+      warnHtml+'</div>';
+    }).join('');
+  }
   root.innerHTML=
     '<div class="bsr-val-modal-overlay" id="warn-overlay">'+
     '<div class="bsr-val-modal" style="max-width:720px;position:relative;">'+
@@ -254,8 +274,18 @@ function showValidationModal(results, onDone){
     if(a.country) lines.push(a.country);
     return lines.join('<br>');
   };
-  var cols=results.map(function(r, idx){
-    var kindLabel=r.kind==='bill'?'Bill to':'Ship to';
+  var billR=results.find(function(r){return r.kind==='bill';});
+  var shipR=results.find(function(r){return r.kind==='ship';});
+  var sameAddr=false;
+  if(billR&&shipR){
+    var bb=billR.original,ss=shipR.original;
+    sameAddr=(bb.address1===ss.address1&&(bb.address2||'')===(ss.address2||'')&&bb.city===ss.city&&bb.state===ss.state&&(bb.postal||bb.zip)===(ss.postal||ss.zip));
+  }
+  var displayResults=sameAddr?[billR]:results;
+  var cols=displayResults.map(function(r, idx){
+    var kindLabel;
+    if(sameAddr){kindLabel='<span class="val-kind">Bill to</span> <span class="val-kind">Ship to</span>';}
+    else{kindLabel='<div class="val-kind">'+(r.kind==='bill'?'Bill to':'Ship to')+'</div>';}
     var unitWarning='';
     // Check if Shippo suggests adding a unit/apt number
     var origUnit=(r.original.address2||r.original.street2||'').trim();
@@ -272,7 +302,7 @@ function showValidationModal(results, onDone){
       '<button type="button" class="val-keep" data-keep="'+idx+'">Keep mine</button></div>';
     }
     return '<div class="val-col" data-idx="'+idx+'" style="flex:1;min-width:220px;">'+
-    '<div class="val-kind">'+kindLabel+'</div>'+
+    '<div>'+kindLabel+'</div>'+
     unitWarning+
     suggestedHtml+
     '<div class="val-addr"><strong>'+(r.suggested?'Yours:':'Address:')+'</strong><br>'+fmtAddr(r.original)+'</div>'+
