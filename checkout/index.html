@@ -717,6 +717,38 @@ location.href='/checkout/payment/';
 }
 });
 
+
+// ZIP code autocomplete - fill city/state/country from ZIP
+function setupZipLookup(zipId, cityId, stateId, countryId){
+  var zipEl=document.getElementById(zipId);
+  if(!zipEl) return;
+  var lastZip='';
+  zipEl.addEventListener('blur', function(){
+    var zip=zipEl.value.trim();
+    // Only US 5-digit ZIPs
+    if(!/^[0-9]{5}$/.test(zip)) return;
+    if(zip===lastZip) return;
+    lastZip=zip;
+    fetch('https://api.zippopotam.us/us/'+zip)
+      .then(function(r){ if(!r.ok) throw new Error('not found'); return r.json(); })
+      .then(function(data){
+        var place=data.places&&data.places[0];
+        if(!place) return;
+        var cityEl=document.getElementById(cityId);
+        var stateEl=document.getElementById(stateId);
+        var countryEl=document.getElementById(countryId);
+        if(cityEl&&!cityEl.value) cityEl.value=place['place name']||'';
+        if(stateEl&&!stateEl.value) stateEl.value=place['state abbreviation']||'';
+        if(countryEl&&!countryEl.value) countryEl.value='US';
+        // Trigger sync if "same as billing" is checked
+        if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}
+      })
+      .catch(function(){ /* Invalid ZIP or API down - leave fields alone */ });
+  });
+}
+setupZipLookup('f-bill-postal','f-bill-city','f-bill-state','f-bill-country');
+setupZipLookup('f-postal','f-city','f-state','f-country');
+
 // Saved address dropdowns (signed-in only)
 function setV(id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; }
 function setSel(id, v) { var el = document.getElementById(id); if (el) el.value = v || 'US'; }
