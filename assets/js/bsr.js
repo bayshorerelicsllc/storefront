@@ -13,6 +13,7 @@
     search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
     account: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
     bell: '<path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/>',
+    heart: '<path d="M12 20.7C7.2 16.4 3.5 13.1 3.5 9.3 3.5 6.6 5.6 4.5 8.3 4.5c1.6 0 3 .8 3.7 2 .7-1.2 2.1-2 3.7-2 2.7 0 4.8 2.1 4.8 4.8 0 3.8-3.7 7.1-8.5 11.4z"/>',
     cart: '<path d="M3 4h2l2.4 12.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L20.5 8H6"/><circle cx="9.5" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
     close: '<path d="M6 6l12 12M18 6L6 18"/>',
@@ -183,6 +184,39 @@
     for (var i = 0; i < els.length; i++) els[i].textContent = n > 0 ? n : '';
   }
 
+  /* ---------------- wishlist toggle button: one shared affordance for every
+     product card / preview, mirroring Add to cart. Pages render it with
+     BSR.wishToggleHtml(slug) inside .card-img; one delegated handler below
+     owns the toggle everywhere. ---------------- */
+  function wishToggleHtml(slug) {
+    var on = wishlist.has(slug);
+    return '<button type="button" class="wish-toggle' + (on ? ' on' : '') + '" data-wish-toggle="' + esc(slug) + '"' +
+      ' aria-pressed="' + (on ? 'true' : 'false') + '"' +
+      ' aria-label="' + (on ? 'Remove from wishlist' : 'Add to wishlist') + '">' +
+      icon('heart', 'ic-sm') + '</button>';
+  }
+  function paintWishToggles(root) {
+    var btns = (root || document).querySelectorAll('[data-wish-toggle]');
+    for (var i = 0; i < btns.length; i++) {
+      var b = btns[i], on = wishlist.has(b.getAttribute('data-wish-toggle'));
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.setAttribute('aria-label', on ? 'Remove from wishlist' : 'Add to wishlist');
+    }
+  }
+  function wireWishToggles() {
+    document.addEventListener('click', function (e) {
+      var t = e.target && e.target.closest ? e.target.closest('[data-wish-toggle]') : null;
+      if (!t) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var slug = t.getAttribute('data-wish-toggle');
+      if (wishlist.has(slug)) { wishlist.remove(slug); toast('Removed from your wishlist'); }
+      else { wishlist.add(slug); toast('Added to your wishlist'); }
+      paintWishToggles(document);
+    });
+  }
+
   /* ---------------- notifications: bell + browser ---------------- */
   function readLocalNotifs() {
     try {
@@ -349,6 +383,16 @@
       '.notif-btn{position:relative}' +
       '.notif-count{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;' +
       'background:#c0392b;color:#fff;font-size:10px;line-height:16px;text-align:center;font-weight:700}' +
+      '.wish-count{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;' +
+      'background:var(--gold,#c9a227);color:#2a241b;font-size:10px;line-height:16px;text-align:center;font-weight:700}' +
+      '.wish-count:empty{display:none}' +
+      '.card-img{position:relative}' +
+      '.wish-toggle{position:absolute;top:8px;right:8px;width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;' +
+      'background:rgba(255,255,255,.94);color:#5a5348;display:flex;align-items:center;justify-content:center;' +
+      'box-shadow:0 2px 8px rgba(0,0,0,.20);z-index:2;padding:0;transition:transform .15s ease,color .15s ease}' +
+      '.wish-toggle:hover{transform:scale(1.1)}' +
+      '.wish-toggle.on{color:#c0392b}' +
+      '.wish-toggle.on svg{fill:#c0392b}' +
       '.notif-panel{position:fixed;top:64px;right:12px;width:min(360px,calc(100vw - 24px));max-height:70vh;overflow:auto;' +
       'background:var(--card,#fff);border:1px solid var(--border,#e2ddd2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.18);' +
       'z-index:1200;padding:8px;display:none}' +
@@ -486,13 +530,47 @@
     document.addEventListener(ev, markActive, { passive: true });
   });
 
+  /* Remove sold/gone items from every local wishlist. The same slide may sit in
+     many shoppers' wishlists; once it sells it is purged from all of them. */
+  function pruneWishlist() {
+    var slugs = wishlist.list();
+    if (!slugs.length) return Promise.resolve(0);
+    return api('/api/cart/status', { method: 'POST', body: { slugs: slugs, tokens: {} } }).then(function (j) {
+      var n = 0;
+      if (j && j.ok && j.status) {
+        slugs.forEach(function (s) {
+          var st = j.status[s];
+          if ((st === 'sold' || st === 'gone') && wishlist.has(s)) { wishlist.remove(s); n++; }
+        });
+        if (n) paintWishToggles(document);
+      }
+      return n;
+    }).catch(function () { return 0; });
+  }
   function dropToWishlist(slug) {
-    cart.release(slug, false);
-    if (!wishlist.has(slug)) wishlist.add(slug);
-    notifyLocal('Moved to your wishlist',
-      'Your reservation ended before checkout. It\u2019s in your wishlist \u2014 add it back while it\u2019s still available.', slug);
-    toast('Moved to your wishlist');
-    if (window.BSR && BSR._onCartDrop) { try { BSR._onCartDrop(slug); } catch (e) {} }
+    /* Sold/gone items never enter the wishlist: purge them everywhere instead. */
+    api('/api/cart/status', { method: 'POST', body: { slugs: [slug], tokens: {} } }).then(function (j) {
+      var st = (j && j.ok && j.status) ? j.status[slug] : null;
+      if (st === 'sold' || st === 'gone') {
+        cart.release(slug, false);
+        if (wishlist.has(slug)) wishlist.remove(slug);
+        paintWishToggles(document);
+        toast('That slide just sold — removed from your cart', 'err');
+        if (window.BSR && BSR._onCartDrop) { try { BSR._onCartDrop(slug); } catch (e) {} }
+        return;
+      }
+      cart.release(slug, false);
+      if (!wishlist.has(slug)) wishlist.add(slug);
+      notifyLocal('Moved to your wishlist',
+        'Your reservation ended before checkout. It\u2019s in your wishlist \u2014 add it back while it\u2019s still available.', slug);
+      toast('Moved to your wishlist');
+      if (window.BSR && BSR._onCartDrop) { try { BSR._onCartDrop(slug); } catch (e) {} }
+    }).catch(function () {
+      cart.release(slug, false);
+      if (!wishlist.has(slug)) wishlist.add(slug);
+      toast('Moved to your wishlist');
+      if (window.BSR && BSR._onCartDrop) { try { BSR._onCartDrop(slug); } catch (e) {} }
+    });
   }
 
   var expiryModalOpen = false, expiryTimer = null;
@@ -751,6 +829,7 @@
         '<div class="header-icons">' +
         '<button class="icon-btn" id="bsr-search-btn" aria-label="Search">' + icon('search') + '</button>' +
         '<button class="icon-btn notif-btn" id="bsr-notif-btn" aria-label="Notifications">' + icon('bell') + '<span class="notif-count"></span></button>' +
+        '<a class="icon-btn" href="/account/?tab=wishlist" aria-label="Wishlist">' + icon('heart') + '<span class="wish-count"></span></a>' +
         '<button class="icon-btn" data-account-btn aria-label="Account">' + icon('account') + '</button>' +
         '<a class="icon-btn" href="/cart/" aria-label="Cart">' + icon('cart') + '<span class="cart-count"></span></a>' +
         '</div></div></div>' +
@@ -762,6 +841,7 @@
           return '<a href="' + n.href + '">' + icon('arrow-right', 'ic-sm') + esc(n.label) + '</a>';
         }).join('') +
         '<a href="/account/" data-account-btn>' + icon('account', 'ic-sm') + 'Account</a>' +
+        '<a href="/account/?tab=wishlist">' + icon('heart', 'ic-sm') + 'Wishlist</a>' +
         '<a href="/cart/">' + icon('cart', 'ic-sm') + 'Cart</a>' +
         '</nav></aside>' +
         '<div class="search-overlay" id="bsr-search"><div class="wrap">' +
@@ -892,6 +972,7 @@
     renderConsent();
     wireNotifBell();
     updateWishBadge();
+    wireWishToggles();
     setInterval(upkeepTick, 30 * 1000);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) { markActive(); upkeepTick(); } });
     upkeepTick();
@@ -988,6 +1069,7 @@
   window.BSR = {
     api: api, money: money, esc: esc, icon: icon,
     cart: cart, updateCartBadge: updateCartBadge, wishlist: wishlist, updateWishBadge: updateWishBadge,
+    wishToggleHtml: wishToggleHtml, paintWishToggles: paintWishToggles, pruneWishlist: pruneWishlist,
     bid: bid, pollNotifications: pollNotifications, notifyLocal: notifyLocal,
     enableBrowserNotifications: enableBrowserNotifications, markNotifsRead: markNotifsRead,
     dropToWishlist: dropToWishlist,

@@ -7,7 +7,7 @@
 <meta name="description" content="Browse our catalog of vintage 35mm railroad slides. Each slide is a single physical item, sold once.">
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260926b" defer></script>
+<script src="/assets/js/bsr.js?v=20260926c" defer></script>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (onSale ? '<s>' + BSR.money(p.compare_at_cents) + '</s>' : '');
     var badge = onSale ? ' <span class="badge badge-sale">Sale</span>' : '';
     return '<article class="card"><a class="card-link" href="' + url + '">' +
-      '<div class="card-img">' + img + '</div>' +
+      '<div class="card-img">' + img + BSR.wishToggleHtml(p.slug) + '</div>' +
       '<div class="card-body">' +
         '<h3 class="card-title">' + BSR.esc(p.title) + '</h3>' +
         (meta ? '<div class="card-meta">' + meta + '</div>' : '') +

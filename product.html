@@ -7,7 +7,7 @@
 <meta name="description" id="meta-desc" content="Vintage 35mm railroad slide — a single physical item, sold once.">
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260926b" defer></script>
+<script src="/assets/js/bsr.js?v=20260926c" defer></script>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (onSale ? '<s>' + BSR.money(p.compare_at_cents) + '</s>' : '');
     var badge = onSale ? ' <span class="badge badge-sale">Sale</span>' : '';
     return '<article class="card"><a class="card-link" href="' + url + '">' +
-      '<div class="card-img">' + img + '</div>' +
+      '<div class="card-img">' + img + BSR.wishToggleHtml(p.slug) + '</div>' +
       '<div class="card-body">' +
         '<h3 class="card-title">' + BSR.esc(p.title) + '</h3>' +
         (meta ? '<div class="card-meta">' + meta + '</div>' : '') +
@@ -145,9 +145,11 @@ document.addEventListener('DOMContentLoaded', function () {
       var st = (j && j.ok && j.status) ? j.status[p.slug] : 'available';
       if (BSR.cart.has(p.slug)) { showInCart(); return; }
       if (st === 'sold') {
+        if (BSR.wishlist.has(p.slug)) { BSR.wishlist.remove(p.slug); BSR.paintWishToggles(document); }
         row.innerHTML = '<div class="held-note">' + BSR.icon('info', 'ic-sm') + '<span><strong>Sold.</strong> This one-of-a-kind slide has found a new home.</span></div>';
       } else if (st === 'held') { showHeld(); }
       else if (st === 'gone') {
+        if (BSR.wishlist.has(p.slug)) { BSR.wishlist.remove(p.slug); BSR.paintWishToggles(document); }
         row.innerHTML = '<div class="held-note">' + BSR.icon('info', 'ic-sm') + '<span>This slide is no longer available.</span></div>';
       } else { showAdd(); }
     }).catch(function () { if (!BSR.cart.has(p.slug)) showAdd(); });
@@ -156,10 +158,29 @@ document.addEventListener('DOMContentLoaded', function () {
       row.innerHTML =
         '<a class="btn btn-primary" href="/cart/">' + BSR.icon('check', 'ic-sm') + ' In your cart \u2014 view cart</a>';
     }
+    function wishBtnHtml() {
+      var on = BSR.wishlist.has(p.slug);
+      return '<button class="btn btn-ghost" id="wish-btn" type="button" aria-pressed="' + (on ? 'true' : 'false') + '">' +
+        BSR.icon('heart', 'ic-sm') + ' <span>' + (on ? 'Saved to wishlist' : 'Add to wishlist') + '</span></button>';
+    }
+    function bindWishBtn() {
+      var wb = document.getElementById('wish-btn');
+      if (!wb) return;
+      wb.addEventListener('click', function () {
+        if (BSR.wishlist.has(p.slug)) { BSR.wishlist.remove(p.slug); BSR.toast('Removed from your wishlist'); }
+        else { BSR.wishlist.add(p.slug); BSR.toast('Added to your wishlist'); }
+        var wrap = document.getElementById('wish-btn-wrap');
+        if (wrap) wrap.innerHTML = wishBtnHtml();
+        bindWishBtn();
+        BSR.paintWishToggles(document);
+      });
+    }
     function showAdd() {
       row.innerHTML =
         '<button class="btn btn-primary" id="add-btn">' + BSR.icon('cart', 'ic-sm') + ' Add to cart</button>' +
+        '<span id="wish-btn-wrap">' + wishBtnHtml() + '</span>' +
         '<a class="btn btn-secondary" href="/cart/">View cart</a>';
+      bindWishBtn();
       document.getElementById('add-btn').addEventListener('click', function () {
         var btn = document.getElementById('add-btn');
         btn.disabled = true;

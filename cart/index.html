@@ -6,7 +6,7 @@
 <title>Cart — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260926b" defer></script>
+<script src="/assets/js/bsr.js?v=20260926c" defer></script>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -170,7 +170,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var products = [], pending = w.length;
     w.forEach(function (slug) {
       BSR.api('/api/catalog/products/' + encodeURIComponent(slug)).then(function (j) {
-        products.push((j && j.ok && j.product) ? j.product : { slug: slug, title: slug, price_cents: 0, image: '' });
+        if (j && j.ok && j.product) products.push(j.product);
+        else BSR.wishlist.remove(slug); /* sold or gone: purge from every wishlist */
         if (--pending === 0) finishWish(products, w);
       }).catch(function () {
         products.push({ slug: slug, title: slug, price_cents: 0, image: '' });
@@ -179,6 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     function finishWish(list, order) {
       list.sort(function (a, b) { return order.indexOf(a.slug) - order.indexOf(b.slug); });
+      if (!list.length) { lines.innerHTML = '<p class="hint">Your wishlist is empty.</p>'; return; }
       lines.innerHTML = list.map(function (p) {
         var img = p.image
           ? '<img src="' + BSR.esc(p.image) + '" alt="' + BSR.esc(p.title) + '" loading="lazy">'

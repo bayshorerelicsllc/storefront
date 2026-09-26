@@ -6,7 +6,7 @@
 <title>Your account — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260926b" defer></script>
+<script src="/assets/js/bsr.js?v=20260926c" defer></script>
 <script src="/assets/js/addr-validate.js?v=20260925m"></script>
 <script src="https://js.stripe.com/v3/" defer></script>
 <style>
@@ -218,6 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ['addresses', 'truck', 'Addresses'],
       ['security', 'shield', 'Security'],
       ['orders', 'package', 'Orders'],
+      ['wishlist', 'heart', 'Wishlist'],
       ['cards', 'card', 'Payment methods'],
     ];
     var nav = tabs.map(function (t) {
@@ -1112,6 +1113,78 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  /* ---------------- wishlist ---------------- */
+  function emptyWish() {
+    return '<div class="empty">' + BSR.icon('heart', 'ic-lg') +
+      '<h2>Your wishlist is empty</h2><p>Tap the heart on any slide to save it here for later.</p>' +
+      '<a class="btn btn-primary" href="/shop/" style="margin-top:14px">Browse slides</a></div>';
+  }
+  function renderWishlist() {
+    return '<div class="acct-section"><h2>Wishlist</h2>' +
+      '<p class="sec-desc">Slides you saved for later. Each one is one-of-a-kind — they can sell at any time.</p>' +
+      '<div id="wish-list"><p>Loading wishlist&hellip;</p></div></div>';
+  }
+  function wishRow(p) {
+    var img = p.image
+      ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy">'
+      : '<div class="empty-icon">' + BSR.icon('box') + '</div>';
+    return '<div class="cart-line" data-slug="' + esc(p.slug) + '">' +
+      '<a class="t" href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' + img + '</a>' +
+      '<div class="m"><div class="t"><a href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' + esc(p.title) + '</a></div>' +
+      '<div class="hint">Item ' + esc(p.item_number || p.slug) + '</div>' +
+      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn btn-secondary btn-sm" type="button" data-wadd="' + esc(p.slug) + '">Add back to cart</button>' +
+      '<button class="btn btn-ghost btn-sm" type="button" data-wrm="' + esc(p.slug) + '" style="color:#9c2b1e">Remove</button>' +
+      '</div></div>' +
+      '<div class="p">' + BSR.money(p.price_cents) + '</div></div>';
+  }
+  function bindWishlist() {
+    var col = document.getElementById('wish-list');
+    if (!col) return;
+    var slugs = BSR.wishlist.list();
+    if (!slugs.length) { col.innerHTML = emptyWish(); return; }
+    var products = [], pending = slugs.length, finished = false;
+    slugs.forEach(function (slug) {
+      BSR.api('/api/catalog/products/' + encodeURIComponent(slug)).then(function (j) {
+        if (j && j.ok && j.product) products.push(j.product);
+        else BSR.wishlist.remove(slug); /* sold or gone: purge from every wishlist */
+        if (--pending === 0) finishWish();
+      }).catch(function () {
+        products.push({ slug: slug, title: slug, price_cents: 0, image: '' });
+        if (--pending === 0) finishWish();
+      });
+    });
+    function finishWish() {
+      if (finished) return; finished = true;
+      products.sort(function (a, b) { return slugs.indexOf(a.slug) - slugs.indexOf(b.slug); });
+      if (!products.length) { col.innerHTML = emptyWish(); return; }
+      col.innerHTML = '<div class="cart-lines">' + products.map(wishRow).join('') + '</div>';
+      col.querySelectorAll('[data-wadd]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var slug = btn.getAttribute('data-wadd');
+          btn.disabled = true; btn.textContent = 'Reserving\u2026';
+          BSR.cart.add(slug).then(function (res) {
+            if (res && res.ok) {
+              BSR.wishlist.remove(slug);
+              BSR.toast('Back in your cart \u2014 reserved for 30 minutes');
+              bindWishlist();
+            } else {
+              btn.disabled = false; btn.textContent = 'Add back to cart';
+              BSR.toast((res && res.error) || 'Could not add back', 'err');
+            }
+          });
+        });
+      });
+      col.querySelectorAll('[data-wrm]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          BSR.wishlist.remove(btn.getAttribute('data-wrm'));
+          BSR.toast('Removed from your wishlist');
+          bindWishlist();
+        });
+      });
+    }
+  }
+
   /* ---------------- payment methods (existing Stripe) ---------------- */
   var stripe = null, cardEl = null, cardNumEl = null, cardExpEl = null, cardCvcEl = null, addingCard = false;
   function renderCards() {
@@ -1266,6 +1339,7 @@ document.addEventListener('DOMContentLoaded', function () {
     else if (tab === 'addresses') html = renderAddresses();
     else if (tab === 'security') html = renderSecurity();
     else if (tab === 'orders') html = renderOrders();
+    else if (tab === 'wishlist') html = renderWishlist();
     else if (tab === 'cards') html = renderCards();
     root.innerHTML = shell(html);
     bindShell();
@@ -1273,10 +1347,15 @@ document.addEventListener('DOMContentLoaded', function () {
     else if (tab === 'addresses') bindAddresses();
     else if (tab === 'security') bindSecurity();
     else if (tab === 'orders') bindOrders();
+    else if (tab === 'wishlist') bindWishlist();
     else if (tab === 'cards') bindCards();
   }
 
   /* ---------------- boot ---------------- */
+  try {
+    var qtab = new URLSearchParams(window.location.search).get('tab');
+    if (['profile', 'addresses', 'security', 'orders', 'wishlist', 'cards'].indexOf(qtab) !== -1) tab = qtab;
+  } catch (e) {}
   BSR.api('/api/account/me').then(function (j) {
     if (j && j._status === 401) { window.location = '/account/login/'; return; }
     if (j && j.ok && j.customer) { customer = j.customer; render(); }

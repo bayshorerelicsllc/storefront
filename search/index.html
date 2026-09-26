@@ -7,7 +7,7 @@
 <meta name="description" content="Search the Bay Shore Relics LLC catalog of vintage 35mm railroad slides.">
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260926b" defer></script>
+<script src="/assets/js/bsr.js?v=20260926c" defer></script>
 <style>
 .search-page .search-box { display: flex; gap: 10px; margin: 18px 0 26px; max-width: 640px; }
 .search-page .search-box input { flex: 1; padding: 13px 16px; border: 1px solid var(--line);
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
       : '<span class="no-photo">' + BSR.icon('eye', 'ic-lg') + '</span>';
     var sale = (p.compare_at_cents > p.price_cents) ? ' <s>' + BSR.money(p.compare_at_cents) + '</s>' : '';
     return '<div class="card"><a class="card-link" href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' +
-      '<div class="card-img">' + img + '</div><div class="card-body">' +
+      '<div class="card-img">' + img + BSR.wishToggleHtml(p.slug) + '</div><div class="card-body">' +
       '<p class="card-title">' + BSR.esc(p.title) + '</p>' +
       '<p class="card-meta">' + BSR.esc(p.railroad || '') + (p.item_number ? ' · #' + BSR.esc(p.item_number) : '') + '</p>' +
       '<p class="card-price">' + BSR.money(p.price_cents) + sale + '</p>' +
