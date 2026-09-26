@@ -680,6 +680,9 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
       }
     });
     var showConfirm=function(){
+      // If no suggestions, skip the confirmation modal (warning was sufficient)
+      var hasSuggestions=results.some(function(r){return r.suggested;});
+      if(!hasSuggestions){ doProceed(); return; }
       showValidationModal(results, function(fixed){
         fixed.forEach(function(f){
           if(f.kind==='bill') writeBack(f.address, 'f-bill-');
