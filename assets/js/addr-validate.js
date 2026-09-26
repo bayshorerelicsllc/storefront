@@ -106,7 +106,7 @@
           '<div class="addr-val-actions">' +
           '<button type="button" class="btn btn-primary btn-sm" data-val-use>Use suggested</button> ' +
           '<button type="button" class="btn btn-ghost btn-sm" data-val-keep>Keep mine</button>' +
-          '</div></div>';
+          '</div><p style="margin-top:10px;font-size:.85rem;color:#96660f">\u26a0 Double-check: if your address has an apartment, unit, suite, or site number, make sure it\u2019s included.</p></div>';
         var useBtn = box.querySelector('[data-val-use]');
         var keepBtn = box.querySelector('[data-val-keep]');
         if (useBtn) useBtn.addEventListener('click', function () {
@@ -128,6 +128,7 @@
       if (box) box.innerHTML =
         '<div class="addr-val-warn"><p><strong>Heads up:</strong> ' + esc(reasons) +
         ' You can still save it, but deliveries may fail.</p>' +
+        '<p style="font-size:.85rem;color:#96660f">\u26a0 Double-check: if your address has an apartment, unit, suite, or site number, make sure it\u2019s included.</p>' +
         '<div class="addr-val-actions">' +
         '<button type="button" class="btn btn-primary btn-sm" data-val-keep>Save anyway</button> ' +
         '<button type="button" class="btn btn-ghost btn-sm" data-val-edit>Edit address</button>' +
