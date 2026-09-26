@@ -1,6 +1,6 @@
 {
-  "versionCode": 6,
-  "versionName": "1.5",
-  "url": "https://raw.githubusercontent.com/bayshorerelicsllc/storefront/main/boone/boone-1.5.apk",
-  "notes": "Launcher icon is now the Muse avatar with headphones and laptop, sized to fit the icon mask."
+  "versionCode": 7,
+  "versionName": "1.6",
+  "url": "https://raw.githubusercontent.com/bayshorerelicsllc/storefront/main/boone/boone-1.6.apk",
+  "notes": "New: Auto-send to Muse toggle - your words go straight to the Muse app when you stop speaking. NOTE: signed with a new key, so uninstall the old Boone first, then install this fresh."
 }
