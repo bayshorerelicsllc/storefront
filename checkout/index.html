@@ -723,11 +723,28 @@ location.href='/checkout/payment/';
 (function(){
   var countryMap={'united states':'us','usa':'us','canada':'ca','united kingdom':'gb','uk':'gb','great britain':'gb','germany':'de','france':'fr','australia':'au','mexico':'mx','japan':'jp','ireland':'ie','netherlands':'nl','spain':'es','italy':'it'};
   var lastBillZip='', lastShipZip='';
+  // Detect country from postal code format (so user doesn't have to set it first)
+  function detectCountry(zip){
+    var z=zip.trim().toUpperCase();
+    if(/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/.test(z)) return 'ca'; // Canada: K1A 0B1
+    if(/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/.test(z)) return 'gb'; // UK: SW1A 1AA
+    if(/^\d{4}$/.test(z)) return 'au'; // Australia: 4 digits (also try de/fr)
+    if(/^\d{5}$/.test(z)) return 'us'; // US: 5 digits (also DE/FR/IT/ES/MX)
+    return null;
+  }
   function lookup(zip, cityId, stateId, countryId){
     var countryEl=document.getElementById(countryId);
     var countryRaw=countryEl?countryEl.value.trim().toLowerCase():'us';
     var countryCode=countryMap[countryRaw]||countryRaw;
     if(!/^[a-z]{2}$/.test(countryCode)) countryCode='us';
+    // Auto-detect: if country is still default US but format looks foreign, switch
+    if(countryCode==='us'){
+      var detected=detectCountry(zip);
+      if(detected&&detected!=='us'){
+        countryCode=detected;
+        if(countryEl) countryEl.value=detected.toUpperCase();
+      }
+    }
     fetch('https://api.zippopotam.us/'+countryCode+'/'+encodeURIComponent(zip))
       .then(function(r){ if(!r.ok) throw new Error('not found'); return r.json(); })
       .then(function(data){
