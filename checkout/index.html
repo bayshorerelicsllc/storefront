@@ -157,7 +157,21 @@ sumLines.innerHTML='<p>Loading…</p>';
     sumLines.innerHTML=html;
   });
 })();
-document.getElementById('f-ship-same').addEventListener('change',function(){document.getElementById('ship-fields').style.display=this.checked?'none':'block';});
+var syncShipToBill=function(){
+  var pairs=[['f-bill-name','f-ship-name'],['f-bill-company','f-ship-company'],['f-bill-email','f-ship-email'],['f-bill-phone','f-ship-phone'],['f-bill-line1','f-line1'],['f-bill-line2','f-line2'],['f-bill-city','f-city'],['f-bill-state','f-state'],['f-bill-postal','f-postal'],['f-bill-country','f-country']];
+  pairs.forEach(function(p){var b=document.getElementById(p[0]),s=document.getElementById(p[1]);if(b&&s)s.value=b.value;});
+};
+document.getElementById('f-ship-same').addEventListener('change',function(){
+  document.getElementById('ship-fields').style.display=this.checked?'none':'block';
+  if(this.checked) syncShipToBill();
+});
+// Keep shipping in sync if billing changes while "same" is checked
+['f-bill-name','f-bill-company','f-bill-email','f-bill-phone','f-bill-line1','f-bill-line2','f-bill-city','f-bill-state','f-bill-postal','f-bill-country'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('input',function(){
+    if(document.getElementById('f-ship-same').checked) syncShipToBill();
+  });
+});
 
 
 function cleanPhone(v){
@@ -548,7 +562,14 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
     postal:document.getElementById('f-bill-postal').value.trim(),
     country:document.getElementById('f-bill-country').value
   };
-  var shipPayload={
+  var shipPayload=same?{
+    address1:document.getElementById('f-bill-line1').value.trim(),
+    address2:document.getElementById('f-bill-line2').value.trim(),
+    city:document.getElementById('f-bill-city').value.trim(),
+    state:document.getElementById('f-bill-state').value.trim(),
+    postal:document.getElementById('f-bill-postal').value.trim(),
+    country:document.getElementById('f-bill-country').value
+  }:{
     address1:document.getElementById('f-line1').value.trim(),
     address2:document.getElementById('f-line2').value.trim(),
     city:document.getElementById('f-city').value.trim(),
