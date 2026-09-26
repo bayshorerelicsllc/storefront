@@ -381,7 +381,7 @@
     st.textContent =
       '.notif-btn{position:relative}' +
       '.notif-count{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;' +
-      'background:#c0392b;color:#fff;font-size:10px;line-height:16px;text-align:center;font-weight:700}' +
+      'background:var(--gold,#c9a227);color:#2a241b;font-size:10px;line-height:16px;text-align:center;font-weight:700}' +
       '.wish-count{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;' +
       'background:var(--gold,#c9a227);color:#2a241b;font-size:10px;line-height:16px;text-align:center;font-weight:700}' +
       '.wish-count:empty{display:none}' +
