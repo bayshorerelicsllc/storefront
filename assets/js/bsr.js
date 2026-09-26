@@ -840,7 +840,7 @@
           return '<a href="' + n.href + '">' + icon('arrow-right', 'ic-sm') + esc(n.label) + '</a>';
         }).join('') +
         '<a href="/account/" data-account-btn>' + icon('account', 'ic-sm') + 'Account</a>' +
-        '<a href="/account/?tab=wishlist">' + icon('heart', 'ic-sm') + 'Wishlist</a>' +
+        '<a href="/account/?tab=wishlist" style="position:relative">' + icon('heart', 'ic-sm') + 'Wishlist <span class="wish-count"></span></a>' +
         '<a href="/cart/">' + icon('cart', 'ic-sm') + 'Cart</a>' +
         '</nav></aside>' +
         '<div class="search-overlay" id="bsr-search"><div class="wrap">' +
