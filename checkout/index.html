@@ -266,12 +266,12 @@ function showWarningPopup(results, warnings, onDone){
   }
   root.innerHTML=
     '<div class="bsr-val-modal-overlay" id="warn-overlay">'+
-    '<div class="bsr-val-modal" style="max-width:720px;position:relative;">'+
+    '<div class="bsr-val-modal" style="max-width:600px;position:relative;box-sizing:border-box;overflow:hidden;">'+
     '<button type="button" id="warn-close-btn" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">&times;</button>'+
-    '<h3>Address issue'+(warnings.length>1?'s':'')+'</h3>'+
-    '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+cols+'</div>'+
-    '<div class="val-actions" style="margin-top:16px;">'+
-    '<button type="button" class="val-use" id="warn-ok-btn" style="width:100%;">I understand</button>'+
+    '<h3 style="text-align:center;margin:0 0 16px 0;padding-right:32px;">Address issue'+(warnings.length>1?'s':'')+'</h3>'+
+    '<div style="display:flex;gap:16px;'+(window.innerWidth<640?'flex-direction:column;':'')+'">'+cols+'</div>'+
+    '<div class="val-actions" style="margin-top:20px;text-align:center;">'+
+    '<button type="button" class="val-use" id="warn-ok-btn" style="padding:12px 36px;font-size:15px;">I understand</button>'+
     '</div></div></div>';
   var closeWarn=function(){root.innerHTML='';resetBtn();};
   document.getElementById('warn-close-btn').addEventListener('click',closeWarn);
