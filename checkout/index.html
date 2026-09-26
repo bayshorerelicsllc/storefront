@@ -419,12 +419,15 @@ function showValidationModal(results, onDone){
     return cell('<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#333;height:100%;box-sizing:border-box;">'+fmtAddr(r.original)+'</div>', 'height:100%;');
   }).join('');
   
-  // Row 7: Unit warnings (if any)
+  // Row 7: Warnings (unit missing, or no suggested correction)
   var warnRow = results.map(function(r){
     var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
     var unitInOrig=unitAlreadyInAddress(suggUnit, r.original.address1||r.original.street, r.original.address2||r.original.street2);
     if(r.suggested&&suggUnit&&!unitInOrig){
       return cell('<div style="background:#fff8e1;border:1px solid #ffd54f;border-radius:8px;padding:10px;font-size:12px;line-height:1.4;color:#5d4037;"><strong>⚠ Unit needed:</strong> Without it, your package may not arrive.</div>');
+    }
+    if(!r.suggested){
+      return cell('<div style="background:#fff8e1;border:1px solid #ffd54f;border-radius:8px;padding:10px;font-size:12px;line-height:1.4;color:#5d4037;"><strong>⚠ Please verify:</strong> If this address is incorrect, you may not receive your mail.</div>');
     }
     return cell('');
   }).join('');
