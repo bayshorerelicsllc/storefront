@@ -79,7 +79,7 @@ function buildCheckoutPayload(ship,bill,walletOrder){
   var promoCode='';try{var p=JSON.parse(sessionStorage.getItem('bsr-promo')||'null');if(p&&p.code)promoCode=p.code;}catch(e){}
   var metaPrep={billing:bill};
   if(ship)metaPrep.shipping=ship;
-  var pl={slugs:slugs,cart_tokens:(window.BSR&&BSR.cart)?BSR.cart.tokens():{},prep:metaPrep,meta:{prep:metaPrep},promo_code:promoCode,contact_email:bill.email||ship.contact_email||'',wallet_order:!!walletOrder};
+  var pl={slugs:slugs,cart_tokens:(window.BSR&&BSR.cart)?BSR.cart.tokens():{},prep:metaPrep,meta:{prep:metaPrep},promo_code:promoCode,contact_email:bill.email||ship.contact_email||'',wallet_order:!!walletOrder,bid:(window.BSR&&BSR.bid)?BSR.bid():''};
   if(ship){pl.shipping=ship;}
   return pl;
 }
