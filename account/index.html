@@ -53,6 +53,9 @@
 .acct-field input:focus, .acct-field select:focus { outline:none; border-color:#1e4d33;
   box-shadow:0 0 0 2px rgba(30,77,51,.12); }
 .acct-field input[readonly] { background:var(--bg-soft); color:var(--text-soft); }
+.addr-form-wrap .acct-field input, .addr-form-wrap .acct-field select { background:var(--bg) !important; }
+.acct-field input:-webkit-autofill, .acct-field input:-webkit-autofill:hover, .acct-field input:-webkit-autofill:focus {
+  -webkit-box-shadow:0 0 0 1000px var(--bg) inset !important; -webkit-text-fill-color:var(--text) !important; }
 .acct-field .hint { font-size:.82rem; color:var(--text-soft); margin-top:5px; }
 .acct-actions { display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
 .acct-msg { padding:11px 14px; border-radius:var(--radius-sm); font-size:.9rem; margin:0 0 16px; }
@@ -394,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var sameLabel = isBill ? 'Same as ship-to address' : 'Same as bill-to address';
     var title = isBill ? 'Bill to' : (isShip ? 'Ship to' : 'Address');
     var req = ' <span style="color:#c0392b;">*</span>';
-    var emailLabel = isBill ? 'Sender email' : (isShip ? 'Recipient email' : 'Email for tracking');
+    var emailLabel = isBill ? 'Sender email' : (isShip ? 'Recipient email' : 'Email');
     var emailHint = isBill ? 'Order confirmation and receipts go here.'
       : (isShip ? 'Tracking updates for this shipment go here.'
       : 'Order updates go here if different.');
