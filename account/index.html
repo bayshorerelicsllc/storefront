@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
         '<div class="acct-field"><label>Company <span class="opt">(optional)</span></label><input name="company" maxlength="120" autocomplete="organization" value="' + esc(a.company || '') + '"></div>' +
         '<div class="acct-field"><label>Phone' + req + '</label><input name="phone" type="tel" required maxlength="40" autocomplete="tel" value="' + esc(a.phone || '') + '"></div>'
       : '') +
-      '<div class="acct-field"><label>' + emailLabel + (isBill ? req : ' <span class="opt">(optional)</span>') + '</label><input name="email" type="email"' + (isBill ? ' required' : '') + ' maxlength="160" autocomplete="email" value="' + esc(a.email || '') + '"><div class="hint">' + emailHint + '</div></div>' +
+      '<div class="acct-field"><label>' + emailLabel + req + '</label><input name="email" type="email" required maxlength="160" autocomplete="email" value="' + esc(a.email || '') + '"><div class="hint">' + emailHint + '</div></div>' +
       '<div class="acct-field"><label>Street address' + req + '</label><input name="address1" required maxlength="200" autocomplete="street-address" value="' + esc(a.address1 || '') + '"></div>' +
       '<div class="acct-field"><label>Apt, suite, etc.' + req + '</label><input name="address2" required maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
       '<div class="acct-field"><label>City' + req + '</label><input name="city" required maxlength="100" autocomplete="address-level2" value="' + esc(a.city || '') + '"></div>' +
