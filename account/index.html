@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="acct-field"><label>Country' + req + '</label><select name="country" autocomplete="country-name">' + bsrCountryOptions(a.country || 'US') + '</select></div>' +
       '</div>' +
       '<div id="addr-validate-msg"></div>' +
-      '<div class="acct-actions"><button type="submit" class="btn btn-primary btn-sm">Save ' + title.toLowerCase() + ' address</button>' +
+      '<div class="acct-actions"><button type="submit" class="btn btn-primary btn-sm">Save ' + (isBook ? 'address' : title.toLowerCase() + ' address') + '</button>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-addr-cancel>Cancel</button></div>' +
       '</form></div>';
   }
