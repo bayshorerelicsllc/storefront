@@ -730,17 +730,31 @@ document.addEventListener('DOMContentLoaded', function () {
       /* Gather the same payload the old card flow used. */
       var payload = buildCheckoutPayload();
       if (!payload) { btn.disabled = false; btn.innerHTML = origText; return; }
+      var timedOut = false;
+      var timer = setTimeout(function () {
+        timedOut = true;
+        btn.disabled = false;
+        btn.innerHTML = origText;
+        var errEl = document.getElementById('hosted-err');
+        var msg = 'Checkout is taking too long. Please try again.';
+        if (errEl) { errEl.textContent = msg; errEl.style.display = ''; }
+        else { alert(msg); }
+      }, 20000);
       BSR.api('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       }).then(function (j) {
+        if (timedOut) return;
+        clearTimeout(timer);
         if (j && j.url) {
           window.location.href = j.url;
         } else {
           throw new Error((j && j.error) || 'Could not start checkout.');
         }
       }).catch(function (e) {
+        if (timedOut) return;
+        clearTimeout(timer);
         btn.disabled = false;
         btn.innerHTML = origText;
         var errEl = document.getElementById('hosted-err');
