@@ -195,8 +195,8 @@ function clearAllFieldErrs(){
 }
 
 
-function showWarningPopup(warnings, onDone){
-  // warnings: [{kind:'bill'|'ship', address, message}, ...]
+function showWarningPopup(results, warnings, onDone){
+  // results: all [{kind, original, ...}], warnings: [{kind, message}, ...]
   var root=document.getElementById('bsr-val-modal-root');
   var fmtAddr=function(a){
     var lines=[];
@@ -209,20 +209,26 @@ function showWarningPopup(warnings, onDone){
     if(a.country) lines.push(a.country);
     return lines.join('<br>');
   };
-  var items=warnings.map(function(w){
-    var kindLabel=w.kind==='bill'?'Bill to':'Ship to';
-    return '<div style="margin-bottom:16px;">'+
+  var warnByKind={};
+  warnings.forEach(function(w){warnByKind[w.kind]=w.message;});
+  var cols=results.map(function(r){
+    var kindLabel=r.kind==='bill'?'Bill to':'Ship to';
+    var warnHtml='';
+    if(warnByKind[r.kind]){
+      warnHtml='<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:14px;color:#856404;margin:8px 0;">'+
+      '<strong>⚠ Heads up:</strong> '+warnByKind[r.kind]+'</div>';
+    }
+    return '<div class="val-col" style="flex:1;min-width:220px;">'+
     '<div class="val-kind">'+kindLabel+'</div>'+
-    '<div class="val-addr" style="margin:8px 0;">'+fmtAddr(w.address)+'</div>'+
-    '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:14px;color:#856404;">'+
-    '<strong>⚠ Heads up:</strong> '+w.message+'</div></div>';
+    '<div class="val-addr" style="margin:8px 0;">'+fmtAddr(r.original)+'</div>'+
+    warnHtml+'</div>';
   }).join('');
   root.innerHTML=
     '<div class="bsr-val-modal-overlay">'+
-    '<div class="bsr-val-modal" style="max-width:520px;">'+
+    '<div class="bsr-val-modal" style="max-width:720px;">'+
     '<h3>Address issue'+(warnings.length>1?'s':'')+'</h3>'+
-    items+
-    '<div class="val-actions">'+
+    '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+cols+'</div>'+
+    '<div class="val-actions" style="margin-top:16px;">'+
     '<button type="button" class="val-use" id="warn-ok-btn" style="width:100%;">I understand</button>'+
     '</div></div></div>';
   document.getElementById('warn-ok-btn').addEventListener('click',function(){
@@ -457,7 +463,7 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
       });
     };
     if(warnings.length){
-      showWarningPopup(warnings, showConfirm);
+      showWarningPopup(results, warnings, showConfirm);
     } else {
       showConfirm();
     }
