@@ -877,9 +877,11 @@ function initAddressPickers() {
         if (a && typeof fillShipForm==='function') fillShipForm(a);
       });
       // Auto-fill with the currently selected address on load
-      var selId = shipSavedEl.value;
-      var selAddr = selId ? byId[String(selId)] : null;
-      if (selAddr && typeof fillShipForm==='function') fillShipForm(selAddr);
+      try {
+        var selId = shipSavedEl.value;
+        var selAddr = selId ? byId[String(selId)] : null;
+        if (selAddr && typeof fillShipForm==='function') fillShipForm(selAddr);
+      } catch(e) { console.log('Auto-fill failed:', e); }
     }
     // (Billing is on separate page - no bill-saved here)
     // Polling fallback: check dropdown value periodically
