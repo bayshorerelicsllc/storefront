@@ -11,7 +11,7 @@
 
 <style>
 .bsr-val-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;}
-.bsr-val-modal{background:#fff;border-radius:12px;max-width:480px;width:100%;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,0.3);}
+.bsr-val-modal{background:#fff;border-radius:12px;max-width:700px;width:100%;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,0.3);}
 .bsr-val-modal h3{margin:0 0 8px 0;font-size:1.2rem;color:#1a3c22;}
 .bsr-val-modal .val-kind{display:inline-block;background:#1a3c22;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:12px;}
 .bsr-val-modal .val-addr{background:#f8f6f0;border:1px solid #e0dccf;border-radius:8px;padding:12px;margin:12px 0;font-size:14px;line-height:1.5;}
@@ -195,64 +195,76 @@ function clearAllFieldErrs(){
 }
 
 
-function showValidationModal(kind, original, suggested, onUse, onKeep){
+function showValidationModal(results, onDone){
+  // results: [{kind:'bill'|'ship', original, suggested}, ...]
   var root=document.getElementById('bsr-val-modal-root');
-  var kindLabel=kind==='bill'?'Bill to':'Ship to';
   var fmtAddr=function(a){
     return [a.address1||a.street, a.address2||a.street2, (a.city||'')+', '+(a.state||'')+' '+(a.postal||a.zip), a.country].filter(Boolean).join('<br>');
   };
+  var cols=results.map(function(r, idx){
+    var kindLabel=r.kind==='bill'?'Bill to':'Ship to';
+    return '<div class="val-col" data-idx="'+idx+'" style="flex:1;min-width:200px;">'+
+    '<div class="val-kind">'+kindLabel+'</div>'+
+    '<div class="val-addr"><strong>Suggested:</strong><br>'+fmtAddr(r.suggested)+'</div>'+
+    '<div class="val-addr"><strong>Yours:</strong><br>'+fmtAddr(r.original)+'</div>'+
+    '<div class="val-choice" style="display:flex;gap:8px;margin-top:8px;">'+
+    '<button type="button" class="val-use" data-use="'+idx+'" style="flex:1;">Use suggested</button>'+
+    '<button type="button" class="val-keep" data-keep="'+idx+'" style="flex:1;">Keep mine</button>'+
+    '</div></div>';
+  }).join('');
   root.innerHTML=
     '<div class="bsr-val-modal-overlay">'+
-    '<div class="bsr-val-modal">'+
-    '<div class="val-kind">'+kindLabel+'</div>'+
-    '<h3>Verify your address</h3>'+
-    '<p>Shippo suggests a correction to the '+kindLabel.toLowerCase()+' address:</p>'+
-    '<div class="val-addr"><strong>Suggested:</strong><br>'+fmtAddr(suggested)+'</div>'+
-    '<div class="val-addr"><strong>Yours:</strong><br>'+fmtAddr(original)+'</div>'+
-    '<div class="val-actions">'+
-    '<button type="button" class="val-use" id="val-use-btn">Use suggested</button>'+
-    '<button type="button" class="val-keep" id="val-keep-btn">Keep mine</button>'+
+    '<div class="bsr-val-modal" style="max-width:700px;">'+
+    '<h3>Verify your addresses</h3>'+
+    '<p>Shippo suggests corrections:</p>'+
+    '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+cols+'</div>'+
+    '<div class="val-actions" style="margin-top:16px;">'+
+    '<button type="button" class="val-use" id="val-continue-btn" style="width:100%;">Continue →</button>'+
     '</div></div></div>';
-  document.getElementById('val-use-btn').addEventListener('click',function(){
-    root.innerHTML='';onUse();
-  });
-  document.getElementById('val-keep-btn').addEventListener('click',function(){
-    root.innerHTML='';onKeep();
-  });
-}
-function validateAddressWithModal(kind, payload, callback){
-  if(!window.BSRAddrValidate||!BSRAddrValidate.validate){callback(payload);return;}
-  BSRAddrValidate.validate(payload).then(function(j){
-    if(!j||!j.ok){callback(payload);return;}
-    var corrected=j.address||null;
-    var hasSuggestion=(j.corrected||(j.corrections&&j.corrections.length));
-    if(!hasSuggestion||!corrected){callback(payload);return;}
-    // Check if actually different
-    var diff=false;
-    ['street','city','state','zip'].forEach(function(k){
-      var ck=k==='street'?'address1':(k==='zip'?'postal':k);
-      if(corrected[k]&&String(corrected[k]).toLowerCase()!==String(payload[ck]||'').toLowerCase()) diff=true;
+  var choices={};
+  results.forEach(function(r, idx){choices[idx]='keep';}); // default to keep
+  root.querySelectorAll('[data-use]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var idx=btn.getAttribute('data-use');
+      choices[idx]='use';
+      btn.style.background='#1a3c22';btn.style.color='#fff';
+      var keepBtn=root.querySelector('[data-keep="'+idx+'"]');
+      if(keepBtn){keepBtn.style.background='#f0f0f0';keepBtn.style.color='#333';}
     });
-    if(!diff){callback(payload);return;}
-    // Show modal
-    var suggestedAddr={address1:corrected.street,address2:corrected.street2,city:corrected.city,state:corrected.state,postal:corrected.zip,country:corrected.country||payload.country};
-    showValidationModal(kind, payload, suggestedAddr,
-      function(){ // Use suggested
-        var out={};for(var k in payload) out[k]=payload[k];
-        if(corrected.street) out.address1=corrected.street;
-        if(corrected.street2) out.address2=corrected.street2;
-        if(corrected.city) out.city=corrected.city;
-        if(corrected.state) out.state=corrected.state;
-        if(corrected.zip) out.postal=corrected.zip;
-        if(corrected.country) out.country=corrected.country;
-        callback(out);
-      },
-      function(){ // Keep mine
-        callback(payload);
+  });
+  root.querySelectorAll('[data-keep]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var idx=btn.getAttribute('data-keep');
+      choices[idx]='keep';
+      btn.style.background='#1a3c22';btn.style.color='#fff';
+      var useBtn=root.querySelector('[data-use="'+idx+'"]');
+      if(useBtn){useBtn.style.background='#f0f0f0';useBtn.style.color='#333';}
+    });
+  });
+  // Highlight default 'keep' buttons
+  root.querySelectorAll('[data-keep]').forEach(function(btn){
+    btn.style.background='#1a3c22';btn.style.color='#fff';
+  });
+  document.getElementById('val-continue-btn').addEventListener('click',function(){
+    root.innerHTML='';
+    var fixed=results.map(function(r, idx){
+      if(choices[idx]==='use'){
+        var out={};for(var k in r.original) out[k]=r.original[k];
+        var c=r.suggestedRaw;
+        if(c.street) out.address1=c.street;
+        if(c.street2) out.address2=c.street2;
+        if(c.city) out.city=c.city;
+        if(c.state) out.state=c.state;
+        if(c.zip) out.postal=c.zip;
+        if(c.country) out.country=c.country;
+        return {kind:r.kind, address:out};
       }
-    );
-  }).catch(function(){callback(payload);});
+      return {kind:r.kind, address:r.original};
+    });
+    onDone(fixed);
+  });
 }
+
 
 function validateRequiredFields(){
   var err=document.getElementById('continue-err');
@@ -343,21 +355,42 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
     resetBtn();
     proceedToPayment();
   };
-  var validateBill=function(){
-    validateAddressWithModal('bill', billPayload, function(fixedBill){
-      writeBack(fixedBill, 'f-bill-');
-      doProceed();
+  // Validate both addresses, then show single combined modal
+  var validateOne=function(kind, payload){
+    return new Promise(function(resolve){
+      if(!window.BSRAddrValidate||!BSRAddrValidate.validate){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});return;}
+      BSRAddrValidate.validate(payload).then(function(j){
+        if(!j||!j.ok){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});return;}
+        var corrected=j.address||null;
+        var hasSuggestion=(j.corrected||(j.corrections&&j.corrections.length));
+        if(!hasSuggestion||!corrected){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});return;}
+        var diff=false;
+        [['street','address1'],['city','city'],['state','state'],['zip','postal']].forEach(function(pair){
+          if(corrected[pair[0]]&&String(corrected[pair[0]]).toLowerCase()!==String(payload[pair[1]]||'').toLowerCase()) diff=true;
+        });
+        if(!diff){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});return;}
+        var suggestedAddr={address1:corrected.street,address2:corrected.street2,city:corrected.city,state:corrected.state,postal:corrected.zip,country:corrected.country||payload.country};
+        resolve({kind:kind,original:payload,suggested:suggestedAddr,suggestedRaw:corrected});
+      }).catch(function(){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});});
     });
   };
-  if(same){
-    // Only validate billing (shipping same as billing)
-    validateBill();
-  } else {
-    validateAddressWithModal('ship', shipPayload, function(fixedShip){
-      writeBack(fixedShip, 'f-');
-      validateBill();
+  var promises=[validateOne('bill', billPayload)];
+  if(!same) promises.push(validateOne('ship', shipPayload));
+  Promise.all(promises).then(function(results){
+    var needModal=results.filter(function(r){return r.suggested;});
+    if(!needModal.length){
+      // No suggestions, proceed directly
+      doProceed();
+      return;
+    }
+    showValidationModal(needModal, function(fixed){
+      fixed.forEach(function(f){
+        if(f.kind==='bill') writeBack(f.address, 'f-bill-');
+        else writeBack(f.address, 'f-');
+      });
+      doProceed();
     });
-  }
+  });
   return; // Don't proceed yet, wait for validation
 }
 // Fallback if validator not available
