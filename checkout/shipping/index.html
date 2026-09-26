@@ -869,12 +869,13 @@ function initAddressPickers() {
         document.getElementById('ship-fields').style.display = 'block';
       }
     }
-    document.getElementById('ship-saved').addEventListener('change', function(){
-      var a = byId[String(this.value)]; clearShipForm(); if (a) fillShipForm(a);
+    var shipSavedEl = document.getElementById('ship-saved');
+    if (shipSavedEl) shipSavedEl.addEventListener('change', function(){
+      var a = byId[String(this.value)];
+      if (typeof clearShipForm==='function') clearShipForm();
+      if (a && typeof fillShipForm==='function') fillShipForm(a);
     });
-    document.getElementById('bill-saved').addEventListener('change', function(){
-      var a = byId[String(this.value)]; clearBillForm(); if (a) fillBillForm(a);
-    if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}});
+    // (Billing is on separate page - no bill-saved here)
   }).catch(function(){});
 }
 
