@@ -736,6 +736,11 @@ function initAddressPickers() {
     document.getElementById('bill-addr-picker').innerHTML =
       '<div class="field"><label for="bill-saved">Saved addresses</label>' +
       '<select id="bill-saved" class="input">' + opts(defBill && defBill.id) + '</select></div>';
+    // Hide ship picker if "Same as billing" is checked
+    if(document.getElementById('f-ship-same').checked){
+      document.getElementById('ship-addr-picker').style.display='none';
+      document.getElementById('ship-fields').style.display='none';
+    }
     if (defShip) fillShipForm(defShip);
     if (defBill) {
       fillBillForm(defBill);
