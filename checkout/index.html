@@ -737,9 +737,9 @@ function setupZipLookup(zipId, cityId, stateId, countryId){
         var cityEl=document.getElementById(cityId);
         var stateEl=document.getElementById(stateId);
         var countryEl=document.getElementById(countryId);
-        if(cityEl&&!cityEl.value) cityEl.value=place['place name']||'';
-        if(stateEl&&!stateEl.value) stateEl.value=place['state abbreviation']||'';
-        if(countryEl&&!countryEl.value) countryEl.value='US';
+        if(cityEl) cityEl.value=place['place name']||'';
+        if(stateEl) stateEl.value=place['state abbreviation']||'';
+        if(countryEl) countryEl.value='US';
         // Trigger sync if "same as billing" is checked
         if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}
       })
