@@ -935,10 +935,11 @@ function fetchShipRates() {
   
   var apiBase = (window.BSR && BSR.apiBase) ? BSR.apiBase : '';
   // Use BSR.api if available, else fetch directly
+  var apiBase = 'https://cm.bayshorerelicsllc.com';
   var fetchFn = (window.BSR && BSR.api) 
     ? function() { return BSR.api('/api/shipping/rates?' + params.toString(), { method: 'GET' }); }
     : function() { 
-        return fetch('/api/shipping/rates?' + params.toString(), { credentials: 'include' })
+        return fetch(apiBase + '/api/shipping/rates?' + params.toString(), { credentials: 'include' })
           .then(function(r) { return r.json(); });
       };
   
