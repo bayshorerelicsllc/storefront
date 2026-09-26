@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods4">
 <script src="/assets/js/bsr.js?v=20260925k" defer></script>
-<script src="/assets/js/addr-validate.js?v=20260925l"></script>
+<script src="/assets/js/addr-validate.js?v=20260925n"></script>
 <script src="https://js.stripe.com/v3/" defer></script>
 <style>
 .acct-nav-btn { display:flex; align-items:center; gap:10px; padding:10px 12px; width:100%;
@@ -413,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function () {
       : '') +
       '<div class="acct-field"><label>' + emailLabel + req + '</label><input name="email" type="email" required maxlength="160" autocomplete="email" value="' + esc(a.email || '') + '"><div class="hint">' + emailHint + '</div></div>' +
       '<div class="acct-field"><label>Street address' + req + '</label><input name="address1" required maxlength="200" autocomplete="street-address" value="' + esc(a.address1 || '') + '"></div>' +
-      '<div class="acct-field"><label>Apt, suite, etc.' + req + '</label><input name="address2" required maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
+      '<div class="acct-field"><label>Apt, suite, etc. <span class="opt">(optional)</span></label><input name="address2" maxlength="200" value="' + esc(a.address2 || '') + '"></div>' +
       '<div class="acct-field"><label>City' + req + '</label><input name="city" required maxlength="100" autocomplete="address-level2" value="' + esc(a.city || '') + '"></div>' +
       '<div class="acct-field"><label>State / Province' + req + '</label>' + bsrStateFieldHtml(a.country || 'US', a.state || '') + '</div>' +
       '<div class="acct-field"><label>ZIP / Postal code' + req + '</label><input name="postal" required maxlength="20" autocomplete="postal-code" value="' + esc(a.postal || '') + '"></div>' +

@@ -98,7 +98,7 @@
         /* Offer the corrected version; keep the save button disabled
            until the user picks. */
         if (box) box.innerHTML =
-          '<div class="addr-val-suggest"><p><strong>Shippo suggests:</strong><br>' + fmtAddr({
+          '<div class="addr-val-suggest"><p><strong>Our address validator suggests:</strong><br>' + fmtAddr({
             address1: corrected.street, address2: corrected.street2,
             city: corrected.city, state: corrected.state,
             postal: corrected.zip, country: corrected.country || payload.country,
