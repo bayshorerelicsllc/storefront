@@ -29,6 +29,7 @@
 <div class="field"><label for="f-bill-phone">Phone</label><input type="tel" id="f-bill-phone" class="input"></div>
 </div>
 <div class="field"><label for="f-bill-line1">Street address</label><input type="text" id="f-bill-line1" class="input"></div>
+<div class="field"><label for="f-bill-line2">Address line 2</label><input type="text" id="f-bill-line2" class="input"></div>
 <div class="field-row">
 <div class="field"><label for="f-bill-city">City</label><input type="text" id="f-bill-city" class="input"></div>
 <div class="field"><label for="f-bill-state">State</label><input type="text" id="f-bill-state" class="input"></div>
@@ -51,6 +52,7 @@
 <div class="field"><label for="f-ship-phone">Phone</label><input type="tel" id="f-ship-phone" class="input"></div>
 </div>
 <div class="field"><label for="f-line1">Street address</label><input type="text" id="f-line1" class="input"></div>
+<div class="field"><label for="f-line2">Address line 2</label><input type="text" id="f-line2" class="input"></div>
 <div class="field-row">
 <div class="field"><label for="f-city">City</label><input type="text" id="f-city" class="input"></div>
 <div class="field"><label for="f-state">State</label><input type="text" id="f-state" class="input"></div>
@@ -107,9 +109,9 @@ var email=document.getElementById('f-bill-email').value.trim();
 if(!email){err.textContent='Enter billing email';err.style.display='block';return;}
 var same=document.getElementById('f-ship-same').checked;
 var p={slugs:cart.map(function(i){return i.slug;}),
-bill:{name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:document.getElementById('f-bill-phone').value,street:document.getElementById('f-bill-line1').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,zip:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value},
+bill:{name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:document.getElementById('f-bill-phone').value,street:document.getElementById('f-bill-line1').value,street2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,zip:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value},
 ship:null};
-if(same){p.ship=p.bill;}else{p.ship={name:document.getElementById('f-ship-name').value,company:document.getElementById('f-ship-company').value,email:document.getElementById('f-ship-email').value,phone:document.getElementById('f-ship-phone').value,street:document.getElementById('f-line1').value,city:document.getElementById('f-city').value,state:document.getElementById('f-state').value,zip:document.getElementById('f-postal').value,country:document.getElementById('f-country').value};}
+if(same){p.ship=p.bill;}else{p.ship={name:document.getElementById('f-ship-name').value,company:document.getElementById('f-ship-company').value,email:document.getElementById('f-ship-email').value,phone:document.getElementById('f-ship-phone').value,street:document.getElementById('f-line1').value,street2:document.getElementById('f-line2').value,city:document.getElementById('f-city').value,state:document.getElementById('f-state').value,zip:document.getElementById('f-postal').value,country:document.getElementById('f-country').value};}
 sessionStorage.setItem('bsr-checkout-payload',JSON.stringify(p));
 location.href='/checkout/payment/';
 });
@@ -129,23 +131,23 @@ function addrLabel(a) {
 function fillShipForm(a) {
   setV('f-ship-name', a.name); setV('f-ship-company', a.company);
   setV('f-ship-email', a.email); setV('f-ship-phone', a.phone);
-  setV('f-line1', a.address1); setV('f-city', a.city);
+  setV('f-line1', a.address1); setV('f-line2', a.address2); setV('f-city', a.city);
   setV('f-state', a.state); setV('f-postal', a.postal);
   setSel('f-country', a.country);
 }
 function fillBillForm(a) {
   setV('f-bill-name', a.name); setV('f-bill-company', a.company);
   setV('f-bill-email', a.email); setV('f-bill-phone', a.phone);
-  setV('f-bill-line1', a.address1); setV('f-bill-city', a.city);
+  setV('f-bill-line1', a.address1); setV('f-bill-line2', a.address2); setV('f-bill-city', a.city);
   setV('f-bill-state', a.state); setV('f-bill-postal', a.postal);
   setSel('f-bill-country', a.country);
 }
 function clearShipForm() {
-  ['f-ship-name','f-ship-company','f-ship-email','f-ship-phone','f-line1','f-city','f-state','f-postal'].forEach(function(id){ setV(id,''); });
+  ['f-ship-name','f-ship-company','f-ship-email','f-ship-phone','f-line1','f-line2','f-city','f-state','f-postal'].forEach(function(id){ setV(id,''); });
   setSel('f-country','US');
 }
 function clearBillForm() {
-  ['f-bill-name','f-bill-company','f-bill-email','f-bill-phone','f-bill-line1','f-bill-city','f-bill-state','f-bill-postal'].forEach(function(id){ setV(id,''); });
+  ['f-bill-name','f-bill-company','f-bill-email','f-bill-phone','f-bill-line1','f-bill-line2','f-bill-city','f-bill-state','f-bill-postal'].forEach(function(id){ setV(id,''); });
   setSel('f-bill-country','US');
 }
 function initAddressPickers() {
