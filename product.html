@@ -7,7 +7,7 @@
 <meta name="description" id="meta-desc" content="Vintage 35mm railroad slide — a single physical item, sold once.">
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260926h" defer></script>
+<script src="/assets/js/bsr.js?v=20260926i" defer></script>
 <style>.gallery-wrap{position:relative}</style>
 </head>
 <body>
@@ -186,41 +186,89 @@ document.addEventListener('DOMContentLoaded', function () {
         '<div class="notify-head"><span class="notify-ic">' + BSR.icon('bell', 'ic-sm') + '</span>' +
         '<div><strong>Someone else is holding this slide</strong>' +
         '<span class="notify-sub">If their reservation ends, it\u2019s yours to grab.</span></div></div>' +
-        '<label class="notify-label" for="wl-email">Email me the moment it\u2019s available</label>' +
-        '<div class="notify-row"><input type="email" id="wl-email" class="field" placeholder="you@example.com" aria-label="Email address">' +
-        '<button class="btn btn-primary" id="wl-btn" type="button">Notify me</button></div>' +
-        '<div class="notify-or" aria-hidden="true"><span>or</span></div>' +
-        '<button class="btn btn-secondary notify-full" id="wl-push" type="button">' + BSR.icon('bell', 'ic-sm') + ' Notify me in this browser</button>' +
+        '<button class="btn btn-primary notify-full" id="wl-btn" type="button">' + BSR.icon('bell', 'ic-sm') + ' Notify me</button>' +
+        '<p class="notify-hint">We\u2019ll pop up an alert here and notify this browser the moment it\u2019s available.</p>' +
         '</div>';
       document.getElementById('wl-btn').addEventListener('click', function () {
-        var em = document.getElementById('wl-email').value.trim();
         var btn = document.getElementById('wl-btn');
         btn.disabled = true;
-        BSR.api('/api/waitlist', { method: 'POST', body: { slug: p.slug, email: em, bid: BSR.bid() } }).then(function (j) {
-          if (j && j.ok) {
-            document.getElementById('notify-box').innerHTML =
-              '<div class="notify-done"><span class="notify-ic">' + BSR.icon('check', 'ic-sm') + '</span>' +
-              '<div><strong>You\u2019re on the list.</strong>' +
-              '<span class="notify-sub">We\u2019ll email you if this slide becomes available.</span></div></div>';
-            BSR.pollNotifications();
-          } else {
-            btn.disabled = false;
-            BSR.toast((j && j.error) || 'Could not join the list', 'err');
-          }
+        btn.innerHTML = 'Setting you up\u2026';
+        /* Browser/popup alerts always: create the watcher first (bell alerts work
+           even if push permission is denied), then request push as a bonus. */
+        BSR.api('/api/waitlist', { method: 'POST', body: { slug: p.slug, bid: BSR.bid(), watch: true } }).then(function () {
+          return BSR.enableBrowserNotifications('');
+        }).then(function () {
+          BSR.pollNotifications();
+          showEmailStep();
+        }).catch(function () {
+          btn.disabled = false;
+          btn.innerHTML = BSR.icon('bell', 'ic-sm') + ' Notify me';
+          BSR.toast('Could not set up notifications', 'err');
         });
       });
-      document.getElementById('wl-push').addEventListener('click', function () {
-        BSR.enableBrowserNotifications('').then(function (ok) {
-          if (!ok) return;
-          BSR.api('/api/waitlist', { method: 'POST', body: { slug: p.slug, bid: BSR.bid(), watch: true } }).then(function () {
+
+      /* Step 2: offer email too. Signed-in shoppers get one-tap with their
+         account email (no typing); guests must enter an email. */
+      function showEmailStep() {
+        BSR.me().then(function (me) { renderEmailStep(me && me.email ? me.email : ''); })
+          .catch(function () { renderEmailStep(''); });
+      }
+      function renderEmailStep(accountEmail) {
+        var box = document.getElementById('notify-box');
+        if (!box) return;
+        var emailBlock;
+        if (accountEmail) {
+          emailBlock =
+            '<div class="notify-email">' +
+            '<strong>Want an email too?</strong>' +
+            '<span class="notify-sub">One tap \u2014 we\u2019ll use your account email, <b>' + BSR.esc(accountEmail) + '</b>.</span>' +
+            '<div class="notify-row"><button class="btn btn-primary" id="wl-email-btn" type="button">Email me too</button>' +
+            '<button class="btn btn-secondary" id="wl-skip" type="button">No thanks</button></div>' +
+            '</div>';
+        } else {
+          emailBlock =
+            '<div class="notify-email">' +
+            '<label class="notify-label" for="wl-email"><strong>Want an email too?</strong></label>' +
+            '<div class="field"><input type="email" id="wl-email" placeholder="you@example.com" aria-label="Email address" autocomplete="email"></div>' +
+            '<div class="notify-row"><button class="btn btn-primary" id="wl-email-btn" type="button">Email me too</button>' +
+            '<button class="btn btn-secondary" id="wl-skip" type="button">No thanks</button></div>' +
+            '</div>';
+        }
+        box.innerHTML =
+          '<div class="notify-done"><span class="notify-ic">' + BSR.icon('check', 'ic-sm') + '</span>' +
+          '<div><strong>You\u2019re watching this slide.</strong>' +
+          '<span class="notify-sub">We\u2019ll pop up an alert here if it frees up.</span></div></div>' +
+          emailBlock;
+        document.getElementById('wl-skip').addEventListener('click', function () {
+          var nb = document.getElementById('notify-box');
+          if (nb) nb.querySelector('.notify-email').remove();
+        });
+        document.getElementById('wl-email-btn').addEventListener('click', function () {
+          var em = accountEmail;
+          if (!em) {
+            em = document.getElementById('wl-email').value.trim();
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
+              BSR.toast('Enter a valid email address', 'err');
+              document.getElementById('wl-email').focus();
+              return;
+            }
+          }
+          var eb = document.getElementById('wl-email-btn');
+          eb.disabled = true;
+          BSR.api('/api/waitlist', { method: 'POST', body: { slug: p.slug, email: em, bid: BSR.bid() } }).then(function (j) {
             var nb = document.getElementById('notify-box');
-            if (nb) nb.innerHTML =
-              '<div class="notify-done"><span class="notify-ic">' + BSR.icon('check', 'ic-sm') + '</span>' +
-              '<div><strong>Watching this slide.</strong>' +
-              '<span class="notify-sub">We\u2019ll notify this browser if it frees up.</span></div></div>';
+            if (j && j.ok) {
+              if (nb) nb.innerHTML =
+                '<div class="notify-done"><span class="notify-ic">' + BSR.icon('check', 'ic-sm') + '</span>' +
+                '<div><strong>You\u2019re all set.</strong>' +
+                '<span class="notify-sub">We\u2019ll alert you here, in this browser, and at ' + BSR.esc(em) + '.</span></div></div>';
+            } else {
+              eb.disabled = false;
+              BSR.toast((j && j.error) || 'Could not add email alerts', 'err');
+            }
           });
         });
-      });
+      }
     }
   }
 

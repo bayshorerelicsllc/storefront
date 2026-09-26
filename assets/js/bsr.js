@@ -442,6 +442,12 @@
       '.notify-or{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--muted,#888);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}' +
       '.notify-or::before,.notify-or::after{content:"";flex:1;height:1px;background:var(--border,#e2ddd2)}' +
       '.notify-full{width:100%;display:flex;align-items:center;justify-content:center;gap:8px}' +
+      '.notify-hint{font-size:12.5px;color:var(--muted,#777);margin:10px 2px 0;text-align:center}' +
+      '.notify-email{margin-top:14px;padding-top:14px;border-top:1px solid var(--border,#e2ddd2)}' +
+      '.notify-email strong{display:block;font-size:14px;margin-bottom:4px}' +
+      '.notify-email .notify-sub{display:block;margin-bottom:10px}' +
+      '.notify-email .field{margin:0 0 10px}' +
+      '.notify-email .notify-row .btn{flex:1 1 0}' +
       '.notify-done{display:flex;gap:12px;align-items:flex-start}' +
       '.notify-done strong{display:block;font-size:15px;margin-bottom:2px}' +
       '@media(max-width:480px){.notify-row{flex-direction:column}.notify-row .btn{width:100%}}' +
