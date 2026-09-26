@@ -24,21 +24,21 @@
 <h2><span class="step-num">1</span> Billing address</h2>
 <div id="bill-addr-picker"></div>
 <div class="addr-validate-msg" id="bill-val-msg"></div>
-<div class="field"><label for="f-bill-name">Full name</label><input type="text" id="f-bill-name" class="input"></div>
+<div class="field"><label for="f-bill-name">Full name</label><input type="text" id="f-bill-name" class="input" required></div>
 <div class="field"><label for="f-bill-company">Company</label><input type="text" id="f-bill-company" class="input"></div>
 <div class="field-row">
-<div class="field"><label for="f-bill-email">Email</label><input type="email" id="f-bill-email" class="input"></div>
-<div class="field"><label for="f-bill-phone">Phone</label><input type="tel" id="f-bill-phone" class="input"></div>
+<div class="field"><label for="f-bill-email">Email</label><input type="email" id="f-bill-email" class="input" required></div>
+<div class="field"><label for="f-bill-phone">Phone</label><input type="tel" id="f-bill-phone" class="input" required></div>
 </div>
-<div class="field"><label for="f-bill-line1">Street address</label><input type="text" id="f-bill-line1" name="address1" class="input"></div>
+<div class="field"><label for="f-bill-line1">Street address</label><input type="text" id="f-bill-line1" name="address1" class="input" required></div>
 <div class="field"><label for="f-bill-line2">Address line 2</label><input type="text" id="f-bill-line2" name="address2" class="input"></div>
 <div class="field-row">
-<div class="field"><label for="f-bill-city">City</label><input type="text" id="f-bill-city" name="city" class="input"></div>
-<div class="field"><label for="f-bill-state">State</label><input type="text" id="f-bill-state" name="state" class="input"></div>
+<div class="field"><label for="f-bill-city">City</label><input type="text" id="f-bill-city" name="city" class="input" required></div>
+<div class="field"><label for="f-bill-state">State</label><input type="text" id="f-bill-state" name="state" class="input" required></div>
 </div>
 <div class="field-row">
-<div class="field"><label for="f-bill-postal">ZIP</label><input type="text" id="f-bill-postal" name="postal" class="input"></div>
-<div class="field"><label for="f-bill-country">Country</label><input type="text" id="f-bill-country" name="country" class="input" value="US"></div>
+<div class="field"><label for="f-bill-postal">ZIP</label><input type="text" id="f-bill-postal" name="postal" class="input" required></div>
+<div class="field"><label for="f-bill-country">Country</label><input type="text" id="f-bill-country" name="country" class="input" value="US" required></div>
 </div>
 </section>
 
@@ -48,21 +48,21 @@
 <div class="addr-validate-msg" id="ship-val-msg"></div>
 <div class="field"><label><input type="checkbox" id="f-ship-same" checked> Same as billing</label></div>
 <div id="ship-fields" style="display:none">
-<div class="field"><label for="f-ship-name">Full name</label><input type="text" id="f-ship-name" class="input"></div>
+<div class="field"><label for="f-ship-name">Full name</label><input type="text" id="f-ship-name" class="input" data-ship-req></div>
 <div class="field"><label for="f-ship-company">Company</label><input type="text" id="f-ship-company" class="input"></div>
 <div class="field-row">
-<div class="field"><label for="f-ship-email">Email</label><input type="email" id="f-ship-email" class="input"></div>
-<div class="field"><label for="f-ship-phone">Phone</label><input type="tel" id="f-ship-phone" class="input"></div>
+<div class="field"><label for="f-ship-email">Email</label><input type="email" id="f-ship-email" class="input" data-ship-req></div>
+<div class="field"><label for="f-ship-phone">Phone</label><input type="tel" id="f-ship-phone" class="input" data-ship-req></div>
 </div>
-<div class="field"><label for="f-line1">Street address</label><input type="text" id="f-line1" name="address1" class="input"></div>
+<div class="field"><label for="f-line1">Street address</label><input type="text" id="f-line1" name="address1" class="input" data-ship-req></div>
 <div class="field"><label for="f-line2">Address line 2</label><input type="text" id="f-line2" name="address2" class="input"></div>
 <div class="field-row">
-<div class="field"><label for="f-city">City</label><input type="text" id="f-city" name="city" class="input"></div>
-<div class="field"><label for="f-state">State</label><input type="text" id="f-state" name="state" class="input"></div>
+<div class="field"><label for="f-city">City</label><input type="text" id="f-city" name="city" class="input" data-ship-req></div>
+<div class="field"><label for="f-state">State</label><input type="text" id="f-state" name="state" class="input" data-ship-req></div>
 </div>
 <div class="field-row">
-<div class="field"><label for="f-postal">ZIP</label><input type="text" id="f-postal" name="postal" class="input"></div>
-<div class="field"><label for="f-country">Country</label><input type="text" id="f-country" name="country" class="input" value="US"></div>
+<div class="field"><label for="f-postal">ZIP</label><input type="text" id="f-postal" name="postal" class="input" data-ship-req></div>
+<div class="field"><label for="f-country">Country</label><input type="text" id="f-country" name="country" class="input" value="US" data-ship-req></div>
 </div>
 </div>
 </section>
@@ -121,12 +121,60 @@ cart.forEach(function(i){var p=parseFloat(i.price||0);t+=p;html+='<div style="di
 document.getElementById('sum-lines').innerHTML=html||'<p>Cart empty</p>';
 document.getElementById('sum-total').textContent='$'+t.toFixed(2);
 document.getElementById('f-ship-same').addEventListener('change',function(){document.getElementById('ship-fields').style.display=this.checked?'none':'block';});
+
+function validateRequiredFields(){
+  var err=document.getElementById('continue-err');
+  var same=document.getElementById('f-ship-same').checked;
+  var required=[
+    ['f-bill-name','Full name (billing)'],
+    ['f-bill-email','Email (billing)'],
+    ['f-bill-phone','Phone (billing)'],
+    ['f-bill-line1','Street address (billing)'],
+    ['f-bill-city','City (billing)'],
+    ['f-bill-state','State (billing)'],
+    ['f-bill-postal','ZIP (billing)'],
+    ['f-bill-country','Country (billing)']
+  ];
+  if(!same){
+    required=required.concat([
+      ['f-ship-name','Full name (shipping)'],
+      ['f-ship-email','Email (shipping)'],
+      ['f-ship-phone','Phone (shipping)'],
+      ['f-line1','Street address (shipping)'],
+      ['f-city','City (shipping)'],
+      ['f-state','State (shipping)'],
+      ['f-postal','ZIP (shipping)'],
+      ['f-country','Country (shipping)']
+    ]);
+  }
+  for(var i=0;i<required.length;i++){
+    var id=required[i][0], label=required[i][1];
+    var el=document.getElementById(id);
+    if(el && !el.value.trim()){
+      err.textContent='Please fill in: '+label;
+      err.style.display='block';
+      el.focus();
+      el.style.borderColor='#c00';
+      setTimeout(function(){el.style.borderColor='';}, 3000);
+      return false;
+    }
+  }
+  // Email format check
+  var emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var bEmail=document.getElementById('f-bill-email').value.trim();
+  if(!emailRe.test(bEmail)){err.textContent='Billing email is not valid';err.style.display='block';return false;}
+  if(!same){
+    var sEmail=document.getElementById('f-ship-email').value.trim();
+    if(!emailRe.test(sEmail)){err.textContent='Shipping email is not valid';err.style.display='block';return false;}
+  }
+  return true;
+}
+
 document.getElementById('continue-to-payment').addEventListener('click',function(){
 var btn=this;
 var err=document.getElementById('continue-err');err.style.display='none';
 if(!cart.length){err.textContent='Cart is empty';err.style.display='block';return;}
-var email=document.getElementById('f-bill-email').value.trim();
-if(!email){err.textContent='Enter billing email';err.style.display='block';return;}
+if(!validateRequiredFields()){return;}
 // Shippo address validation before proceeding
 if (window.BSRAddrValidate && BSRAddrValidate.checkAndConfirm) {
   btn.disabled=true; btn.textContent='Validating addresses…';
