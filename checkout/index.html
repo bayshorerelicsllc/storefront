@@ -88,6 +88,20 @@ var _addrTimer = setInterval(function(){
   }
 }, 200);
 // Address validator: attach to billing section (shipping is on separate page)
+window._bsrValDebug = function(){
+  var out = [];
+  out.push('BSRAddrValidate: ' + (window.BSRAddrValidate ? 'DEFINED' : 'MISSING'));
+  out.push('BSR: ' + (window.BSR ? 'DEFINED' : 'MISSING'));
+  out.push('BSR.api: ' + (window.BSR && BSR.api ? 'DEFINED' : 'MISSING'));
+  var sec = document.getElementById('bill-section');
+  out.push('bill-section: ' + (sec ? 'FOUND' : 'MISSING'));
+  if (sec) {
+    var inp = sec.querySelector('input[name="address1"]');
+    out.push('address1 input: ' + (inp ? 'FOUND' : 'MISSING'));
+    out.push('already attached: ' + (sec._bsrLiveAttached ? 'YES' : 'NO'));
+  }
+  return out.join('\n');
+};
 function attachBillValidator(){
   try {
     var billSec = document.getElementById('bill-section');
@@ -112,6 +126,12 @@ if (document.readyState === 'loading') {
   setTimeout(attachBillValidator, 500);
 }
 window.addEventListener('load', function(){ setTimeout(attachBillValidator, 500); });
+// Fallback: attach on first focus of street field (ensures script is loaded)
+document.addEventListener('focusin', function(e){
+  if (e.target && e.target.id === 'f-bill-line1') {
+    setTimeout(attachBillValidator, 100);
+  }
+});
 var cart=[]; try{cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){}
 var sumLines=document.getElementById('sum-lines');
 sumLines.innerHTML='<p>Loading…</p>';
@@ -707,6 +727,10 @@ var doSave=function(b){
 };
 // Validate billing address with Shippo, show modal if correction suggested
 try {
+  // Debug: check validator status
+  var _vs = 'Validator: ' + (window.BSRAddrValidate ? 'loaded' : 'MISSING');
+  if (window.BSRAddrValidate) _vs += ', validate=' + (typeof BSRAddrValidate.validate);
+  console.log(_vs);
   if (window.BSRAddrValidate && BSRAddrValidate.validate) {
     var payload={address1:billing.address.line1,address2:billing.address.line2,city:billing.address.city,state:billing.address.state,postal:billing.address.postal,country:billing.address.country};
     BSRAddrValidate.validate(payload).then(function(j){
