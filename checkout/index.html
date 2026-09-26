@@ -293,7 +293,10 @@ function showWarningPopup(results, warnings, onDone){
     '<div class="bsr-val-modal-overlay" id="warn-overlay">'+
     '<div class="bsr-val-modal" style="max-width:600px;position:relative;box-sizing:border-box;overflow:hidden;">'+
     '<button type="button" id="warn-close-btn" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">&times;</button>'+
-    '<h3 style="text-align:center;margin:0 0 16px 0;padding-right:32px;">Address issue'+(warnings.length>1?'s':'')+'</h3>'+
+    '<h3 style="text-align:center;margin:0 0 8px 0;padding-right:32px;">Address issue'+(warnings.length>1?'s':'')+'</h3>'+
+    '<p style="text-align:center;margin:0 0 16px 0;font-size:12px;color:var(--warn);line-height:1.4;">'+
+      '⚠ Double-check: if your address has an apartment, unit, suite, or site number, make sure it\'s included.'+
+    '</p>'+
     '<div style="display:flex;gap:16px;'+(window.innerWidth<640?'flex-direction:column;':'')+'">'+cols+'</div>'+
     '<div class="val-actions" style="margin-top:20px;text-align:center;">'+
     '<button type="button" class="val-use" id="warn-ok-btn" style="padding:12px 36px;font-size:15px;">I understand</button>'+
@@ -446,6 +449,9 @@ function showValidationModal(results, onDone){
         '<h3 style="margin:0 0 8px 0;font-size:22px;font-weight:700;color:#1a3c22;letter-spacing:-0.3px;">Confirm your addresses</h3>'+
         '<p style="margin:0;font-size:14px;color:#666;line-height:1.5;max-width:440px;margin-left:auto;margin-right:auto;">'+
           (hasSuggestions?'We found some corrections for your addresses. Please review below.':'Please review your addresses below.')+
+        '</p>'+
+        '<p style="margin:8px 0 0 0;font-size:12px;color:var(--warn);line-height:1.4;max-width:440px;margin-left:auto;margin-right:auto;">'+
+          '⚠ Double-check: if your address has an apartment, unit, suite, or site number, make sure it\'s included above.'+
         '</p>'+
       '</div>'+
       '<div style="height:1px;background:#e8e4d8;margin:20px 0;"></div>'+
