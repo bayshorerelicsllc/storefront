@@ -292,11 +292,11 @@ function showValidationModal(results, onDone){
     var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
     if(r.suggested&&!origUnit&&suggUnit){
       unitWarning='<div class="val-warn" style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;margin:8px 0;font-size:13px;color:#856404;">'+
-      '<strong>⚠ Unit number detected:</strong> Shippo found a unit/apartment number for this address. Without it, you may not receive your item.</div>';
+      '<strong>⚠ Unit number detected:</strong> Our address validator found a unit/apartment number for this address. Without it, you may not receive your item.</div>';
     }
     var suggestedHtml='';
     if(r.suggested){
-      suggestedHtml='<div class="val-addr"><strong>Shippo suggests:</strong><br>'+fmtAddr(r.suggested)+'</div>'+
+      suggestedHtml='<div class="val-addr"><strong>Suggested:</strong><br>'+fmtAddr(r.suggested)+'</div>'+
       '<div class="val-choice" style="display:flex;gap:8px;margin:8px 0;">'+
       '<button type="button" class="val-use" data-use="'+idx+'">Use suggested</button>'+
       '<button type="button" class="val-keep" data-keep="'+idx+'">Keep mine</button></div>';
@@ -314,7 +314,7 @@ function showValidationModal(results, onDone){
     '<div class="bsr-val-modal" style="max-width:720px;max-height:90vh;overflow-y:auto;position:relative;">'+
     '<button type="button" id="val-close-btn" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">&times;</button>'+
     '<h3>Confirm your addresses</h3>'+
-    '<p>'+(hasSuggestions?'Shippo suggests corrections below. Review':'Please confirm')+' your billing and shipping addresses:</p>'+
+    '<p>'+(hasSuggestions?'Our address validator suggests corrections below. Review':'Please confirm')+' your billing and shipping addresses:</p>'+
     '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+cols+'</div>'+
     '<div class="val-actions" style="margin-top:16px;">'+
     '<button type="button" class="val-use" id="val-continue-btn" style="width:100%;">Continue to payment →</button>'+
@@ -484,15 +484,17 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
     // Check for warnings (missing unit, undeliverable, etc.)
     var warnings=[];
     results.forEach(function(r){
-      var origUnit=(r.original.address2||'').trim();
       var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
-      if(r.suggested&&!origUnit&&suggUnit){
+      // Check if the unit appears anywhere in the original address (line 1 or line 2)
+      var origFull=((r.original.address1||'')+' '+(r.original.address2||'')).toLowerCase();
+      var unitInOrig=suggUnit&&origFull.indexOf(suggUnit.toLowerCase())!==-1;
+      if(r.suggested&&suggUnit&&!unitInOrig){
         warnings.push({kind:r.kind, address:r.original,
-          message:'Shippo detected a unit/apartment number ('+suggUnit+') for this address that you did not include. Without it, you may not receive your item.'});
+          message:'Our address validator detected a unit/apartment number ('+suggUnit+') for this address that you did not include. Without it, you may not receive your item.'});
       }
       if(r.undeliverable){
         warnings.push({kind:r.kind, address:r.original,
-          message:'Shippo could not verify this address as deliverable. Please double-check it.'});
+          message:'Our address validator could not verify this address as deliverable. Please double-check it.'});
       }
     });
     var showConfirm=function(){
