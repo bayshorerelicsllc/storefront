@@ -522,6 +522,7 @@
       '.switch .sw-ic{display:inline-flex;color:var(--muted,#888)}' +
       '.switch input:checked~.sw-ic{color:#1f5c3f}' +
       '.wish-email-form{display:flex;gap:8px;margin-top:10px}' +
+      '.wish-email-form[hidden]{display:none}' +
       '.wish-email-form .field{margin:0;flex:1}' +
       '.wish-status{display:inline-block;font-size:11px;font-weight:700;padding:2px 10px;border-radius:999px;letter-spacing:.04em}' +
       '.wish-status.avail{background:rgba(31,92,63,.12);color:#1f5c3f}' +
