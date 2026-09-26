@@ -149,12 +149,11 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="error" id="e-ship" style="display:none;margin-top:8px"></div>' +
     '<div id="ship-options" style="margin-top:12px"></div></div></section>' +
     
-    '<section class="card"><h2><span class="step-num">4</span> Promo code</h2>' +
-    '<div class="promo-row"><input type="text" id="f-promo" class="field" placeholder="Promo code" aria-label="Promo code" value="' + BSR.esc(savedPromo() ? savedPromo().code : '') + '">' +
-    '<button class="btn btn-secondary btn-sm" id="promo-apply" type="button" style="height:44px;box-sizing:border-box">Apply</button></div>' +
-    '<div class="hint" id="promo-ok" style="display:none"></div>' +
-    '<div class="error" id="promo-err" style="display:none"></div></section>' +
-    '</div>' +
+    '<section class="card" style="margin:16px 0;max-width:600px;text-align:center">' +
+    '<button type="button" id="continue-to-payment" class="btn btn-primary" style="width:100%;padding:16px;font-size:1.1rem">Continue to payment →</button>' +
+    '<div class="error" id="continue-err" style="display:none;margin-top:12px"></div>' +
+    '</section>' +
+    
     '<div class="pay-options-grid" style="display:flex;flex-direction:column;gap:16px;margin:16px 0;max-width:600px">' +
     '<section class="card" id="express-checkout-card" style="margin:0"><h2>Pay with PayPal</h2>' +
     '<p class="hint" style="margin-bottom:12px">Secure checkout via PayPal — pay with your balance, bank, or card.</p>' +
@@ -682,6 +681,59 @@ document.addEventListener('DOMContentLoaded', function () {
         if (errEl) { errEl.textContent = e.message || 'PayPal checkout failed. Please try again.'; errEl.style.display = ''; }
         else { alert(e.message || 'PayPal checkout failed. Please try again.'); }
       });
+    });
+  }
+
+  // Continue to payment: save payload and go to payment page
+  var contBtn = document.getElementById('continue-to-payment');
+  if (contBtn) {
+    contBtn.addEventListener('click', function () {
+      try {
+        var errEl = document.getElementById('continue-err');
+        errEl.style.display = 'none';
+        
+        // Get cart slugs from localStorage
+        var slugs = [];
+        try {
+          var cart = JSON.parse(localStorage.getItem('bsr-cart') || '[]');
+          slugs = cart.map(function(item) { return item.slug; }).filter(Boolean);
+        } catch (e) {}
+        
+        if (!slugs.length) {
+          errEl.textContent = 'Your cart is empty.';
+          errEl.style.display = 'block';
+          return;
+        }
+        
+        // Build payload from form fields
+        var payload = {
+          slugs: slugs,
+          email: (document.getElementById('f-email') || {}).value || '',
+          shipName: (document.getElementById('f-name') || {}).value || '',
+          shipPhone: (document.getElementById('f-ship-phone') || {}).value || '',
+          shipEmail: (document.getElementById('f-ship-email') || {}).value || '',
+          shipLine1: (document.getElementById('f-line1') || {}).value || '',
+          shipCity: (document.getElementById('f-city') || {}).value || '',
+          shipState: (document.getElementById('f-state') || {}).value || '',
+          shipPostal: (document.getElementById('f-postal') || {}).value || '',
+          shipCountry: (document.getElementById('f-country') || {}).value || 'US',
+          billName: (document.getElementById('f-bill-name') || {}).value || '',
+          billLine1: (document.getElementById('f-bill-line1') || {}).value || '',
+          billCity: (document.getElementById('f-bill-city') || {}).value || '',
+          billState: (document.getElementById('f-bill-state') || {}).value || '',
+          billPostal: (document.getElementById('f-bill-postal') || {}).value || '',
+          billCountry: (document.getElementById('f-bill-country') || {}).value || 'US'
+        };
+        
+        sessionStorage.setItem('bsr-checkout-payload', JSON.stringify(payload));
+        window.location.href = '/checkout/payment/';
+      } catch (e) {
+        var errEl = document.getElementById('continue-err');
+        if (errEl) {
+          errEl.textContent = 'Could not proceed: ' + (e.message || 'Unknown error');
+          errEl.style.display = 'block';
+        }
+      }
     });
   }
 
