@@ -195,6 +195,27 @@ function clearAllFieldErrs(){
 }
 
 
+function unitAlreadyInAddress(suggUnit, origAddr1, origAddr2){
+  // Smarter check: extract the unit identifier (number/letter combo) from the
+  // suggested unit and see if it appears as a standalone token in the original
+  // address. Handles "Apt 4" vs "#4", "Suite 200" vs "Ste 200", etc.
+  if(!suggUnit) return false;
+  var origFull=((origAddr1||'')+' '+(origAddr2||'')).toLowerCase();
+  var suggLower=suggUnit.toLowerCase().trim();
+  // First try: exact match (case-insensitive)
+  if(origFull.indexOf(suggLower)!==-1) return true;
+  // Second try: extract the unit identifier (alphanumeric token at the end)
+  // e.g. "PMB 116" -> "116", "Apt 4B" -> "4b", "Suite 200" -> "200"
+  var m=suggLower.match(/([a-z]*\d+[a-z]*|\d+)\s*$/);
+  if(m){
+    var unitId=m[1]||m[0];
+    // Check with word boundaries to avoid false positives (e.g. "4" in "1234")
+    var re=new RegExp('\\b'+unitId.replace(/[^a-z0-9]/g,'')+'\\b');
+    if(re.test(origFull)) return true;
+  }
+  return false;
+}
+
 function showWarningPopup(results, warnings, onDone){
   // results: all [{kind, original, ...}], warnings: [{kind, message}, ...]
   var root=document.getElementById('bsr-val-modal-root');
@@ -287,10 +308,9 @@ function showValidationModal(results, onDone){
     if(sameAddr){kindLabel='<span class="val-kind">Bill to</span> <span class="val-kind">Ship to</span>';}
     else{kindLabel='<div class="val-kind">'+(r.kind==='bill'?'Bill to':'Ship to')+'</div>';}
     var unitWarning='';
-    // Check if Shippo suggests adding a unit/apt number
-    var origUnit=(r.original.address2||r.original.street2||'').trim();
     var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
-    if(r.suggested&&!origUnit&&suggUnit){
+    var unitInOrig=unitAlreadyInAddress(suggUnit, r.original.address1||r.original.street, r.original.address2||r.original.street2);
+    if(r.suggested&&suggUnit&&!unitInOrig){
       unitWarning='<div class="val-warn" style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;margin:8px 0;font-size:13px;color:#856404;">'+
       '<strong>⚠ Unit number detected:</strong> Our address validator found a unit/apartment number for this address. Without it, you may not receive your item.</div>';
     }
@@ -485,9 +505,7 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
     var warnings=[];
     results.forEach(function(r){
       var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
-      // Check if the unit appears anywhere in the original address (line 1 or line 2)
-      var origFull=((r.original.address1||'')+' '+(r.original.address2||'')).toLowerCase();
-      var unitInOrig=suggUnit&&origFull.indexOf(suggUnit.toLowerCase())!==-1;
+      var unitInOrig=unitAlreadyInAddress(suggUnit, r.original.address1, r.original.address2);
       if(r.suggested&&suggUnit&&!unitInOrig){
         warnings.push({kind:r.kind, address:r.original,
           message:'Our address validator detected a unit/apartment number ('+suggUnit+') for this address that you did not include. Without it, you may not receive your item.'});
