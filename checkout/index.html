@@ -120,26 +120,26 @@ var sumLines=document.getElementById('sum-lines');
 sumLines.innerHTML='<p>Loading…</p>';
 (function(){
   if(!cart.length){sumLines.innerHTML='<p>Cart empty</p>';document.getElementById('sum-total').textContent='$0.00';return;}
-  var products=[],pending=cart.length;
-  cart.forEach(function(slug){
-    BSR.api('/api/catalog/products/'+encodeURIComponent(slug)).then(function(j){
-      var p=(j&&j.ok&&j.product)?j.product:{slug:slug,title:slug,price_cents:0};
-      products.push(p);if(--pending===0)renderSum(products,cart);
-    }).catch(function(){
-      products.push({slug:slug,title:slug,price_cents:0});
-      if(--pending===0)renderSum(products,cart);
-    });
-  });
-  function renderSum(list,order){
-    list.sort(function(a,b){return order.indexOf(a.slug)-order.indexOf(b.slug);});
+  // Fetch all products once, then match by slug
+  BSR.api('/api/catalog/products').then(function(j){
+    var all=(j&&j.ok&&j.products)?j.products:[];
+    var bySlug={};
+    all.forEach(function(p){bySlug[p.slug]=p;});
     var t=0,html='';
-    list.forEach(function(p){
+    cart.forEach(function(slug){
+      var p=bySlug[slug]||{slug:slug,title:slug,price_cents:0};
       var cents=p.price_cents||0;t+=cents;
       html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>'+BSR.esc(p.title||p.slug)+'</span><span>'+BSR.money(cents)+'</span></div>';
     });
     sumLines.innerHTML=html;
     document.getElementById('sum-total').textContent=BSR.money(t);
-  }
+  }).catch(function(){
+    // Fallback: show slugs only
+    var html=cart.map(function(slug){
+      return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>'+BSR.esc(slug)+'</span><span>—</span></div>';
+    }).join('');
+    sumLines.innerHTML=html;
+  });
 })();
 document.getElementById('f-ship-same').addEventListener('change',function(){document.getElementById('ship-fields').style.display=this.checked?'none':'block';});
 
