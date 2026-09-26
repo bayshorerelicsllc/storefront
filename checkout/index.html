@@ -938,11 +938,7 @@ function initAddressPickers() {
     if (defShip) fillShipForm(defShip);
     if (defBill) {
       fillBillForm(defBill);
-      var sameRec = defShip && String(defBill.id) === String(defShip.id);
-      if (!sameRec) {
-        document.getElementById('f-ship-same').checked = false;
-        document.getElementById('ship-fields').style.display = 'block';
-      }
+      // (Shipping is on separate page - skip same-as-billing sync)
     }
     var shipSaved = document.getElementById('ship-saved');
     if (shipSaved) shipSaved.addEventListener('change', function(){
