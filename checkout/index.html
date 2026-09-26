@@ -80,8 +80,9 @@
 </div>
 </section>
 
-<section class="card" id="ship-method-section" style="display:none">
+<section class="card" id="ship-method-section">
 <h2><span class="step-num">3</span> Shipping method</h2>
+<div style="margin-bottom:10px"><button type="button" id="get-ship-rates" class="btn" style="padding:10px 20px">Show shipping options</button></div>
 <div id="ship-methods-loading" style="display:none;color:#666">Getting shipping rates…</div>
 <div id="ship-methods-error" class="error" style="display:none;color:#c00"></div>
 <div id="ship-methods-list"></div>
@@ -991,6 +992,11 @@ if (document.readyState === 'loading') {
 } else {
   initShipRates();
 }
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'get-ship-rates') {
+    fetchShipRates();
+  }
+});
 function initShipRates() {
   var postal = document.getElementById('f-postal');
   var billPostal = document.getElementById('f-bill-postal');
