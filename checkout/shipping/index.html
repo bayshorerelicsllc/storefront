@@ -98,22 +98,30 @@ var _addrTimer = setInterval(function(){
     try { initAddressPickers(); } catch(e) {}
   }
 }, 200);
-// Address validator: Geoapify live suggestions (same as account address book)
+// Address validator: attach to shipping section (billing is on previous page)
+function attachShipValidator(){
+  try {
+    var shipSec = document.getElementById('ship-section');
+    if (shipSec && window.BSRAddrValidate && BSRAddrValidate.attachLive) {
+      BSRAddrValidate.attachLive(shipSec);
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
 var _valTries = 0;
 var _valTimer = setInterval(function(){
   _valTries++;
-  if ((window.BSRAddrValidate && BSRAddrValidate.attachLive) || _valTries > 25) {
+  if (attachShipValidator() || _valTries > 30) {
     clearInterval(_valTimer);
-    try {
-      var billSec = document.getElementById('bill-section');
-      var shipSec = document.getElementById('ship-section');
-      if (window.BSRAddrValidate && BSRAddrValidate.attachLive) {
-        if (billSec) BSRAddrValidate.attachLive(billSec);
-        if (shipSec) BSRAddrValidate.attachLive(shipSec);
-      }
-    } catch(e) {}
   }
 }, 200);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(attachShipValidator, 500); });
+} else {
+  setTimeout(attachShipValidator, 500);
+}
+window.addEventListener('load', function(){ setTimeout(attachShipValidator, 500); });
 var cart=[]; try{cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){}
 var sumLines=document.getElementById('sum-lines');
 sumLines.innerHTML='<p>Loading…</p>';
