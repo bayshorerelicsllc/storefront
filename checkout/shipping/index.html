@@ -870,11 +870,17 @@ function initAddressPickers() {
       }
     }
     var shipSavedEl = document.getElementById('ship-saved');
-    if (shipSavedEl) shipSavedEl.addEventListener('change', function(){
-      var a = byId[String(this.value)];
-      if (typeof clearShipForm==='function') clearShipForm();
-      if (a && typeof fillShipForm==='function') fillShipForm(a);
-    });
+    if (shipSavedEl) {
+      shipSavedEl.addEventListener('change', function(){
+        var a = byId[String(this.value)];
+        if (typeof clearShipForm==='function') clearShipForm();
+        if (a && typeof fillShipForm==='function') fillShipForm(a);
+      });
+      // Auto-fill with the currently selected address on load
+      var selId = shipSavedEl.value;
+      var selAddr = selId ? byId[String(selId)] : null;
+      if (selAddr && typeof fillShipForm==='function') fillShipForm(selAddr);
+    }
     // (Billing is on separate page - no bill-saved here)
   }).catch(function(){});
 }
