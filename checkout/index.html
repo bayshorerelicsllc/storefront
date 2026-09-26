@@ -81,7 +81,15 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 if (window.BSR && BSR.init) BSR.init();
-initAddressPickers();
+// Retry address pickers until BSR.api is ready (up to 5s)
+var _addrTries = 0;
+var _addrTimer = setInterval(function(){
+  _addrTries++;
+  if ((window.BSR && BSR.api) || _addrTries > 25) {
+    clearInterval(_addrTimer);
+    try { initAddressPickers(); } catch(e) {}
+  }
+}, 200);
 var cart=[]; try{cart=JSON.parse(localStorage.getItem('bsr-cart')||'[]');}catch(e){}
 var html='',t=0;
 cart.forEach(function(i){var p=parseFloat(i.price||0);t+=p;html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>'+(i.title||i.slug)+'</span><span>$'+p.toFixed(2)+'</span></div>';});
