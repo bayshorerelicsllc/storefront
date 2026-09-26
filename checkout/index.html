@@ -70,20 +70,6 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="checkout-layout">' +
     '<div class="checkout-main">' +
     '<style>@media (max-width:640px){.pay-options-grid{grid-template-columns:1fr !important}}</style>' +
-    '<div class="pay-options-grid"  style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">' +
-    '<section class="card" id="express-checkout-card" style="margin:0"><h2>Pay with PayPal</h2>' +
-    '<p class="hint" style="margin-bottom:12px">Secure checkout via PayPal — pay with your balance, bank, or card.</p>' +
-    '<div style="width:250px;max-width:100%;margin:0 auto"><div id="pay-paypal-top">' +
-    '<button type="button" id="paypal-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#FFC439;color:#003087;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(255,196,57,.35)"><img src="/assets/img/payments/paypal-official.svg" alt="" style="height:22px;width:auto"><span>Continue to PayPal</span></button>' +
-    '<div class="error" id="paypal-hosted-err" style="display:none"></div>' +
-    '<div class="hint" id="paypal-msg"></div></div>' +
-    
-    '</section>' +
-    '<section class="card" style="margin:0"><h2>Pay with card</h2>' +
-    '<p class="hint" style="margin-bottom:12px">Secure checkout via Stripe — all major cards accepted.</p>' +
-    '<div style="width:250px;max-width:100%;margin:0 auto">' +
-    '<button type="button" id="stripe-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#635BFF;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,91,255,.35)"><img src="/assets/img/payments/stripe-official.svg" alt="" style="height:22px;width:auto;filter:brightness(0) invert(1)"><span>Continue to Stripe</span></button>' +
-    '<div class="error" id="hosted-err" style="display:none"></div>' +
     '</div></section></div>' +
     '<div id="manual-form-wrap">' +
     '<section class="card"><h2><span class="step-num">1</span> Contact</h2>' +
@@ -169,23 +155,20 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="hint" id="promo-ok" style="display:none"></div>' +
     '<div class="error" id="promo-err" style="display:none"></div></section>' +
     '</div>' +
-    '<section class="card" id="card-payment-section" style="display:none"><h2><span class="step-num">5</span> Payment</h2>' +
-    '<div class="pay-divider" id="card-divider"><span>pay with card</span></div>' +
-    '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">' +
-    '<button type="button" id="stripe-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#635BFF;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,91,255,.35)"><img src="/assets/img/payments/stripe-official.svg" alt="" style="height:22px;width:auto;filter:brightness(0) invert(1)"><span>Continue to secure checkout</span></button>' +
+    '<div class="pay-options-grid"  style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">' +
+    '<section class="card" id="express-checkout-card" style="margin:0"><h2>Pay with PayPal</h2>' +
+    '<p class="hint" style="margin-bottom:12px">Secure checkout via PayPal — pay with your balance, bank, or card.</p>' +
+    '<div style="width:250px;max-width:100%;margin:0 auto"><div id="pay-paypal-top">' +
+    '<button type="button" id="paypal-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#FFC439;color:#003087;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(255,196,57,.35)"><img src="/assets/img/payments/paypal-official.svg" alt="" style="height:22px;width:auto"><span>Continue to PayPal</span></button>' +
+    '<div class="error" id="paypal-hosted-err" style="display:none"></div>' +
+    '<div class="hint" id="paypal-msg"></div></div>' +
+    
+    '</section>' +
+    '<section class="card" style="margin:0"><h2>Pay with card</h2>' +
+    '<p class="hint" style="margin-bottom:12px">Secure checkout via Stripe — all major cards accepted.</p>' +
+    '<div style="width:250px;max-width:100%;margin:0 auto">' +
+    '<button type="button" id="stripe-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#635BFF;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,91,255,.35)"><img src="/assets/img/payments/stripe-official.svg" alt="" style="height:22px;width:auto;filter:brightness(0) invert(1)"><span>Continue to Stripe</span></button>' +
     '<div class="error" id="hosted-err" style="display:none"></div>' +
-    '<div style="text-align:center;font-size:.8rem;color:#6c757d">Cards, wallets & more via Stripe</div>' +
-    '<div class="pay-divider"><span>or pay with PayPal</span></div>' +
-    '</div>' +
-
-    '<div id="pay-card-paypal">' +
-    '<div class="field"><label>Card number</label><div id="pp-card-number" style="border:1px solid #ccc;border-radius:6px;padding:10px;min-height:20px"></div></div>' +
-    '<div class="form-row"><div class="field"><label>Expiry</label><div id="pp-card-expiry" style="border:1px solid #ccc;border-radius:6px;padding:10px;min-height:20px"></div></div>' +
-    '<div class="field"><label>Security code</label><div id="pp-card-cvv" style="border:1px solid #ccc;border-radius:6px;padding:10px;min-height:20px"></div></div></div>' +
-    '<div class="error" id="pp-card-err" style="display:none"></div>' +
-    '<button id="pp-card-pay" type="button" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:44px;box-sizing:border-box;background:#003087;color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:1.02rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,48,135,.35)">Pay with <span style="font-weight:800;letter-spacing:-.02em">PayPal</span></button></div>' +
-    '<div class="secure-note">' + BSR.icon('lock', 'ic-sm') + '<span>Payments are encrypted. We never see your card number.</span></div>' +
-    '</section></div>' +
     '<aside class="card summary"><h2>Order summary</h2>' +
     '<div class="cart-lines" id="sum-lines"></div>' +
     '<div id="sum-rows"></div></aside></div>';
