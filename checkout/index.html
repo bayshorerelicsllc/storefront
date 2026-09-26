@@ -255,12 +255,12 @@ function showWarningPopup(results, warnings, onDone){
       var kindLabel=r.kind==='bill'?'Bill to':'Ship to';
       var warnHtml='';
       if(warnByKind[r.kind]){
-        warnHtml='<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:14px;color:#856404;margin:8px 0;">'+
+        warnHtml='<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:13px;line-height:1.5;color:#856404;margin:8px 0;word-wrap:break-word;overflow-wrap:break-word;">'+
         '<strong>⚠ Heads up:</strong> '+warnByKind[r.kind]+'</div>';
       }
-      return '<div class="val-col" style="flex:1;min-width:220px;">'+
-      '<div class="val-kind">'+kindLabel+'</div>'+
-      '<div class="val-addr" style="margin:8px 0;">'+fmtAddr(r.original)+'</div>'+
+      return '<div class="val-col" style="flex:1;min-width:0;overflow:hidden;">'+
+      '<div style="text-align:center;margin-bottom:8px;"><span class="val-kind">'+kindLabel+'</span></div>'+
+      '<div class="val-addr" style="margin:0 0 8px 0;word-wrap:break-word;overflow-wrap:break-word;">'+fmtAddr(r.original)+'</div>'+
       warnHtml+'</div>';
     }).join('');
   }
