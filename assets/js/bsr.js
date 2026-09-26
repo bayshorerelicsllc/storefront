@@ -187,11 +187,14 @@
   /* ---------------- per-item notification watches ----------------
      Guests pick one email address the first time they enable email alerts;
      it is kept in this browser (local storage, cleared with site data) and
-     reused for every item. Signed-in shoppers always use their account email.
-     When a guest later creates an account, their guest-email watch rows move
-     onto the account email (migrateGuestState, run at init). Wishlist and
-     cart already live in local storage, so they survive sign-in untouched. */
+     reused for every item. Signed-in shoppers pick from their saved emails
+     (account/index.html > Emails tab); the pick is kept per browser and
+     defaults to the account email. When a guest later creates an account,
+     their guest-email watch rows move onto the account email
+     (migrateGuestState, run at init). Wishlist and cart already live in local
+     storage, so they survive sign-in untouched. */
   var GUEST_EMAIL_KEY = 'bsr-guest-email';
+  var NOTIFY_EMAIL_KEY = 'bsr-notify-email';
   function guestEmail() {
     try { return (localStorage.getItem(GUEST_EMAIL_KEY) || '').trim(); } catch (e) { return ''; }
   }
@@ -201,12 +204,41 @@
       else localStorage.removeItem(GUEST_EMAIL_KEY);
     } catch (e) {}
   }
+  /* This browser's chosen alert email for a signed-in shopper. */
+  function storedNotifyEmail() {
+    try { return (localStorage.getItem(NOTIFY_EMAIL_KEY) || '').trim().toLowerCase(); } catch (e) { return ''; }
+  }
+  function setStoredNotifyEmail(email) {
+    try {
+      if (email) localStorage.setItem(NOTIFY_EMAIL_KEY, String(email).trim().toLowerCase());
+      else localStorage.removeItem(NOTIFY_EMAIL_KEY);
+    } catch (e) {}
+  }
   function validEmailLoose(s) { return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s || '').trim()); }
-  /* Which email should item alerts go to? Resolves to the account email when
-     signed in, the stored guest email when one was given, else null. */
+  /* The shopper's saved emails for alert pickers. Always includes the virtual
+     account email first; [] when not signed in. */
+  function notifyEmailOptions() {
+    return me().then(function (c) {
+      if (!c || !c.email) return [];
+      if (Array.isArray(c.emails) && c.emails.length) return c.emails;
+      return [{ id: 'account', email: c.email, label: 'Account', is_account: true }];
+    }).catch(function () { return []; });
+  }
+  /* Which email should item alerts go to? Signed-in: the stored pick when it
+     is still one of their emails, else the account email. Guests: the stored
+     guest email when one was given, else null. */
   function resolveNotifyEmail() {
     return me().then(function (c) {
-      if (c && c.email) return c.email;
+      if (c && c.email) {
+        var list = Array.isArray(c.emails) ? c.emails : [];
+        var pick = storedNotifyEmail();
+        if (pick) {
+          for (var i = 0; i < list.length; i++) {
+            if (String(list[i].email || '').toLowerCase() === pick) return list[i].email;
+          }
+        }
+        return c.email;
+      }
       return guestEmail() || null;
     }).catch(function () { return guestEmail() || null; });
   }
@@ -229,7 +261,10 @@
     return api('/api/waitlist', { method: 'POST', body: { slug: slug, bid: bid(), clear_email: true } }).then(function () { return true; });
   }
   /* After any sign-in (modal, OAuth, passkey): move guest-email watch rows
-     onto the account email so alerts follow the new account. Idempotent. */
+     onto the account email so alerts follow the new account. Idempotent.
+     The stored guest email is cleared ONLY after the server confirms the
+     move -- a failed migration keeps the address so a later retry can still
+     find and move the rows. */
   var _migrated = false;
   function migrateGuestState() {
     if (_migrated) return Promise.resolve();
@@ -239,9 +274,10 @@
       _migrated = true;
       if (!c || !c.email) return;
       var ae = String(c.email).toLowerCase();
-      setGuestEmail(''); /* the browser no longer needs the guest copy */
-      if (ae === ge.toLowerCase()) return;
-      return api('/api/waitlist/migrate-email', { method: 'POST', body: { from_email: ge, to_email: ae } }).catch(function () {});
+      if (ae === ge.toLowerCase()) { setGuestEmail(''); return; }
+      return api('/api/waitlist/migrate-email', { method: 'POST', body: { from_email: ge, to_email: ae } })
+        .then(function (j) { if (j && j.ok) setGuestEmail(''); })
+        .catch(function () {});
     }).catch(function () {});
   }
 
@@ -524,6 +560,9 @@
       '.wish-email-form{display:flex;gap:8px;margin-top:10px}' +
       '.wish-email-form[hidden]{display:none}' +
       '.wish-email-form .field{margin:0;flex:1}' +
+      '.wish-guest-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--card,#fff);border:1px solid var(--border,#e5ddc8);border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:13px}' +
+      '.wish-guest-bar .sw-ic{display:inline-flex;vertical-align:-3px;margin-right:6px;color:var(--muted,#888)}' +
+      '.wish-guest-bar strong{word-break:break-all}' +
       '.wish-status{display:inline-block;font-size:11px;font-weight:700;padding:2px 10px;border-radius:999px;letter-spacing:.04em}' +
       '.wish-status.avail{background:rgba(31,92,63,.12);color:#1f5c3f}' +
       '.wish-status.held{background:rgba(201,162,39,.16);color:#8a6d1a}' +
@@ -1176,6 +1215,8 @@
     enableBrowserNotifications: enableBrowserNotifications, markNotifsRead: markNotifsRead,
     dropToWishlist: dropToWishlist,
     guestEmail: guestEmail, setGuestEmail: setGuestEmail, resolveNotifyEmail: resolveNotifyEmail,
+    notifyEmailOptions: notifyEmailOptions, storedNotifyEmail: storedNotifyEmail,
+    setStoredNotifyEmail: setStoredNotifyEmail,
     watchStatus: watchStatus, setWatchBrowser: setWatchBrowser, setWatchEmail: setWatchEmail,
     migrateGuestState: migrateGuestState,
     loadTheme: loadTheme, applyTheme: applyTheme, loadMenus: loadMenus,

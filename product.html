@@ -7,7 +7,7 @@
 <meta name="description" id="meta-desc" content="Vintage 35mm railroad slide — a single physical item, sold once.">
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260926l" defer></script>
+<script src="/assets/js/bsr.js?v=20260926m" defer></script>
 <style>.gallery-wrap{position:relative}</style>
 </head>
 <body>
@@ -207,17 +207,34 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       });
 
-      /* Step 2: offer email too. Signed-in shoppers get one-tap with their
-         account email (no typing); guests must enter an email. */
+      /* Step 2: offer email too. Signed-in shoppers with one saved email get
+         one-tap (no typing); with several, a labeled dropdown. Guests must
+         enter an email. */
       function showEmailStep() {
-        BSR.me().then(function (me) { renderEmailStep(me && me.email ? me.email : '', BSR.guestEmail()); })
-          .catch(function () { renderEmailStep('', BSR.guestEmail()); });
+        BSR.notifyEmailOptions().then(function (opts) { renderEmailStep(opts, BSR.guestEmail()); })
+          .catch(function () { renderEmailStep([], BSR.guestEmail()); });
       }
-      function renderEmailStep(accountEmail, storedGuest) {
+      function renderEmailStep(emailOpts, storedGuest) {
         var box = document.getElementById('notify-box');
         if (!box) return;
         var emailBlock;
-        if (accountEmail) {
+        if (emailOpts.length > 1) {
+          var pick = BSR.storedNotifyEmail();
+          var options = emailOpts.map(function (o) {
+            var label = (o.label && !o.is_account) ? o.label + ' \u2014 ' + o.email : o.email + (o.is_account ? ' (account)' : '');
+            return '<option value="' + BSR.esc(o.email) + '"' +
+              (String(o.email).toLowerCase() === pick ? ' selected' : '') + '>' + BSR.esc(label) + '</option>';
+          }).join('');
+          emailBlock =
+            '<div class="notify-email">' +
+            '<label class="notify-label" for="wl-email-pick"><strong>Want an email too?</strong></label>' +
+            '<span class="notify-sub">Pick which of your emails gets the alert.</span>' +
+            '<div class="field"><select id="wl-email-pick">' + options + '</select></div>' +
+            '<div class="notify-row"><button class="btn btn-primary" id="wl-email-btn" type="button">Email me too</button>' +
+            '<button class="btn btn-secondary" id="wl-skip" type="button">No thanks</button></div>' +
+            '</div>';
+        } else if (emailOpts.length === 1) {
+          var accountEmail = emailOpts[0].email;
           emailBlock =
             '<div class="notify-email">' +
             '<strong>Want an email too?</strong>' +
@@ -247,18 +264,24 @@ document.addEventListener('DOMContentLoaded', function () {
           if (nb) nb.querySelector('.notify-email').remove();
         });
         document.getElementById('wl-email-btn').addEventListener('click', function () {
-          var em = accountEmail;
-          if (!em) {
+          var em, isGuest = false;
+          if (emailOpts.length > 1) {
+            em = document.getElementById('wl-email-pick').value;
+            BSR.setStoredNotifyEmail(em); /* remember the pick for this browser */
+          } else if (emailOpts.length === 1) {
+            em = emailOpts[0].email;
+          } else {
             em = document.getElementById('wl-email').value.trim();
             if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
               BSR.toast('Enter a valid email address', 'err');
               document.getElementById('wl-email').focus();
               return;
             }
+            isGuest = true;
           }
           var eb = document.getElementById('wl-email-btn');
           eb.disabled = true;
-          if (!accountEmail) BSR.setGuestEmail(em); /* ask once: keep it for this browser */
+          if (isGuest) BSR.setGuestEmail(em); /* ask once: keep it for this browser */
           BSR.api('/api/waitlist', { method: 'POST', body: { slug: p.slug, email: em, bid: BSR.bid() } }).then(function (j) {
             var nb = document.getElementById('notify-box');
             if (j && j.ok) {

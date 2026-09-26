@@ -6,7 +6,7 @@
 <title>Your account — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260926l" defer></script>
+<script src="/assets/js/bsr.js?v=20260926m" defer></script>
 <script src="/assets/js/addr-validate.js?v=20260925m"></script>
 <script src="https://js.stripe.com/v3/" defer></script>
 <style>
@@ -221,6 +221,7 @@ document.addEventListener('DOMContentLoaded', function () {
       : [
         ['profile', 'user', 'Profile'],
         ['addresses', 'truck', 'Addresses'],
+        ['emails', 'mail', 'Emails'],
         ['security', 'shield', 'Security'],
         ['orders', 'package', 'Orders'],
         ['wishlist', 'heart', 'Wishlist'],
@@ -877,6 +878,170 @@ document.addEventListener('DOMContentLoaded', function () {
     loadAddresses();
   }
 
+  /* ---------------- emails ----------------
+     The account (sign-in) email is virtual and immutable -- it stays
+     authoritative on sf_customers. Additional labeled emails live in
+     customer_emails with independent billing/shipping defaults. */
+  var emailList = [];
+  function renderEmails() {
+    var acct = (customer && customer.email) ? esc(customer.email) : '';
+    return '<div class="acct-section"><h2>Emails</h2>' +
+      '<p class="sec-desc">Your account email signs you in and can\'t be changed here. ' +
+      'Add other emails for order updates and item alerts, and choose which are your billing and shipping defaults.</p>' +
+      '<div id="email-msg"></div>' +
+      '<div class="addr-box"><div class="addr-cell-name">Account email</div>' +
+      '<div>' + acct + '</div>' +
+      '<div class="addr-cell-sub">Used to sign in. To change it, contact us.</div></div>' +
+      '<h3 class="sub" style="margin-top:22px">Saved emails</h3>' +
+      '<div class="addr-book" id="email-book"><p>Loading&hellip;</p></div>' +
+      '<div class="acct-actions"><button type="button" class="btn btn-secondary btn-sm" id="email-add">Add email</button></div>' +
+      '<div id="email-form-slot"></div>' +
+      '</div>';
+  }
+  function showEmailMsg(ok, text) {
+    var el = document.getElementById('email-msg');
+    if (el) showMsg(el, ok, text);
+  }
+  function paintEmailBook() {
+    var el = document.getElementById('email-book');
+    if (!el) return;
+    if (!emailList.length) {
+      el.innerHTML = '<p style="color:var(--text-soft);font-size:.92rem">No extra emails saved yet. Alerts and order updates will use your account email.</p>';
+      return;
+    }
+    var rows = emailList.map(function (e) {
+      var badges = '';
+      if (e.is_default_shipping) badges += '<span class="addr-badge">Ship-to</span>';
+      if (e.is_default_billing) badges += '<span class="addr-badge addr-badge-bill">Bill-to</span>';
+      var cell = '<div class="addr-cell-name">' + esc(e.email) + '</div>' +
+        (e.label ? '<div class="addr-cell-sub">' + esc(e.label) + '</div>' : '');
+      return '<tr data-email="' + esc(e.id) + '">' +
+        '<td>' + cell + '</td>' +
+        '<td>' + (badges || '<span class="addr-cell-sub">&mdash;</span>') + '</td>' +
+        '<td class="row-actions">' +
+        (e.is_default_shipping ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-set-ship>Set ship-to</button>') +
+        (e.is_default_billing ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-set-bill>Set bill-to</button>') +
+        '<button type="button" class="btn btn-ghost btn-sm" data-email-edit>Edit</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-email-del style="color:#a33">Delete</button>' +
+        '</td></tr>';
+    }).join('');
+    el.innerHTML = '<div class="addr-table-wrap"><table class="addr-table">' +
+      '<thead><tr><th>Email</th><th>Defaults</th><th>Actions</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table></div>';
+    el.querySelectorAll('[data-email]').forEach(function (row) {
+      var id = row.getAttribute('data-email');
+      var e = emailList.find(function (x) { return String(x.id) === String(id); });
+      if (!e) return;
+      var setShip = row.querySelector('[data-set-ship]');
+      var setBill = row.querySelector('[data-set-bill]');
+      if (setShip) setShip.addEventListener('click', function () { setEmailDefault(e, 'ship'); });
+      if (setBill) setBill.addEventListener('click', function () { setEmailDefault(e, 'bill'); });
+      row.querySelector('[data-email-edit]').addEventListener('click', function () {
+        var slot = document.getElementById('email-form-slot');
+        slot.innerHTML = emailFormHtml(e);
+        bindEmailForm(slot);
+        slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+      row.querySelector('[data-email-del]').addEventListener('click', function () {
+        var roles = [];
+        if (e.is_default_shipping) roles.push('ship-to default');
+        if (e.is_default_billing) roles.push('bill-to default');
+        var msg = 'Delete ' + e.email + '?';
+        if (roles.length && emailList.length > 1) {
+          msg = 'This is your ' + roles.join(' and ') + '. Deleting it will make your oldest remaining email the new default. Continue?';
+        }
+        if (!window.confirm(msg)) return;
+        BSR.api('/api/account/emails/' + encodeURIComponent(id), { method: 'DELETE' })
+          .then(function (j) {
+            if (j && j.ok) { loadEmails(); toast('Email deleted'); }
+            else { var em = (j && j.error) || 'Could not delete the email.'; showEmailMsg(false, em); toast(em, false); }
+          })
+          .catch(function () { showEmailMsg(false, 'Could not delete. Check your connection.'); });
+      });
+    });
+  }
+  function setEmailDefault(e, role) {
+    BSR.api('/api/account/emails/' + encodeURIComponent(e.id), {
+      method: 'PUT',
+      body: {
+        email: e.email, label: e.label || '',
+        is_default_shipping: role === 'ship' ? true : !!e.is_default_shipping,
+        is_default_billing: role === 'bill' ? true : !!e.is_default_billing,
+      }
+    }).then(function (j) {
+      if (j && j.ok) {
+        loadEmails();
+        showEmailMsg(true, (role === 'ship' ? 'Ship-to' : 'Bill-to') + ' default updated.');
+        toast('Default updated \u2713');
+      } else { var em = (j && j.error) || 'Could not update.'; showEmailMsg(false, em); toast(em, false); }
+    }).catch(function () { showEmailMsg(false, 'Could not update. Check your connection.'); });
+  }
+  function emailFormHtml(e) {
+    var isNew = !e;
+    e = e || {};
+    return '<form class="addr-form" data-email-form="' + (isNew ? 'new' : esc(e.id)) + '">' +
+      '<div class="field"><label>Email address</label>' +
+      '<input type="email" name="email" required maxlength="160" autocomplete="email" value="' + esc(e.email || '') + '"></div>' +
+      '<div class="field"><label>Label <span class="opt">(optional &mdash; e.g. Work, Spouse)</span></label>' +
+      '<input type="text" name="label" maxlength="80" value="' + esc(e.label || '') + '"></div>' +
+      '<div class="check-row">' +
+      '<label class="check"><input type="checkbox" name="is_default_billing"' + (e.is_default_billing ? ' checked' : '') + '> Default billing email</label>' +
+      '<label class="check"><input type="checkbox" name="is_default_shipping"' + (e.is_default_shipping ? ' checked' : '') + '> Default shipping email</label></div>' +
+      '<div class="form-row"><button type="submit" class="btn btn-primary btn-sm">' + (isNew ? 'Add email' : 'Save') + '</button>' +
+      ' <button type="button" class="btn btn-ghost btn-sm" data-email-cancel>Cancel</button></div>' +
+      '</form>';
+  }
+  function bindEmailForm(slot) {
+    var form = slot.querySelector('[data-email-form]');
+    if (!form) return;
+    form.querySelector('[data-email-cancel]').addEventListener('click', function () { slot.innerHTML = ''; });
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var id = form.getAttribute('data-email-form');
+      var email = form.email.value.trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showEmailMsg(false, 'Enter a valid email address.'); form.email.focus(); return; }
+      var body = {
+        email: email,
+        label: form.label.value.trim(),
+        is_default_billing: form.is_default_billing.checked,
+        is_default_shipping: form.is_default_shipping.checked,
+      };
+      var url = id === 'new' ? '/api/account/emails' : '/api/account/emails/' + encodeURIComponent(id);
+      BSR.api(url, { method: id === 'new' ? 'POST' : 'PUT', body: body })
+        .then(function (j) {
+          if (j && j.ok) {
+            slot.innerHTML = '';
+            loadEmails();
+            showEmailMsg(true, id === 'new' ? 'Email added.' : 'Email updated.');
+            toast((id === 'new' ? 'Email added' : 'Email updated') + ' \u2713');
+          } else { showEmailMsg(false, (j && j.error) || 'Could not save the email.'); }
+        })
+        .catch(function () { showEmailMsg(false, 'Could not save. Check your connection.'); });
+    });
+  }
+  function loadEmails() {
+    BSR.api('/api/account/emails').then(function (j) {
+      if (j && j._status === 401) { window.location = '/account/login/'; return; }
+      emailList = (j && j.ok && Array.isArray(j.emails)) ? j.emails : [];
+      paintEmailBook();
+      /* Keep the cached account record fresh so alert pickers elsewhere see
+         the new list without a reload. */
+      BSR.me(true).then(function (c) { if (c) customer = c; }).catch(function () {});
+    }).catch(function () {
+      var el = document.getElementById('email-book');
+      if (el) el.innerHTML = '<p style="color:#a33">Could not load emails. Check your connection.</p>';
+    });
+  }
+  function bindEmails() {
+    document.getElementById('email-add').addEventListener('click', function () {
+      var slot = document.getElementById('email-form-slot');
+      slot.innerHTML = emailFormHtml(null);
+      bindEmailForm(slot);
+      slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+    loadEmails();
+  }
+
   /* ---------------- security ---------------- */
   function b64urlToBytes(s) {
     s = String(s).replace(/-/g, '+').replace(/_/g, '/');
@@ -1135,8 +1300,49 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function renderWishlist() {
     return '<div class="acct-section"><h2>Wishlist</h2>' +
-      '<p class="sec-desc">Slides you saved for later. Each one is one-of-a-kind — they can sell at any time.</p>' +
+      '<p class="sec-desc">Slides you saved for later. Each one is one-of-a-kind &mdash; they can sell at any time. ' +
+      'If a slide is purchased by someone else, it is removed from your wishlist automatically.</p>' +
+      '<div id="wish-guest-email"></div>' +
       '<div id="wish-list"><p>Loading wishlist&hellip;</p></div></div>';
+  }
+  /* Guests: show the stored alert email with a Change option, so a typo can
+     be fixed. Signed-in shoppers pick from their saved emails per item. */
+  function paintGuestEmailBar() {
+    var bar = document.getElementById('wish-guest-email');
+    if (!bar) return;
+    BSR.me().then(function (c) {
+      var ge = BSR.guestEmail();
+      if ((c && c.email) || !ge) { bar.innerHTML = ''; return; }
+      bar.innerHTML =
+        '<div class="wish-guest-bar"><span><span class="sw-ic">' + BSR.icon('mail', 'ic-sm') + '</span>' +
+        'Alert emails go to <strong>' + esc(ge) + '</strong></span>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-wge-change>Change</button></div>' +
+        '<div class="wish-email-form" data-wgeform hidden><div class="field">' +
+        '<input type="email" inputmode="email" value="' + esc(ge) + '" aria-label="Alert email address"></div>' +
+        '<button type="button" class="btn btn-secondary btn-sm" data-wgesave>Save</button></div>';
+      var form = bar.querySelector('[data-wgeform]');
+      var input = form.querySelector('input');
+      bar.querySelector('[data-wge-change]').addEventListener('click', function () {
+        form.hidden = !form.hidden;
+        if (!form.hidden) { input.focus(); input.select(); }
+      });
+      bar.querySelector('[data-wgesave]').addEventListener('click', function () {
+        var v = input.value.trim();
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { BSR.toast('Enter a valid email address', 'err'); input.focus(); return; }
+        var old = BSR.guestEmail();
+        BSR.setGuestEmail(v);
+        /* Move the corrected address onto any existing alert rows. */
+        if (v.toLowerCase() !== String(old).toLowerCase()) {
+          BSR.wishlist.list().forEach(function (slug) {
+            BSR.watchStatus(slug).then(function (w) {
+              if (w && w.email) BSR.setWatchEmail(slug, v).catch(function () {});
+            });
+          });
+        }
+        paintGuestEmailBar();
+        BSR.toast('Alert email updated');
+      });
+    }).catch(function () {});
   }
   function wishRow(p) {
     var img = p.image
@@ -1157,9 +1363,39 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="p">' + BSR.money(p.price_cents) +
       '<div class="rm"><button type="button" class="btn btn-ghost btn-sm" data-wrm="' + slug + '" style="color:#9c2b1e">Remove</button></div></div></div>';
   }
+  /* Signed-in shopper with more than one saved email: a labeled dropdown to
+     pick which address gets this slide's alerts. The pick is remembered for
+     this browser and preselected next time. */
+  function paintEmailPicker(row, slug, tgl, opts) {
+    var form = row.querySelector('[data-weform]');
+    if (!form) return;
+    var pick = BSR.storedNotifyEmail();
+    var options = opts.map(function (o) {
+      var label = (o.label && !o.is_account) ? o.label + ' \u2014 ' + o.email : o.email + (o.is_account ? ' (account)' : '');
+      return '<option value="' + esc(o.email) + '"' +
+        (String(o.email).toLowerCase() === pick ? ' selected' : '') + '>' + esc(label) + '</option>';
+    }).join('');
+    form.innerHTML = '<div class="field"><select aria-label="Email for alerts">' + options + '</select></div>' +
+      '<button type="button" class="btn btn-secondary btn-sm" data-wepick>Save</button>';
+    form.hidden = false;
+    tgl.checked = false;
+    form.querySelector('[data-wepick]').onclick = function () {
+      var em = form.querySelector('select').value;
+      tgl.disabled = true;
+      BSR.setStoredNotifyEmail(em);
+      BSR.setWatchEmail(slug, em).then(function () {
+        form.hidden = true;
+        tgl.checked = true;
+        BSR.toast('Email alerts on \u2014 ' + em);
+      }).catch(function () {
+        BSR.toast('Could not update alerts', 'err');
+      }).then(function () { tgl.disabled = false; });
+    };
+  }
   function bindWishlist() {
     var col = document.getElementById('wish-list');
     if (!col) return;
+    paintGuestEmailBar();
     var slugs = BSR.wishlist.list();
     if (!slugs.length) { col.innerHTML = emptyWish(); return; }
     var products = [], pending = slugs.length, finished = false;
@@ -1213,9 +1449,10 @@ document.addEventListener('DOMContentLoaded', function () {
           }).then(function () { tgl.disabled = false; });
         });
       });
-      /* Email-alert toggle: signed-in shoppers use their account email
-         automatically; guests are asked once and the address is kept in this
-         browser until site data is cleared. */
+      /* Email-alert toggle: signed-in shoppers with several saved emails pick
+         which one gets the alerts; a single email is used automatically.
+         Guests are asked once and the address is kept in this browser until
+         site data is cleared. */
       col.querySelectorAll('[data-we]').forEach(function (tgl) {
         tgl.addEventListener('change', function () {
           var slug = tgl.getAttribute('data-we');
@@ -1232,7 +1469,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }).then(function () { tgl.disabled = false; });
             return;
           }
-          BSR.resolveNotifyEmail().then(function (em) {
+          BSR.notifyEmailOptions().then(function (opts) {
+            if (opts.length > 1) { paintEmailPicker(row, slug, tgl, opts); return; }
+            return BSR.resolveNotifyEmail().then(function (em) {
             if (em) {
               tgl.disabled = true;
               BSR.setWatchEmail(slug, em).then(function () {
@@ -1255,6 +1494,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var v = input.value.trim();
                 if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { BSR.toast('Enter a valid email address', 'err'); input.focus(); return; }
                 BSR.setGuestEmail(v);
+                paintGuestEmailBar();
                 tgl.disabled = true;
                 BSR.setWatchEmail(slug, v).then(function () {
                   form.hidden = true;
@@ -1265,6 +1505,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }).then(function () { tgl.disabled = false; });
               };
             }
+          });
           });
         });
       });
@@ -1430,6 +1671,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var html = '';
     if (tab === 'profile') html = renderProfile();
     else if (tab === 'addresses') html = renderAddresses();
+    else if (tab === 'emails') html = renderEmails();
     else if (tab === 'security') html = renderSecurity();
     else if (tab === 'orders') html = renderOrders();
     else if (tab === 'wishlist') html = renderWishlist();
@@ -1438,6 +1680,7 @@ document.addEventListener('DOMContentLoaded', function () {
     bindShell();
     if (tab === 'profile') bindProfile();
     else if (tab === 'addresses') bindAddresses();
+    else if (tab === 'emails') bindEmails();
     else if (tab === 'security') bindSecurity();
     else if (tab === 'orders') bindOrders();
     else if (tab === 'wishlist') bindWishlist();
@@ -1447,7 +1690,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------------- boot ---------------- */
   try {
     var qtab = new URLSearchParams(window.location.search).get('tab');
-    if (['profile', 'addresses', 'security', 'orders', 'wishlist', 'cards'].indexOf(qtab) !== -1) tab = qtab;
+    if (['profile', 'addresses', 'emails', 'security', 'orders', 'wishlist', 'cards'].indexOf(qtab) !== -1) tab = qtab;
   } catch (e) {}
   if (tab === 'wishlist') {
     /* The wishlist lives in this browser's local storage, so guests see it

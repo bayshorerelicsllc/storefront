@@ -6,7 +6,7 @@
 <title>Checkout — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods9">
-<script src="/assets/js/bsr.js?v=20260926l" defer></script>
+<script src="/assets/js/bsr.js?v=20260926m" defer></script>
 <script src="/assets/js/addr-validate.js?v=20260925m" defer></script>
 <script src="/assets/js/checkout-common.js?v=20260926a" defer></script>
 
@@ -181,6 +181,21 @@ function initBillPicker() {
     document.getElementById('bill-saved').addEventListener('change', function(){
       var a = byId[String(this.value)]; clearBillForm(); if (a) fillBillForm(a);
     });
+    /* Email book default: if the billing email is still empty (no default
+       billing address, or its email was blank), pre-fill the shopper's
+       default billing email from their saved emails. Never overwrites. */
+    var bem = document.getElementById('f-bill-email');
+    if (bem && !bem.value.trim()) {
+      BSR.me().then(function (c) {
+        if (!c || !Array.isArray(c.emails)) return;
+        var el = document.getElementById('f-bill-email');
+        if (!el || el.value.trim()) return;
+        for (var i = 0; i < c.emails.length; i++) {
+          var e = c.emails[i];
+          if (!e.is_account && e.is_default_billing && e.email) { BSRCheckout.setV('f-bill-email', e.email); break; }
+        }
+      }).catch(function(){});
+    }
   }).catch(function(){});
 }
 
