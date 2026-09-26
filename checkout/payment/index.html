@@ -37,6 +37,14 @@
     '<p class="hint">Your order details are confirmed. Choose how to pay:</p>' +
     
     '<section class="card" style="margin:20px 0">' +
+    '<h2>Promo code</h2>' +
+    '<div style="display:flex;gap:8px;margin-bottom:8px">' +
+    '<input type="text" id="f-promo" class="field" placeholder="Enter code" style="flex:1">' +
+    '<button class="btn btn-secondary" id="promo-apply" type="button">Apply</button></div>' +
+    '<div class="hint" id="promo-ok" style="display:none;color:#28a745"></div>' +
+    '<div class="error" id="promo-err" style="display:none"></div></section>' +
+    
+    '<section class="card" style="margin:20px 0">' +
     '<h2>Pay with PayPal</h2>' +
     '<p class="hint" style="margin-bottom:16px">Secure checkout via PayPal — pay with your balance, bank, or card.</p>' +
     '<button type="button" id="paypal-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:320px;height:52px;box-sizing:border-box;background:#FFC439;color:#003087;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;margin:0 auto">' +
@@ -56,7 +64,57 @@
     '<a href="/checkout/" style="color:#6c757d">&larr; Back to checkout</a>' +
     '</div></div>';
   
+  // Promo code handling
+  var promoInput = document.getElementById('f-promo');
+  var promoApply = document.getElementById('promo-apply');
+  var promoOk = document.getElementById('promo-ok');
+  var promoErr = document.getElementById('promo-err');
+  if (payload.promo_code && promoInput) {
+    promoInput.value = payload.promo_code;
+  }
+  if (promoApply) {
+    promoApply.addEventListener('click', function () {
+      var code = promoInput.value.trim();
+      if (promoOk) promoOk.style.display = 'none';
+      if (promoErr) promoErr.style.display = 'none';
+      if (!code) return;
+      promoApply.disabled = true;
+      BSR.api('/api/promo/validate', {
+        method: 'POST',
+        body: { code: code, slugs: payload.slugs },
+      }).then(function (j) {
+        promoApply.disabled = false;
+        if (j && j.ok) {
+          payload.promo_code = code;
+          try {
+            sessionStorage.setItem('bsr-checkout-payload', JSON.stringify(payload));
+          } catch (e) {}
+          if (promoOk) {
+            promoOk.textContent = 'Code applied: ' + (j.description || code);
+            promoOk.style.display = '';
+          }
+        } else {
+          throw new Error((j && j.error) || 'Invalid code.');
+        }
+      }).catch(function (e) {
+        promoApply.disabled = false;
+        if (promoErr) {
+          promoErr.textContent = e.message || 'Invalid code.';
+          promoErr.style.display = '';
+        }
+      });
+    });
+  }
+  
   // Wire up the buttons
+  function getPayload() {
+    // Re-read from sessionStorage to get the latest promo code
+    try {
+      var stored = sessionStorage.getItem('bsr-checkout-payload');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return payload;
+  }
   function wireButton(btnId, errId, apiPath, loadingText) {
     var btn = document.getElementById(btnId);
     if (!btn) return;
@@ -78,7 +136,7 @@
       BSR.api(apiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(getPayload()),
       }).then(function (j) {
         if (timedOut) return;
         clearTimeout(timer);
