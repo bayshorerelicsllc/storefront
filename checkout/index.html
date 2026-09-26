@@ -719,24 +719,15 @@ location.href='/checkout/payment/';
 
 
 // Postal code autocomplete - fill city/state/country from postal code (international)
-function setupZipLookup(zipId, cityId, stateId, countryId){
-  var zipEl=document.getElementById(zipId);
-  if(!zipEl) return;
-  var lastLookup='';
-  // Map common full country names to ISO codes
+// Uses polling (bulletproof - no event dependency)
+(function(){
   var countryMap={'united states':'us','usa':'us','canada':'ca','united kingdom':'gb','uk':'gb','great britain':'gb','germany':'de','france':'fr','australia':'au','mexico':'mx','japan':'jp','ireland':'ie','netherlands':'nl','spain':'es','italy':'it'};
-  var debounceTimer=null;
-  function doLookup(){
-    var zip=zipEl.value.trim();
-    if(!zip) return;
+  var lastBillZip='', lastShipZip='';
+  function lookup(zip, cityId, stateId, countryId){
     var countryEl=document.getElementById(countryId);
     var countryRaw=countryEl?countryEl.value.trim().toLowerCase():'us';
     var countryCode=countryMap[countryRaw]||countryRaw;
-    // Only 2-letter codes supported by the API
     if(!/^[a-z]{2}$/.test(countryCode)) countryCode='us';
-    var lookupKey=countryCode+':'+zip;
-    if(lookupKey===lastLookup) return;
-    lastLookup=lookupKey;
     fetch('https://api.zippopotam.us/'+countryCode+'/'+encodeURIComponent(zip))
       .then(function(r){ if(!r.ok) throw new Error('not found'); return r.json(); })
       .then(function(data){
@@ -747,21 +738,25 @@ function setupZipLookup(zipId, cityId, stateId, countryId){
         if(cityEl) cityEl.value=place['place name']||'';
         if(stateEl) stateEl.value=place['state abbreviation']||place['state']||'';
         if(countryEl&&data['country abbreviation']) countryEl.value=data['country abbreviation'];
-        // Trigger sync if "same as billing" is checked
-        if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}
+        if(document.getElementById('f-ship-same')&&document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}
       })
-      .catch(function(){ /* Invalid postal code or API down - leave fields alone */ });
+      .catch(function(){});
   }
-  // Trigger on input (debounced) and on blur/change for reliability
-  zipEl.addEventListener('input', function(){
-    clearTimeout(debounceTimer);
-    debounceTimer=setTimeout(doLookup, 800);
-  });
-  zipEl.addEventListener('blur', doLookup);
-  zipEl.addEventListener('change', doLookup);
-}
-setupZipLookup('f-bill-postal','f-bill-city','f-bill-state','f-bill-country');
-setupZipLookup('f-postal','f-city','f-state','f-country');
+  setInterval(function(){
+    var bZipEl=document.getElementById('f-bill-postal');
+    var sZipEl=document.getElementById('f-postal');
+    if(bZipEl){
+      var bZip=bZipEl.value.trim();
+      if(bZip&&bZip!==lastBillZip){ lastBillZip=bZip; lookup(bZip,'f-bill-city','f-bill-state','f-bill-country'); }
+      if(!bZip) lastBillZip='';
+    }
+    if(sZipEl){
+      var sZip=sZipEl.value.trim();
+      if(sZip&&sZip!==lastShipZip){ lastShipZip=sZip; lookup(sZip,'f-city','f-state','f-country'); }
+      if(!sZip) lastShipZip='';
+    }
+  }, 1000);
+})();
 
 // Saved address dropdowns (signed-in only)
 function setV(id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; }
