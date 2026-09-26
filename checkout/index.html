@@ -618,7 +618,8 @@ document.addEventListener('DOMContentLoaded', function () {
       var origText = btn.innerHTML;
       btn.innerHTML = '<span>Creating secure checkout&hellip;</span>';
       /* Gather the same payload the old card flow used. */
-      var payload = buildCheckoutPayload();
+      var payload = null;
+      try { payload = buildCheckoutPayload(); } catch (e) { payload = null; }
       if (!payload) { btn.disabled = false; btn.innerHTML = origText; return; }
       var timedOut = false;
       var timer = setTimeout(function () {
@@ -664,7 +665,8 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.disabled = true;
       var origText = btn.innerHTML;
       btn.innerHTML = '<span>Redirecting to PayPal&hellip;</span>';
-      var payload = buildCheckoutPayload();
+      var payload = null;
+      try { payload = buildCheckoutPayload(); } catch (e) { payload = null; }
       if (!payload) { btn.disabled = false; btn.innerHTML = origText; return; }
       var timedOut = false;
       var timer = setTimeout(function () {
