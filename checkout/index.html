@@ -729,7 +729,7 @@ location.href='/checkout/payment/';
     if(/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/.test(z)) return 'ca'; // Canada: K1A 0B1
     if(/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/.test(z)) return 'gb'; // UK: SW1A 1AA
     if(/^\d{4}$/.test(z)) return 'au'; // Australia: 4 digits (also try de/fr)
-    if(/^\d{5}$/.test(z)) return 'us'; // US: 5 digits (also DE/FR/IT/ES/MX)
+    if(/^\d{5}(-\d{4})?$/.test(z)) return 'us'; // US: 5 digits or ZIP+4 (also DE/FR/IT/ES/MX)
     return null;
   }
   function lookup(zip, cityId, stateId, countryId){
@@ -745,7 +745,13 @@ location.href='/checkout/payment/';
         if(countryEl) countryEl.value=detected.toUpperCase();
       }
     }
-    fetch('https://api.zippopotam.us/'+countryCode+'/'+encodeURIComponent(zip))
+    // Strip ZIP+4 extension for the API (it only wants the 5-digit base)
+    var apiZip=zip;
+    if(countryCode==='us'){
+      var m5=/^(\d{5})(-\d{4})?$/.exec(zip.trim());
+      if(m5) apiZip=m5[1];
+    }
+    fetch('https://api.zippopotam.us/'+countryCode+'/'+encodeURIComponent(apiZip))
       .then(function(r){ if(!r.ok) throw new Error('not found'); return r.json(); })
       .then(function(data){
         var place=data.places&&data.places[0];
