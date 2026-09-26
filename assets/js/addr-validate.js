@@ -316,7 +316,7 @@
       var q = contextQuery();
       /* Typing a new address after a dismissal re-arms save-time verification. */
       if (q !== dismissedQ && form._bsrValDismissed === '__dismissed__') form._bsrValDismissed = '';
-      if (q.length < 4 || q === lastQ || q === dismissedQ) { if (q !== lastQ) hideDd(); return; }
+      if (q.length < 3 || q === lastQ || q === dismissedQ) { if (q !== lastQ) hideDd(); return; }
       lastQ = q;
       var mySeq = ++seq;
       var countryEl = form.querySelector('[name="country"]');
@@ -332,7 +332,7 @@
     }
     streetEl.addEventListener('input', schedule);
     if (cityEl) cityEl.addEventListener('input', schedule);
-    if (streetEl.value.trim().length >= 4) timer = setTimeout(run, 600);
+    if (streetEl.value.trim().length >= 3) timer = setTimeout(run, 600);
   }
 
   /* Silent submit-time check: validate, fold any corrections into the
