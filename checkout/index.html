@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
   root.innerHTML =
     '<div class="checkout-layout">' +
     '<div class="checkout-main">' +
-    '<style>@media (max-width:640px){.pay-options-grid{grid-template-columns:1fr !important}}.pay-options-grid{display:none !important}</style>' +
+    '<style>@media (max-width:640px){.pay-options-grid{grid-template-columns:1fr !important}}</style>' +
     '</div></section></div>' +
     '<div id="manual-form-wrap">' +
     '<section class="card"><h2><span class="step-num">1</span> Contact</h2>' +
@@ -150,24 +150,9 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div id="ship-options" style="margin-top:12px"></div></div></section>' +
     
     '<section class="card" style="margin:16px 0;max-width:600px;text-align:center">' +
-    '<button type="button" id="continue-to-payment" class="btn btn-primary" style="width:100%;padding:16px;font-size:1.1rem">Continue to payment →</button>' +
+    '<button type="button" id="continue-to-payment" class="btn btn-primary" style="font-size:1.1rem;padding:14px 32px">Continue to payment &rarr;</button>' +
     '<div class="error" id="continue-err" style="display:none;margin-top:12px"></div>' +
     '</section>' +
-    
-    '<div class="pay-options-grid" style="display:flex;flex-direction:column;gap:16px;margin:16px 0;max-width:600px">' +
-    '<section class="card" id="express-checkout-card" style="margin:0"><h2>Pay with PayPal</h2>' +
-    '<p class="hint" style="margin-bottom:12px">Secure checkout via PayPal — pay with your balance, bank, or card.</p>' +
-    '<div style="width:250px;max-width:100%;margin:0 auto"><div id="pay-paypal-top">' +
-    '<button type="button" id="paypal-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#FFC439;color:#003087;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(255,196,57,.35)"><img src="/assets/img/payments/paypal-official.svg" alt="" style="height:22px;width:auto"><span>Continue to PayPal</span></button>' +
-    '<div class="error" id="paypal-hosted-err" style="display:none"></div>' +
-    '<div class="hint" id="paypal-msg"></div></div>' +
-    
-    '</section>' +
-    '<section class="card" style="margin:0"><h2>Pay with card</h2>' +
-    '<p class="hint" style="margin-bottom:12px">Secure checkout via Stripe — all major cards accepted.</p>' +
-    '<div style="width:250px;max-width:100%;margin:0 auto">' +
-    '<button type="button" id="stripe-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#635BFF;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,91,255,.35)"><img src="/assets/img/payments/stripe-official.svg" alt="" style="height:22px;width:auto;filter:brightness(0) invert(1)"><span>Continue to Stripe</span></button>' +
-    '<div class="error" id="hosted-err" style="display:none"></div>' +
     '<aside class="card summary"><h2>Order summary</h2>' +
     '<div class="cart-lines" id="sum-lines"></div>' +
     '<div id="sum-rows"></div></aside></div>';
@@ -577,8 +562,28 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- load provider config (keys embedded - publishable by design) ---------- */
   (function () {
     updateDividers();
-    wireStripeHosted();
-    wirePayPalHosted();
+    var contBtn = document.getElementById('continue-to-payment');
+    if (contBtn) {
+      contBtn.addEventListener('click', function () {
+        var payload = null;
+        try { payload = buildCheckoutPayload(); } catch (e) { payload = null; }
+        var errEl = document.getElementById('continue-err');
+        if (!payload) {
+          if (errEl) {
+            errEl.textContent = 'Please complete all required fields above.';
+            errEl.style.display = '';
+          }
+          // Scroll to first error
+          var firstErr = document.querySelector('.error:not([style*="none"])');
+          if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        try {
+          sessionStorage.setItem('bsr-checkout-payload', JSON.stringify(payload));
+        } catch (e) {}
+        window.location.href = '/checkout/payment/';
+      });
+    }
   })();
 
 
@@ -681,59 +686,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (errEl) { errEl.textContent = e.message || 'PayPal checkout failed. Please try again.'; errEl.style.display = ''; }
         else { alert(e.message || 'PayPal checkout failed. Please try again.'); }
       });
-    });
-  }
-
-  // Continue to payment: save payload and go to payment page
-  var contBtn = document.getElementById('continue-to-payment');
-  if (contBtn) {
-    contBtn.addEventListener('click', function () {
-      try {
-        var errEl = document.getElementById('continue-err');
-        errEl.style.display = 'none';
-        
-        // Get cart slugs from localStorage
-        var slugs = [];
-        try {
-          var cart = JSON.parse(localStorage.getItem('bsr-cart') || '[]');
-          slugs = cart.map(function(item) { return item.slug; }).filter(Boolean);
-        } catch (e) {}
-        
-        if (!slugs.length) {
-          errEl.textContent = 'Your cart is empty.';
-          errEl.style.display = 'block';
-          return;
-        }
-        
-        // Build payload from form fields
-        var payload = {
-          slugs: slugs,
-          email: (document.getElementById('f-email') || {}).value || '',
-          shipName: (document.getElementById('f-name') || {}).value || '',
-          shipPhone: (document.getElementById('f-ship-phone') || {}).value || '',
-          shipEmail: (document.getElementById('f-ship-email') || {}).value || '',
-          shipLine1: (document.getElementById('f-line1') || {}).value || '',
-          shipCity: (document.getElementById('f-city') || {}).value || '',
-          shipState: (document.getElementById('f-state') || {}).value || '',
-          shipPostal: (document.getElementById('f-postal') || {}).value || '',
-          shipCountry: (document.getElementById('f-country') || {}).value || 'US',
-          billName: (document.getElementById('f-bill-name') || {}).value || '',
-          billLine1: (document.getElementById('f-bill-line1') || {}).value || '',
-          billCity: (document.getElementById('f-bill-city') || {}).value || '',
-          billState: (document.getElementById('f-bill-state') || {}).value || '',
-          billPostal: (document.getElementById('f-bill-postal') || {}).value || '',
-          billCountry: (document.getElementById('f-bill-country') || {}).value || 'US'
-        };
-        
-        sessionStorage.setItem('bsr-checkout-payload', JSON.stringify(payload));
-        window.location.href = '/checkout/payment/';
-      } catch (e) {
-        var errEl = document.getElementById('continue-err');
-        if (errEl) {
-          errEl.textContent = 'Could not proceed: ' + (e.message || 'Unknown error');
-          errEl.style.display = 'block';
-        }
-      }
     });
   }
 
