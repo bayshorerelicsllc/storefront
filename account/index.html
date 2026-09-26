@@ -1314,11 +1314,15 @@ document.addEventListener('input', function (e) {
     var countryRaw=countrySel?countrySel.value.trim().toLowerCase():'us';
     var countryCode=countryMap[countryRaw]||countryRaw;
     if(!/^[a-z]{2}$/.test(countryCode)) countryCode='us';
-    if(countryCode==='us'){
-      var detected=detectCountry(zip);
-      if(detected&&detected!=='us'){
-        countryCode=detected;
-        if(countrySel) countrySel.value=detected.toUpperCase();
+    var detected=detectCountry(zip);
+    if(detected&&detected!==countryCode){
+      countryCode=detected;
+      if(countrySel){
+        if(countrySel.tagName==='SELECT'){
+          for(var i=0;i<countrySel.options.length;i++){
+            if(countrySel.options[i].value.toLowerCase()===detected){countrySel.selectedIndex=i;break;}
+          }
+        } else { countrySel.value=detected.toUpperCase(); }
       }
     }
     var apiZip=zip;

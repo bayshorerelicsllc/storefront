@@ -746,13 +746,11 @@ location.href='/checkout/payment/';
     var countryRaw=countryEl?countryEl.value.trim().toLowerCase():'us';
     var countryCode=countryMap[countryRaw]||countryRaw;
     if(!/^[a-z]{2}$/.test(countryCode)) countryCode='us';
-    // Auto-detect: if country is still default US but format looks foreign, switch
-    if(countryCode==='us'){
-      var detected=detectCountry(zip);
-      if(detected&&detected!=='us'){
-        countryCode=detected;
-        if(countryEl) countryEl.value=detected.toUpperCase();
-      }
+    // Auto-detect: if ZIP format clearly indicates a different country, switch
+    var detected=detectCountry(zip);
+    if(detected&&detected!==countryCode){
+      countryCode=detected;
+      if(countryEl) countryEl.value=detected.toUpperCase();
     }
     // Strip ZIP+4 extension for the API (it only wants the 5-digit base)
     var apiZip=zip;
