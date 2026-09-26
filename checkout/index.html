@@ -342,6 +342,28 @@ function showValidationModal(results, onDone){
   
   var hasSuggestions=results.some(function(r){return r.suggested;});
   
+  // Consolidate identical billing/shipping into one column with both indicators
+  var addrKey=function(a){
+    return [(a.address1||a.street||''),(a.address2||a.street2||''),(a.city||''),(a.state||''),(a.postal||a.zip||''),(a.country||'')].map(function(s){return String(s).trim().toLowerCase();}).join('|');
+  };
+  var isIdentical=false;
+  if(results.length===2){
+    var b=results.filter(function(r){return r.kind==='bill';})[0];
+    var s=results.filter(function(r){return r.kind!=='bill';})[0];
+    if(b&&s&&addrKey(b.original)===addrKey(s.original)){
+      // Also check suggested addresses match (or both have none)
+      var bSugg=b.suggested?addrKey(b.suggested):'';
+      var sSugg=s.suggested?addrKey(s.suggested):'';
+      if(bSugg===sSugg) isIdentical=true;
+    }
+  }
+  if(isIdentical){
+    // Merge into single result with both kinds
+    var merged=results.filter(function(r){return r.kind==='bill';})[0];
+    merged.bothKinds=true;
+    results=[merged];
+  }
+  
   // Build address cards - TRUE GRID for perfect alignment
   // Structure: each row is a grid row spanning all columns
   var nCols = results.length;
@@ -352,10 +374,17 @@ function showValidationModal(results, onDone){
     return '<div style="'+(extraStyle||'')+'">'+html+'</div>';
   };
   
-  // Row 1: Address type labels (Billing / Shipping)
+  // Row 1: Address type labels (Billing / Shipping, or both if identical)
   var labelRow = results.map(function(r){
-    var label = r.kind==='bill' ? 'Billing address' : 'Shipping address';
-    return cell('<div style="text-align:center;"><span style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;">'+label+'</span></div>');
+    var labelHtml;
+    if(r.bothKinds){
+      labelHtml='<span style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;margin:0 4px;">Billing address</span>'+
+                '<span style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;margin:0 4px;">Shipping address</span>';
+    } else {
+      var label = r.kind==='bill' ? 'Billing address' : 'Shipping address';
+      labelHtml='<span style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;">'+label+'</span>';
+    }
+    return cell('<div style="text-align:center;">'+labelHtml+'</div>');
   }).join('');
   
   // Row 2: "Suggested correction" labels
@@ -651,6 +680,8 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
           if(f.kind==='bill') writeBack(f.address, 'f-bill-');
           else writeBack(f.address, 'f-');
         });
+        // Sync shipping to billing if "same" is checked (writeBack doesn't fire input events)
+        if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}
         doProceed();
       });
     };
