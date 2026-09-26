@@ -6,24 +6,18 @@
 <title>Checkout — Bay Shore Relics LLC</title>
 <link rel="stylesheet" href="/assets/css/theme.css">
 <script src="/assets/js/bsr.js" defer></script>
+
 <style>
-.checkout-wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
-.checkout-grid { display: grid; grid-template-columns: 1fr 360px; gap: 30px; }
-.card { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 22px; margin-bottom: 18px; }
-.card h2 { margin-top: 0; }
-label { display: block; margin: 10px 0 4px; font-weight: 600; }
-input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.btn { width: 100%; padding: 15px; background: #2d5016; color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
-.summary { position: sticky; top: 20px; }
-.line { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
-.total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.15rem; padding-top: 10px; }
+.checkout-grid { display: grid; grid-template-columns: 1fr 360px; gap: 30px; align-items: start; }
 @media (max-width: 800px) { .checkout-grid { grid-template-columns: 1fr; } }
+.field { margin: 10px 0; }
+.field label { display: block; margin-bottom: 4px; font-weight: 600; }
+.field input, .field select { width: 100%; padding: 10px; box-sizing: border-box; }
 </style>
 </head>
 <body>
 <div id="bsr-header"></div>
-<div class="checkout-wrap">
+<div class="wrap"><div class="page-head"><h1>Checkout</h1><p>Each slide is a single physical item, sold once.</p></div>
 <h1>Checkout</h1>
 <div class="checkout-grid">
 <div>
@@ -46,7 +40,7 @@ input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radiu
 <div class="row2"><label>ZIP <input type="text" id="s_zip"></label><label>Country <input type="text" id="s_country" value="US"></label></div>
 </div>
 </div>
-<div class="card"><button class="btn" id="go">Continue to payment →</button><p id="err" style="color:red"></p></div>
+<div class="card"><button class="btn btn-primary" id="go" style="width:100%">Continue to payment →</button><p id="err" style="color:red"></p></div>
 </div>
 <div><div class="card summary"><h2>Order Summary</h2><div id="lines"></div><div class="total"><span>Total</span><span id="tot">$0.00</span></div></div></div>
 </div>
