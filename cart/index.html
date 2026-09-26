@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
         (discount ? '<div class="sum-row"><span>Discount</span><span>−' + BSR.money(discount) + '</span></div>' : '') +
         '<div class="sum-row"><span>Shipping &amp; taxes</span><span>At checkout</span></div>' +
         '<div class="sum-row total"><span>Total</span><span>' + BSR.money(Math.max(0, subtotal - discount)) + '</span></div>';
-      renderPromo(subtotal, list.length);
+      /* Promo code moved to payment page - not shown on cart */
     }
   }
 
