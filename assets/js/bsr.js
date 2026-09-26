@@ -972,6 +972,12 @@
     wireNotifBell();
     updateWishBadge();
     wireWishToggles();
+    /* Purge sold/gone items from the local wishlist on every page load,
+       then repaint the badge and all card hearts. */
+    pruneWishlist().then(function () {
+      updateWishBadge();
+      paintWishToggles(document);
+    });
     setInterval(upkeepTick, 30 * 1000);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) { markActive(); upkeepTick(); } });
     upkeepTick();
