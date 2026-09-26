@@ -273,7 +273,7 @@ function showWarningPopup(results, warnings, onDone){
     '<div class="val-actions" style="margin-top:16px;">'+
     '<button type="button" class="val-use" id="warn-ok-btn" style="width:100%;">I understand</button>'+
     '</div></div></div>';
-  var closeWarn=function(){root.innerHTML='';};
+  var closeWarn=function(){root.innerHTML='';resetBtn();};
   document.getElementById('warn-close-btn').addEventListener('click',closeWarn);
   document.getElementById('warn-overlay').addEventListener('click',function(e){
     if(e.target.id==='warn-overlay') closeWarn();
@@ -379,7 +379,7 @@ function showValidationModal(results, onDone){
   root.querySelectorAll('[data-keep]').forEach(function(btn){
     btn.style.background='#1a3c22';btn.style.color='#fff';
   });
-  var closeModal=function(){root.innerHTML='';};
+  var closeModal=function(){root.innerHTML='';resetBtn();};
   document.getElementById('val-close-btn').addEventListener('click',closeModal);
   document.getElementById('val-overlay').addEventListener('click',function(e){
     if(e.target.id==='val-overlay') closeModal();
@@ -497,7 +497,11 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
     return new Promise(function(resolve){
       if(!window.BSRAddrValidate||!BSRAddrValidate.validate){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:!(j&&j.deliverable)});return;}
       BSRAddrValidate.validate(payload).then(function(j){
-        if(!j||!j.ok){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:false});return;}
+        if(!j||!j.ok){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:false}).catch(function(){
+        if(timedOut) return;
+        clearTimeout(timer);
+        resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:false});
+      });return;}
         var corrected=j.address||null;
         var hasSuggestion=(j.corrected||(j.corrections&&j.corrections.length));
         if(!hasSuggestion||!corrected){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:!(j&&j.deliverable)});return;}
