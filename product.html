@@ -210,10 +210,10 @@ document.addEventListener('DOMContentLoaded', function () {
       /* Step 2: offer email too. Signed-in shoppers get one-tap with their
          account email (no typing); guests must enter an email. */
       function showEmailStep() {
-        BSR.me().then(function (me) { renderEmailStep(me && me.email ? me.email : ''); })
-          .catch(function () { renderEmailStep(''); });
+        BSR.me().then(function (me) { renderEmailStep(me && me.email ? me.email : '', BSR.guestEmail()); })
+          .catch(function () { renderEmailStep('', BSR.guestEmail()); });
       }
-      function renderEmailStep(accountEmail) {
+      function renderEmailStep(accountEmail, storedGuest) {
         var box = document.getElementById('notify-box');
         if (!box) return;
         var emailBlock;
@@ -229,7 +229,8 @@ document.addEventListener('DOMContentLoaded', function () {
           emailBlock =
             '<div class="notify-email">' +
             '<label class="notify-label" for="wl-email"><strong>Want an email too?</strong></label>' +
-            '<div class="field"><input type="email" id="wl-email" placeholder="you@example.com" aria-label="Email address" autocomplete="email"></div>' +
+            '<div class="field"><input type="email" id="wl-email" placeholder="you@example.com" aria-label="Email address" autocomplete="email"' +
+            (storedGuest ? ' value="' + BSR.esc(storedGuest) + '"' : '') + '></div>' +
             '<div class="notify-row"><button class="btn btn-primary" id="wl-email-btn" type="button">Email me too</button>' +
             '<button class="btn btn-secondary" id="wl-skip" type="button">No thanks</button></div>' +
             '</div>';
@@ -257,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }
           var eb = document.getElementById('wl-email-btn');
           eb.disabled = true;
+          if (!accountEmail) BSR.setGuestEmail(em); /* ask once: keep it for this browser */
           BSR.api('/api/waitlist', { method: 'POST', body: { slug: p.slug, email: em, bid: BSR.bid() } }).then(function (j) {
             var nb = document.getElementById('notify-box');
             if (j && j.ok) {
