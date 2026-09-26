@@ -790,23 +790,23 @@ try {
   if (window.BSRAddrValidate && BSRAddrValidate.validate) {
     var payload={address1:billing.address.line1,address2:billing.address.line2,city:billing.address.city,state:billing.address.state,postal:billing.address.postal,country:billing.address.country};
     BSRAddrValidate.validate(payload).then(function(j){
-      if (j && j.ok && (j.corrected || (j.corrections && j.corrections.length)) && j.address) {
-        // Show validation modal with suggestion
-        var corrected=j.address;
-        var results=[{kind:'billing',original:payload,suggested:corrected,suggestedRaw:j,undeliverable:!(j.deliverable)}];
-        if (typeof showValidationModal==='function') {
-          showValidationModal(results, function(fixed){
-            if (fixed) {
-              b.address.line1=fixed.address1||b.address.line1;
-              b.address.line2=fixed.address2||b.address.line2;
-              b.address.city=fixed.city||b.address.city;
-              b.address.state=fixed.state||b.address.state;
-              b.address.postal=(fixed.postal||fixed.zip)||b.address.postal;
-              b.address.country=fixed.country||b.address.country;
-            }
-            doSave(b);
-          });
-        } else { doSave(billing); }
+      // Show validation modal for the billing address (matches old behavior)
+      var corrected = (j && j.address) || null;
+      var hasSuggestion = j && (j.corrected || (j.corrections && j.corrections.length));
+      var results=[{kind:'bill',original:payload,suggested:hasSuggestion?corrected:null,suggestedRaw:j,undeliverable:!(j&&j.deliverable)}];
+      if (typeof showValidationModal==='function') {
+        showValidationModal(results, function(fixed){
+          var b = billing;
+          if (fixed) {
+            b.address.line1=fixed.address1||b.address.line1;
+            b.address.line2=fixed.address2||b.address.line2;
+            b.address.city=fixed.city||b.address.city;
+            b.address.state=fixed.state||b.address.state;
+            b.address.postal=(fixed.postal||fixed.zip)||b.address.postal;
+            b.address.country=fixed.country||b.address.country;
+          }
+          doSave(b);
+        });
       } else { doSave(billing); }
     }).catch(function(){ doSave(billing); });
   } else { doSave(billing); }
