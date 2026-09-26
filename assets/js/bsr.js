@@ -229,7 +229,8 @@
     return Math.floor(d / 86400000) + 'd ago';
   }
   var notifFirstPoll = true;
-  /* In-page popup when the bell goes off with a new notification. */
+  /* In-page popup when the bell goes off with a new notification.
+     "Available again" alerts render like an order-summary line: photo, title, price, Add to cart. */
   function notifPopup(n) {
     var wrap = document.getElementById('bsr-notif-popups');
     if (!wrap) {
@@ -243,17 +244,52 @@
     var el = document.createElement('div');
     el.className = 'bsr-notif-popup';
     el.setAttribute('data-nid', n.id);
-    el.innerHTML = '<button class="bsr-notif-popup-x" aria-label="Dismiss">&times;</button>' +
-      '<div class="t">' + esc(n.title) + '</div>' +
-      '<div class="b">' + esc(n.body) + '</div>' +
-      (n.url ? '<span class="bsr-notif-popup-a">View &rsaquo;</span>' : '');
-    el.querySelector('.bsr-notif-popup-x').addEventListener('click', function (ev) {
-      ev.stopPropagation();
-      if (el.parentNode) el.parentNode.removeChild(el);
-    });
-    if (n.url) el.addEventListener('click', function () { window.location.href = n.url; });
+    function dismiss() { if (el.parentNode) el.parentNode.removeChild(el); }
+    var closeBtn = '<button class="bsr-notif-popup-x" aria-label="Dismiss">&times;</button>';
+    if (n.title === 'Available again' && n.product) {
+      var p = n.product;
+      el.innerHTML = closeBtn +
+        '<div class="bsr-np-row">' +
+          (p.image ? '<img class="bsr-np-img" src="' + esc(p.image) + '" alt="">'
+                   : '<div class="bsr-np-img bsr-np-noimg"></div>') +
+          '<div class="bsr-np-main">' +
+            '<div class="t">' + esc((p.item_number ? p.item_number + ' \u00B7 ' : '') + (p.title || n.title)) + '</div>' +
+            '<div class="bsr-np-price">' + money(p.price_cents) + '</div>' +
+            '<div class="b">' + esc(n.body) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="bsr-modal-actions">' +
+          '<button class="btn btn-primary btn-sm bsr-np-add" type="button">Add to cart</button>' +
+          (n.url ? '<a class="btn btn-secondary btn-sm" href="' + esc(n.url) + '">View</a>' : '') +
+        '</div>' +
+        '<div class="bsr-np-err" style="display:none"></div>';
+      el.querySelector('.bsr-notif-popup-x').addEventListener('click', function (ev) { ev.stopPropagation(); dismiss(); });
+      var addBtn = el.querySelector('.bsr-np-add');
+      addBtn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        addBtn.disabled = true;
+        addBtn.textContent = 'Adding\u2026';
+        BSR.cart.add(n.slug).then(function (r) {
+          if (r && r.ok) { dismiss(); toast('Added \u2014 reserved for 30 minutes'); pollNotifications(); }
+          else {
+            var err = el.querySelector('.bsr-np-err');
+            err.style.display = '';
+            err.textContent = (r && r.error) || 'Could not add it right now.';
+            addBtn.disabled = false;
+            addBtn.textContent = 'Add to cart';
+          }
+        });
+      });
+    } else {
+      el.innerHTML = closeBtn +
+        '<div class="t">' + esc(n.title) + '</div>' +
+        '<div class="b">' + esc(n.body) + '</div>' +
+        (n.url ? '<span class="bsr-notif-popup-a">View &rsaquo;</span>' : '');
+      el.querySelector('.bsr-notif-popup-x').addEventListener('click', function (ev) { ev.stopPropagation(); dismiss(); });
+      if (n.url) el.addEventListener('click', function () { window.location.href = n.url; });
+    }
     wrap.appendChild(el);
-    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 12000);
+    setTimeout(dismiss, 15000);
   }
   function pollNotifications() {
     return api('/api/notifications?bid=' + encodeURIComponent(bid())).then(function (j) {
@@ -331,6 +367,13 @@
       '.bsr-notif-popup .b{font-size:13px;color:var(--muted,#666);margin-top:2px}' +
       '.bsr-notif-popup-a{display:inline-block;margin-top:6px;font-size:13px;font-weight:700;color:var(--accent,#1a5c3a)}' +
       '.bsr-notif-popup-x{position:absolute;top:6px;right:8px;border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:var(--muted,#999)}' +
+      '.bsr-np-row{display:flex;gap:10px;align-items:flex-start}' +
+      '.bsr-np-img{width:72px;height:72px;object-fit:cover;border-radius:8px;flex:none;background:var(--chip,#f1ece1)}' +
+      '.bsr-np-noimg{display:block}' +
+      '.bsr-np-main{flex:1;min-width:0}' +
+      '.bsr-np-price{font-weight:700;margin-top:2px}' +
+      '.bsr-notif-popup .bsr-modal-actions{margin-top:10px}' +
+      '.bsr-np-err{color:#b3261e;font-size:13px;margin-top:8px}' +
       '@keyframes bsrPopIn{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}' +
       '.notif-enable{margin:8px;padding:10px;border:1px dashed var(--border,#ccc);border-radius:8px;text-align:center;font-size:13px}' +
       '.bsr-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1300;display:flex;align-items:center;justify-content:center;padding:16px}' +
@@ -518,6 +561,7 @@
 
   function upkeepTick() {
     if (document.hidden) return;
+    pollNotifications(); /* bell badge + popups stay live even with an empty cart */
     var items = readCart().filter(function (i) { return i.token; });
     if (!items.length) { if (expiryModalOpen) closeExpiryModal(); return; }
     var idle = (Date.now() - lastActive) > IDLE_MS;
@@ -527,7 +571,6 @@
       items.forEach(function (it) {
         cart.heartbeatOne(it).then(function (alive) { if (!alive) dropToWishlist(it.slug); });
       });
-      pollNotifications();
       return;
     }
     /* Idle: only warn as the reservation runs out. */
