@@ -164,7 +164,7 @@
     var nodes = [];
     while(walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(function(n){
-      if(n.nodeValue && n.nodeValue.trim() === 'Your cart is empty.'){
+      if(n.nodeValue && n.nodeValue.toLowerCase().indexOf('cart is empty') !== -1){
         var p = n.parentNode;
         if(p) p.style.display = 'none';
       }
