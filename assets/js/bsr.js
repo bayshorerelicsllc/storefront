@@ -336,12 +336,11 @@
       });
       if (changed) writeSeenIds(seen);
       if (!notifFirstPoll && fresh.length) {
-        var panelOpen = notifPanelEl && notifPanelEl.classList.contains('open');
         fresh.forEach(function (n) {
           if (('Notification' in window) && Notification.permission === 'granted') {
             try { new Notification(n.title, { body: n.body, icon: '/assets/img/logo.png', tag: n.id }); } catch (e) {}
           }
-          if (!panelOpen) notifPopup(n);
+          notifPopup(n); /* always pop, even with the panel open */
         });
       }
       notifFirstPoll = false;
