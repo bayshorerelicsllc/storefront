@@ -56,7 +56,7 @@
 </section>
 
 <section class="card" style="text-align:center">
-<button type="button" id="continue-to-payment" class="btn btn-primary" style="width:100%;padding:16px;font-size:1.1rem">Continue to shipping →</button>
+<button type="button" id="continue-to-payment" class="btn btn-primary" style="width:100%;padding:16px;font-size:1.1rem" onclick="try{if(typeof proceedToShipping==='function'){proceedToShipping();}else{var c=[];try{c=JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){} if(!c.length){alert('Your cart is empty.');}else{var b={name:document.getElementById('f-bill-name').value,email:document.getElementById('f-bill-email').value,phone:document.getElementById('f-bill-phone').value,address:{line1:document.getElementById('f-bill-line1').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}};sessionStorage.setItem('bsr-billing',JSON.stringify({slugs:c,billing:b}));location.href='/checkout/shipping/?t='+Date.now();}}}catch(e){alert('Error: '+e.message);}">Continue to shipping →</button>
 <div class="error" id="continue-err" style="display:none;color:#c00;margin-top:10px"></div>
 </section>
 </div>
