@@ -17,6 +17,11 @@
 .addr-val-warn { border-color:#b98a2f; background:#fdf6e8; }
 .addr-val-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
 </style>
+<style>
+@media (max-width:900px){
+  .checkout-layout{grid-template-columns:1fr 1fr !important;gap:16px !important}
+}
+</style>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -67,7 +72,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   root.innerHTML =
-    '<style>@media (max-width:900px){.checkout-layout{grid-template-columns:1fr 1fr !important;gap:16px !important}}</style>' +
     '<div class="checkout-layout">' +
     '<div class="checkout-main">' +
     '<style>@media (max-width:640px){.pay-options-grid{grid-template-columns:1fr !important}}</style>' +
