@@ -882,6 +882,21 @@ function initAddressPickers() {
       if (selAddr && typeof fillShipForm==='function') fillShipForm(selAddr);
     }
     // (Billing is on separate page - no bill-saved here)
+    // Polling fallback: check dropdown value periodically
+    var _lastShipVal = null;
+    setInterval(function(){
+      var el = document.getElementById('ship-saved');
+      if (!el) return;
+      var v = el.value;
+      if (v !== _lastShipVal) {
+        _lastShipVal = v;
+        var a = byId[String(v)];
+        if (a && typeof fillShipForm==='function') {
+          if (typeof clearShipForm==='function') clearShipForm();
+          fillShipForm(a);
+        }
+      }
+    }, 500);
   }).catch(function(){});
 }
 
