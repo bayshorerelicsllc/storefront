@@ -576,7 +576,7 @@ function validateRequiredFields(){
   return true;
 }
 
-document.getElementById('continue-to-payment').addEventListener('click',function(){ proceedToShipping(); return; // old handler below disabled
+document.getElementById('continue-to-payment').addEventListener('click',function(){ try { proceedToShipping(); } catch(e) { alert('Error: ' + e.message); } return; });// old handler disabled
 
 var btn=this;
 var err=document.getElementById('continue-err');err.style.display='none';
@@ -703,7 +703,6 @@ var billing={name:document.getElementById('f-bill-name').value,company:document.
 sessionStorage.setItem('bsr-billing',JSON.stringify({slugs:_cart,billing:billing}));
 location.href='/checkout/shipping/?t='+Date.now();
 }
-});
 
 
 // Postal code autocomplete - fill city/state/country from postal code (international)
