@@ -224,13 +224,19 @@ function showWarningPopup(results, warnings, onDone){
     warnHtml+'</div>';
   }).join('');
   root.innerHTML=
-    '<div class="bsr-val-modal-overlay">'+
-    '<div class="bsr-val-modal" style="max-width:720px;">'+
+    '<div class="bsr-val-modal-overlay" id="warn-overlay">'+
+    '<div class="bsr-val-modal" style="max-width:720px;position:relative;">'+
+    '<button type="button" id="warn-close-btn" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">&times;</button>'+
     '<h3>Address issue'+(warnings.length>1?'s':'')+'</h3>'+
     '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+cols+'</div>'+
     '<div class="val-actions" style="margin-top:16px;">'+
     '<button type="button" class="val-use" id="warn-ok-btn" style="width:100%;">I understand</button>'+
     '</div></div></div>';
+  var closeWarn=function(){root.innerHTML='';};
+  document.getElementById('warn-close-btn').addEventListener('click',closeWarn);
+  document.getElementById('warn-overlay').addEventListener('click',function(e){
+    if(e.target.id==='warn-overlay') closeWarn();
+  });
   document.getElementById('warn-ok-btn').addEventListener('click',function(){
     root.innerHTML='';onDone();
   });
@@ -274,8 +280,9 @@ function showValidationModal(results, onDone){
   }).join('');
   var hasSuggestions=results.some(function(r){return r.suggested;});
   root.innerHTML=
-    '<div class="bsr-val-modal-overlay">'+
-    '<div class="bsr-val-modal" style="max-width:720px;max-height:90vh;overflow-y:auto;">'+
+    '<div class="bsr-val-modal-overlay" id="val-overlay">'+
+    '<div class="bsr-val-modal" style="max-width:720px;max-height:90vh;overflow-y:auto;position:relative;">'+
+    '<button type="button" id="val-close-btn" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">&times;</button>'+
     '<h3>Confirm your addresses</h3>'+
     '<p>'+(hasSuggestions?'Shippo suggests corrections below. Review':'Please confirm')+' your billing and shipping addresses:</p>'+
     '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+cols+'</div>'+
@@ -304,6 +311,11 @@ function showValidationModal(results, onDone){
   });
   root.querySelectorAll('[data-keep]').forEach(function(btn){
     btn.style.background='#1a3c22';btn.style.color='#fff';
+  });
+  var closeModal=function(){root.innerHTML='';};
+  document.getElementById('val-close-btn').addEventListener('click',closeModal);
+  document.getElementById('val-overlay').addEventListener('click',function(e){
+    if(e.target.id==='val-overlay') closeModal();
   });
   document.getElementById('val-continue-btn').addEventListener('click',function(){
     root.innerHTML='';
