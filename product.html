@@ -235,10 +235,12 @@ document.addEventListener('DOMContentLoaded', function () {
             '</div>';
         }
         box.innerHTML =
+          '<div class="notify-panel">' +
           '<div class="notify-done"><span class="notify-ic">' + BSR.icon('check', 'ic-sm') + '</span>' +
           '<div><strong>You\u2019re watching this slide.</strong>' +
           '<span class="notify-sub">We\u2019ll pop up an alert here if it frees up.</span></div></div>' +
-          emailBlock;
+          emailBlock +
+          '</div>';
         document.getElementById('wl-skip').addEventListener('click', function () {
           var nb = document.getElementById('notify-box');
           if (nb) nb.querySelector('.notify-email').remove();
@@ -259,9 +261,11 @@ document.addEventListener('DOMContentLoaded', function () {
             var nb = document.getElementById('notify-box');
             if (j && j.ok) {
               if (nb) nb.innerHTML =
+                '<div class="notify-panel">' +
                 '<div class="notify-done"><span class="notify-ic">' + BSR.icon('check', 'ic-sm') + '</span>' +
                 '<div><strong>You\u2019re all set.</strong>' +
-                '<span class="notify-sub">We\u2019ll alert you here, in this browser, and at ' + BSR.esc(em) + '.</span></div></div>';
+                '<span class="notify-sub">We\u2019ll alert you here, in this browser, and at ' + BSR.esc(em) + '.</span></div></div>' +
+                '</div>';
             } else {
               eb.disabled = false;
               BSR.toast((j && j.error) || 'Could not add email alerts', 'err');
