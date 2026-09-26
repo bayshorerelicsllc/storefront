@@ -123,6 +123,12 @@
     var btn = document.getElementById(btnId);
     if (!btn) return;
     btn.addEventListener('click', function () {
+      var pl = getPayload();
+      if (!pl || !pl.slugs || !pl.slugs.length) {
+        var el = document.getElementById(errId);
+        if (el) { el.textContent = 'Your order was not found. Please go back to checkout and try again.'; el.style.display = ''; }
+        return;
+      }
       btn.disabled = true;
       var orig = btn.innerHTML;
       btn.innerHTML = '<span>' + loadingText + '</span>';
