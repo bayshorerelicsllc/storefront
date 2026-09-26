@@ -725,7 +725,8 @@ function setupZipLookup(zipId, cityId, stateId, countryId){
   var lastLookup='';
   // Map common full country names to ISO codes
   var countryMap={'united states':'us','usa':'us','canada':'ca','united kingdom':'gb','uk':'gb','great britain':'gb','germany':'de','france':'fr','australia':'au','mexico':'mx','japan':'jp','ireland':'ie','netherlands':'nl','spain':'es','italy':'it'};
-  zipEl.addEventListener('blur', function(){
+  var debounceTimer=null;
+  function doLookup(){
     var zip=zipEl.value.trim();
     if(!zip) return;
     var countryEl=document.getElementById(countryId);
@@ -750,7 +751,14 @@ function setupZipLookup(zipId, cityId, stateId, countryId){
         if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}
       })
       .catch(function(){ /* Invalid postal code or API down - leave fields alone */ });
+  }
+  // Trigger on input (debounced) and on blur/change for reliability
+  zipEl.addEventListener('input', function(){
+    clearTimeout(debounceTimer);
+    debounceTimer=setTimeout(doLookup, 800);
   });
+  zipEl.addEventListener('blur', doLookup);
+  zipEl.addEventListener('change', doLookup);
 }
 setupZipLookup('f-bill-postal','f-bill-city','f-bill-state','f-bill-country');
 setupZipLookup('f-postal','f-city','f-state','f-country');
