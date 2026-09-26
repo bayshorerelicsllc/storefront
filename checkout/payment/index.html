@@ -114,6 +114,8 @@
     try {
       var s = sessionStorage.getItem('bsr-checkout-payload');
       if (s) return JSON.parse(s);
+      s = localStorage.getItem('bsr-checkout-payload-bak');
+      if (s) return JSON.parse(s);
     } catch (e) {}
     return payload;
   }

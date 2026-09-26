@@ -723,6 +723,7 @@ if(same){
   p.shipping={name:document.getElementById('f-ship-name').value,company:document.getElementById('f-ship-company').value,email:document.getElementById('f-ship-email').value,phone:cleanPhone(document.getElementById('f-ship-phone').value),address:{line1:document.getElementById('f-line1').value,line2:document.getElementById('f-line2').value,city:document.getElementById('f-city').value,state:document.getElementById('f-state').value,postal:document.getElementById('f-postal').value,country:document.getElementById('f-country').value}};
 }
 sessionStorage.setItem('bsr-checkout-payload',JSON.stringify(p));
+try{localStorage.setItem('bsr-checkout-payload-bak',JSON.stringify(p));}catch(e){}
 location.href='/checkout/payment/';
 }
 });
