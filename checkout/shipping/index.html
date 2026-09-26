@@ -884,11 +884,27 @@ var selectedShipOption = null;
 function fetchShipRates() {
   var sameAsBilling = document.getElementById('f-ship-same');
   var useBilling = sameAsBilling && sameAsBilling.checked;
-  var postal = document.getElementById(useBilling ? 'f-bill-postal' : 'f-postal');
-  var country = document.getElementById(useBilling ? 'f-bill-country' : 'f-country');
-  var city = document.getElementById(useBilling ? 'f-bill-city' : 'f-city');
-  var state = document.getElementById(useBilling ? 'f-bill-state' : 'f-state');
-  var street = document.getElementById(useBilling ? 'f-bill-line1' : 'f-line1');
+  var postal, country, city, state, street;
+  if (useBilling) {
+    // Read billing from sessionStorage (billing page saved it there)
+    try {
+      var billingData = JSON.parse(sessionStorage.getItem('bsr-billing') || 'null');
+      if (billingData && billingData.billing && billingData.billing.address) {
+        var addr = billingData.billing.address;
+        postal = { value: addr.postal || '' };
+        country = { value: addr.country || 'US' };
+        city = { value: addr.city || '' };
+        state = { value: addr.state || '' };
+        street = { value: addr.line1 || '' };
+      }
+    } catch(e) {}
+  } else {
+    postal = document.getElementById('f-postal');
+    country = document.getElementById('f-country');
+    city = document.getElementById('f-city');
+    state = document.getElementById('f-state');
+    street = document.getElementById('f-line1');
+  }
   if (!postal || !postal.value.trim()) return;
   
   var section = document.getElementById('ship-method-section');
