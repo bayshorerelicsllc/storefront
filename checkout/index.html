@@ -699,7 +699,8 @@ proceedToPayment();
 function proceedToShipping(){
 var _cart=[]; try{_cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){}
 if(!_cart||!_cart.length){alert('Your cart is empty. Please add an item before checking out.');return;}
-var billing={name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:cleanPhone(document.getElementById('f-bill-phone').value),address:{line1:document.getElementById('f-bill-line1').value,line2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}};
+var _cp=function(p){try{if(typeof cleanPhone==='function')return cleanPhone(p);}catch(e){} return (p||'').replace(/[^0-9+]/g,'');};
+var billing={name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:_cp(document.getElementById('f-bill-phone').value),address:{line1:document.getElementById('f-bill-line1').value,line2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}};
 sessionStorage.setItem('bsr-billing',JSON.stringify({slugs:_cart,billing:billing}));
 location.href='/checkout/shipping/?t='+Date.now();
 }
