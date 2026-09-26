@@ -340,7 +340,7 @@
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       var open = notifPanelEl.classList.toggle('open');
-      if (open) { renderNotifPanel(); markNotifsRead(); }
+      if (open) { pollNotifications().then(function () { markNotifsRead(); }); }
     });
     document.addEventListener('click', function (e) {
       if (notifPanelEl && notifPanelEl.classList.contains('open') &&

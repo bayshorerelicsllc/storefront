@@ -122,6 +122,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     renderBuyRow(p);
+    /* If this slide's reservation lapses while the page is open, refresh the buy row. */
+    BSR._onCartDrop = function (slug) { if (slug === p.slug) renderBuyRow(p); };
 
     // Related slides: same railroad, excluding self
     BSR.api('/api/catalog/products?per=12').then(function (j) {
