@@ -725,7 +725,7 @@ if(same){
 }
 sessionStorage.setItem('bsr-checkout-payload',JSON.stringify(p));
 try{localStorage.setItem('bsr-checkout-payload-bak',JSON.stringify(p));}catch(e){}
-location.href='/checkout/payment/';
+location.href='/checkout/payment/?t='+Date.now();
 }
 });
 
