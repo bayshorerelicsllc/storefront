@@ -17,6 +17,16 @@
 .addr-val-warn { border-color:#b98a2f; background:#fdf6e8; }
 .addr-val-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
 </style>
+<style>
+.checkout-layout { display: grid !important; grid-template-columns: minmax(0,1fr) 380px !important; gap: 34px !important; align-items: start !important; }
+.checkout-layout > aside { grid-column: 2 !important; }
+.checkout-layout > div { grid-column: 1 !important; min-width: 0; }
+@media (max-width: 900px) {
+  .checkout-layout { grid-template-columns: 1fr !important; }
+  .checkout-layout > aside { grid-column: 1 !important; }
+  .checkout-layout > div { grid-column: 1 !important; }
+}
+</style>
 </head>
 <body>
 <div id="bsr-header"></div>
