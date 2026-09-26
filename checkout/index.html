@@ -418,6 +418,28 @@ function showValidationModal(results, onDone){
   document.getElementById('val-overlay').addEventListener('click',function(e){
     if(e.target.id==='val-overlay') closeModal();
   });
+  // Force equal heights across columns for perfect alignment
+  setTimeout(function(){
+    var grid = root.querySelector('div[style*="grid-template-columns"]');
+    if(!grid) return;
+    var cols = nCols;
+    var items = Array.prototype.slice.call(grid.children);
+    // Group items by row (every 'cols' items = one row)
+    for(var r=0; r<items.length; r+=cols){
+      var rowItems = items.slice(r, r+cols);
+      var maxH = 0;
+      rowItems.forEach(function(el){
+        el.style.height='auto';
+        var h = el.offsetHeight;
+        if(h>maxH) maxH=h;
+      });
+      rowItems.forEach(function(el){
+        el.style.height=maxH+'px';
+        el.style.boxSizing='border-box';
+      });
+    }
+  }, 50);
+  
   document.getElementById('val-continue-btn').addEventListener('click',function(){
     root.innerHTML='';
     var fixed=results.map(function(r, idx){
