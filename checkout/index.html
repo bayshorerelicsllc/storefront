@@ -892,11 +892,13 @@ function initAddressPickers() {
 /* Shipping methods - fetch live rates from Shippo/Easyship */
 var selectedShipOption = null;
 function fetchShipRates() {
-  var postal = document.getElementById('f-postal');
-  var country = document.getElementById('f-country');
-  var city = document.getElementById('f-city');
-  var state = document.getElementById('f-state');
-  var street = document.getElementById('f-line1');
+  var sameAsBilling = document.getElementById('f-ship-same');
+  var useBilling = sameAsBilling && sameAsBilling.checked;
+  var postal = document.getElementById(useBilling ? 'f-bill-postal' : 'f-postal');
+  var country = document.getElementById(useBilling ? 'f-bill-country' : 'f-country');
+  var city = document.getElementById(useBilling ? 'f-bill-city' : 'f-city');
+  var state = document.getElementById(useBilling ? 'f-bill-state' : 'f-state');
+  var street = document.getElementById(useBilling ? 'f-bill-line1' : 'f-line1');
   if (!postal || !postal.value.trim()) return;
   
   var section = document.getElementById('ship-method-section');
@@ -990,14 +992,26 @@ if (document.readyState === 'loading') {
 }
 function initShipRates() {
   var postal = document.getElementById('f-postal');
+  var billPostal = document.getElementById('f-bill-postal');
+  var sameChk = document.getElementById('f-ship-same');
   if (postal) {
     postal.addEventListener('input', scheduleShipRateFetch);
     postal.addEventListener('change', scheduleShipRateFetch);
   }
-  // Also fetch if postal already has a value (e.g., from saved address)
-  if (postal && postal.value.trim()) {
-    setTimeout(fetchShipRates, 1000);
+  if (billPostal) {
+    billPostal.addEventListener('input', scheduleShipRateFetch);
+    billPostal.addEventListener('change', scheduleShipRateFetch);
   }
+  if (sameChk) {
+    sameChk.addEventListener('change', function() {
+      setTimeout(fetchShipRates, 500);
+    });
+  }
+  // Fetch if postal already has a value (e.g., from saved address)
+  setTimeout(function() {
+    var p = (sameChk && sameChk.checked ? billPostal : postal);
+    if (p && p.value.trim()) fetchShipRates();
+  }, 1500);
 }
 
 </script>
