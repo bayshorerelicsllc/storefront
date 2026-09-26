@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
       '</form>' +
       '<h3 class="sub" style="margin-top:28px">Email preferences</h3>' +
       '<div id="mkt-msg"></div>' +
-      '<label class="mkt-toggle"><input type="checkbox" id="mkt-opt" ' + (customer.accepts_marketing ? 'checked' : '') + '>' +
+      '<label class="mkt-toggle"><input type="checkbox" id="mkt-opt" style="accent-color:#1a3c22" ' + (customer.accepts_marketing ? 'checked' : '') + '>' +
       '<span>Send me new arrivals, restocks, and store news</span></label>' +
       '<div class="hint">You can unsubscribe anytime. We never sell your information.</div>' +
       '</div>';
@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
       : 'Order updates go here if different.');
     return '<div class="addr-form-wrap"><form class="addr-form" data-addr-form="' + (a.id || 'new') + '" data-addr-kind="' + kind + '">' +
       '<h4 class="addr-form-title">' + title + '</h4>' +
-      ((!isBook) ? '<label class="checkbox-row"><input type="checkbox" name="same_as_other"' + (sameChecked ? ' checked' : '') + '> ' + sameLabel + '</label>' : '') +
+      ((!isBook) ? '<label class="checkbox-row"><input type="checkbox" name="same_as_other" style="accent-color:#1a3c22"' + (sameChecked ? ' checked' : '') + '> ' + sameLabel + '</label>' : '') +
       '<div class="addr-form-grid two-col" data-addr-fields' + (sameChecked ? ' style="display:none"' : '') + '>' +
       (isBook ?
         '<div class="acct-field"><label>Nickname <span class="opt">(optional)</span></label><input name="nickname" maxlength="80" placeholder="Home, Warehouse\u2026" value="' + esc(a.nickname || '') + '"></div>' +
