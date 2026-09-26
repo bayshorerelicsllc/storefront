@@ -7,7 +7,7 @@
 <meta name="description" id="meta-desc" content="Vintage 35mm railroad slide — a single physical item, sold once.">
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260926g" defer></script>
+<script src="/assets/js/bsr.js?v=20260926h" defer></script>
 <style>.gallery-wrap{position:relative}</style>
 </head>
 <body>
@@ -182,12 +182,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     function showHeld() {
       row.innerHTML =
-        '<div class="held-note">' + BSR.icon('info', 'ic-sm') + '<span><strong>In someone\u2019s cart</strong> right now. If their reservation ends, it\u2019s yours to grab.</span></div>' +
-        '<div class="notify-box" id="notify-box">' +
-        '<p><strong>Want it if it frees up?</strong> Leave your email and we\u2019ll tell you the moment it\u2019s available.</p>' +
-        '<div class="row"><input type="email" id="wl-email" class="field" placeholder="Email address" aria-label="Email address">' +
-        '<button class="btn btn-secondary" id="wl-btn" type="button">Notify me</button></div>' +
-        '<p style="margin-top:8px"><button class="btn btn-ghost btn-sm" id="wl-push" type="button">Or notify me in this browser</button></p>' +
+        '<div class="notify-panel" id="notify-box">' +
+        '<div class="notify-head"><span class="notify-ic">' + BSR.icon('bell', 'ic-sm') + '</span>' +
+        '<div><strong>Someone else is holding this slide</strong>' +
+        '<span class="notify-sub">If their reservation ends, it\u2019s yours to grab.</span></div></div>' +
+        '<label class="notify-label" for="wl-email">Email me the moment it\u2019s available</label>' +
+        '<div class="notify-row"><input type="email" id="wl-email" class="field" placeholder="you@example.com" aria-label="Email address">' +
+        '<button class="btn btn-primary" id="wl-btn" type="button">Notify me</button></div>' +
+        '<div class="notify-or" aria-hidden="true"><span>or</span></div>' +
+        '<button class="btn btn-secondary notify-full" id="wl-push" type="button">' + BSR.icon('bell', 'ic-sm') + ' Notify me in this browser</button>' +
         '</div>';
       document.getElementById('wl-btn').addEventListener('click', function () {
         var em = document.getElementById('wl-email').value.trim();
@@ -196,7 +199,9 @@ document.addEventListener('DOMContentLoaded', function () {
         BSR.api('/api/waitlist', { method: 'POST', body: { slug: p.slug, email: em, bid: BSR.bid() } }).then(function (j) {
           if (j && j.ok) {
             document.getElementById('notify-box').innerHTML =
-              '<p>' + BSR.icon('check', 'ic-sm') + ' <strong>You\u2019re on the list.</strong> We\u2019ll email you if this slide becomes available.</p>';
+              '<div class="notify-done"><span class="notify-ic">' + BSR.icon('check', 'ic-sm') + '</span>' +
+              '<div><strong>You\u2019re on the list.</strong>' +
+              '<span class="notify-sub">We\u2019ll email you if this slide becomes available.</span></div></div>';
             BSR.pollNotifications();
           } else {
             btn.disabled = false;
@@ -210,7 +215,9 @@ document.addEventListener('DOMContentLoaded', function () {
           BSR.api('/api/waitlist', { method: 'POST', body: { slug: p.slug, bid: BSR.bid(), watch: true } }).then(function () {
             var nb = document.getElementById('notify-box');
             if (nb) nb.innerHTML =
-              '<p>' + BSR.icon('check', 'ic-sm') + ' <strong>Watching this slide.</strong> We\u2019ll notify this browser if it frees up.</p>';
+              '<div class="notify-done"><span class="notify-ic">' + BSR.icon('check', 'ic-sm') + '</span>' +
+              '<div><strong>Watching this slide.</strong>' +
+              '<span class="notify-sub">We\u2019ll notify this browser if it frees up.</span></div></div>';
           });
         });
       });

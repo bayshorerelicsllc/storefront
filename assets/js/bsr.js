@@ -428,12 +428,23 @@
       '.bsr-modal .muted{color:var(--muted,#666);font-size:13px}' +
       '.bsr-modal #bsr-exp-count{font-variant-numeric:tabular-nums}' +
       '.bsr-modal-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}' +
-      '.held-note{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border,#e2ddd2);' +
-      'border-radius:8px;background:var(--chip,#f7f4ec);font-size:14px;margin-bottom:10px}' +
-      '.notify-box{border:1px solid var(--border,#e2ddd2);border-radius:8px;padding:12px;margin-bottom:10px}' +
-      '.notify-box p{margin:0 0 8px;font-size:14px}' +
-      '.notify-box .row{display:flex;gap:8px}' +
-      '.notify-box input{flex:1}' +
+      '.notify-panel{border:1px solid var(--border,#e2ddd2);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--card,#fff)}' +
+      '.held-note{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border,#e2ddd2);' +
+      'border-radius:12px;background:var(--chip,#f7f4ec);font-size:14px;margin-bottom:12px}' +
+      '.notify-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}' +
+      '.notify-ic{flex:0 0 auto;width:38px;height:38px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(201,162,39,.14);color:#8a6d1a}' +
+      '.notify-head strong{display:block;font-size:15px;margin-bottom:2px}' +
+      '.notify-sub{font-size:13px;color:var(--muted,#666)}' +
+      '.notify-label{display:block;font-size:13px;font-weight:600;margin:0 0 6px}' +
+      '.notify-row{display:flex;gap:8px}' +
+      '.notify-row input{flex:1;min-width:0}' +
+      '.notify-row .btn{white-space:nowrap;flex:0 0 auto}' +
+      '.notify-or{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--muted,#888);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}' +
+      '.notify-or::before,.notify-or::after{content:"";flex:1;height:1px;background:var(--border,#e2ddd2)}' +
+      '.notify-full{width:100%;display:flex;align-items:center;justify-content:center;gap:8px}' +
+      '.notify-done{display:flex;gap:12px;align-items:flex-start}' +
+      '.notify-done strong{display:block;font-size:15px;margin-bottom:2px}' +
+      '@media(max-width:480px){.notify-row{flex-direction:column}.notify-row .btn{width:100%}}' +
       '.wish-line{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--border,#eee)}';
     document.head.appendChild(st);
   }
