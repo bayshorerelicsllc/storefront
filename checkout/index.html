@@ -115,7 +115,7 @@ var _valTimer = setInterval(function(){
     } catch(e) {}
   }
 }, 200);
-var cart=[]; try{cart=JSON.parse(localStorage.getItem('bsr-cart')||'[]');}catch(e){}
+var cart=[]; try{cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){}
 var html='',t=0;
 cart.forEach(function(i){var p=parseFloat(i.price||0);t+=p;html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>'+(i.title||i.slug)+'</span><span>$'+p.toFixed(2)+'</span></div>';});
 document.getElementById('sum-lines').innerHTML=html||'<p>Cart empty</p>';
@@ -235,9 +235,9 @@ if (window.BSRAddrValidate && BSRAddrValidate.checkAndConfirm) {
 proceedToPayment();
 });
 function proceedToPayment(){
-var _cart=[]; try{_cart=JSON.parse(localStorage.getItem('bsr-cart')||'[]');}catch(e){}
+var _cart=[]; try{_cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){}
 var same=document.getElementById('f-ship-same').checked;
-var p={slugs:_cart.map(function(i){return i.slug;}),
+var p={slugs:_cart,
 bill:{name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:document.getElementById('f-bill-phone').value,street:document.getElementById('f-bill-line1').value,street2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,zip:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value},
 ship:null};
 if(same){p.ship=p.bill;}else{p.ship={name:document.getElementById('f-ship-name').value,company:document.getElementById('f-ship-company').value,email:document.getElementById('f-ship-email').value,phone:document.getElementById('f-ship-phone').value,street:document.getElementById('f-line1').value,street2:document.getElementById('f-line2').value,city:document.getElementById('f-city').value,state:document.getElementById('f-state').value,zip:document.getElementById('f-postal').value,country:document.getElementById('f-country').value};}
