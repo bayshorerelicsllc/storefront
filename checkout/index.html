@@ -303,31 +303,48 @@ function showValidationModal(results, onDone){
     sameAddr=(bb.address1===ss.address1&&(bb.address2||'')===(ss.address2||'')&&bb.city===ss.city&&bb.state===ss.state&&(bb.postal||bb.zip)===(ss.postal||ss.zip));
   }
   var displayResults=sameAddr?[billR]:results;
-  var cols=displayResults.map(function(r, idx){
+  // Build aligned grid: each row spans all columns so boxes line up
+  var gridHtml='';
+  var nCols=displayResults.length;
+  var gridStyle='display:grid;grid-template-columns:repeat('+nCols+',1fr);gap:16px;';
+  // Row 1: labels
+  var labelRow=displayResults.map(function(r){
     var kindLabel;
     if(sameAddr){kindLabel='<span class="val-kind">Bill to</span> <span class="val-kind">Ship to</span>';}
     else{kindLabel='<div class="val-kind">'+(r.kind==='bill'?'Bill to':'Ship to')+'</div>';}
-    var unitWarning='';
+    return '<div>'+kindLabel+'</div>';
+  }).join('');
+  // Row 2: unit warnings (empty div if none, to keep alignment)
+  var warnRow=displayResults.map(function(r){
     var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
     var unitInOrig=unitAlreadyInAddress(suggUnit, r.original.address1||r.original.street, r.original.address2||r.original.street2);
     if(r.suggested&&suggUnit&&!unitInOrig){
-      unitWarning='<div class="val-warn" style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;margin:8px 0;font-size:13px;color:#856404;">'+
+      return '<div class="val-warn" style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;font-size:13px;color:#856404;">'+
       '<strong>⚠ Unit number detected:</strong> Our address validator found a unit/apartment number for this address. Without it, you may not receive your item.</div>';
     }
-    var suggestedHtml='';
+    return '<div></div>';
+  }).join('');
+  // Row 3: suggested boxes
+  var suggRow=displayResults.map(function(r, idx){
     if(r.suggested){
-      suggestedHtml='<div class="val-addr"><strong>Suggested:</strong><br>'+fmtAddr(r.suggested)+'</div>'+
-      '<div class="val-choice" style="display:flex;gap:8px;margin:8px 0;">'+
+      return '<div class="val-addr" style="height:100%;box-sizing:border-box;"><strong>Suggested:</strong><br>'+fmtAddr(r.suggested)+'</div>';
+    }
+    return '<div></div>';
+  }).join('');
+  // Row 4: buttons
+  var btnRow=displayResults.map(function(r, idx){
+    if(r.suggested){
+      return '<div class="val-choice" style="display:flex;gap:8px;">'+
       '<button type="button" class="val-use" data-use="'+idx+'">Use suggested</button>'+
       '<button type="button" class="val-keep" data-keep="'+idx+'">Keep mine</button></div>';
     }
-    return '<div class="val-col" data-idx="'+idx+'" style="flex:1;min-width:220px;">'+
-    '<div>'+kindLabel+'</div>'+
-    unitWarning+
-    suggestedHtml+
-    '<div class="val-addr"><strong>'+(r.suggested?'Yours:':'Address:')+'</strong><br>'+fmtAddr(r.original)+'</div>'+
-    '</div>';
+    return '<div></div>';
   }).join('');
+  // Row 5: yours boxes
+  var yoursRow=displayResults.map(function(r){
+    return '<div class="val-addr" style="height:100%;box-sizing:border-box;"><strong>'+(r.suggested?'Yours:':'Address:')+'</strong><br>'+fmtAddr(r.original)+'</div>';
+  }).join('');
+  var cols='<div style="'+gridStyle+'">'+labelRow+warnRow+suggRow+btnRow+yoursRow+'</div>';
   var hasSuggestions=results.some(function(r){return r.suggested;});
   root.innerHTML=
     '<div class="bsr-val-modal-overlay" id="val-overlay">'+
