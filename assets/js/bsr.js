@@ -228,22 +228,52 @@
     if (d < 86400000) return Math.floor(d / 3600000) + 'h ago';
     return Math.floor(d / 86400000) + 'd ago';
   }
+  var notifFirstPoll = true;
+  /* In-page popup when the bell goes off with a new notification. */
+  function notifPopup(n) {
+    var wrap = document.getElementById('bsr-notif-popups');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'bsr-notif-popups';
+      wrap.className = 'bsr-notif-popups';
+      document.body.appendChild(wrap);
+    }
+    if (wrap.querySelector('[data-nid="' + n.id + '"]')) return;
+    while (wrap.children.length >= 3) wrap.removeChild(wrap.firstChild);
+    var el = document.createElement('div');
+    el.className = 'bsr-notif-popup';
+    el.setAttribute('data-nid', n.id);
+    el.innerHTML = '<button class="bsr-notif-popup-x" aria-label="Dismiss">&times;</button>' +
+      '<div class="t">' + esc(n.title) + '</div>' +
+      '<div class="b">' + esc(n.body) + '</div>' +
+      (n.url ? '<span class="bsr-notif-popup-a">View &rsaquo;</span>' : '');
+    el.querySelector('.bsr-notif-popup-x').addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      if (el.parentNode) el.parentNode.removeChild(el);
+    });
+    if (n.url) el.addEventListener('click', function () { window.location.href = n.url; });
+    wrap.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 12000);
+  }
   function pollNotifications() {
     return api('/api/notifications?bid=' + encodeURIComponent(bid())).then(function (j) {
       if (!j || !j.ok) return;
       serverNotifs = j.notifications || [];
-      var seen = readSeenIds(), changed = false;
-      if (('Notification' in window) && Notification.permission === 'granted') {
-        serverNotifs.forEach(function (n) {
-          if (!n.read && !seen[n.id]) {
-            seen[n.id] = 1; changed = true;
+      var seen = readSeenIds(), changed = false, fresh = [];
+      serverNotifs.forEach(function (n) {
+        if (!seen[n.id]) { seen[n.id] = 1; changed = true; if (!n.read) fresh.push(n); }
+      });
+      if (changed) writeSeenIds(seen);
+      if (!notifFirstPoll && fresh.length) {
+        var panelOpen = notifPanelEl && notifPanelEl.classList.contains('open');
+        fresh.forEach(function (n) {
+          if (('Notification' in window) && Notification.permission === 'granted') {
             try { new Notification(n.title, { body: n.body, icon: '/assets/img/logo.png', tag: n.id }); } catch (e) {}
           }
+          if (!panelOpen) notifPopup(n);
         });
-      } else {
-        serverNotifs.forEach(function (n) { if (!seen[n.id]) { seen[n.id] = 1; changed = true; } });
       }
-      if (changed) writeSeenIds(seen);
+      notifFirstPoll = false;
       updateNotifBadge();
       renderNotifPanel();
     }).catch(function () {});
@@ -294,6 +324,14 @@
       '.notif-item .w{font-size:11px;color:var(--muted,#999);margin-top:4px}' +
       '.notif-item.unread .t::before{content:"";display:inline-block;width:8px;height:8px;border-radius:4px;background:#c0392b;margin-right:6px}' +
       '.notif-empty{padding:18px 8px;text-align:center;color:var(--muted,#777);font-size:14px}' +
+      '.bsr-notif-popups{position:fixed;right:12px;bottom:12px;z-index:1400;display:flex;flex-direction:column;gap:8px;max-width:min(360px,calc(100vw - 24px))}' +
+      '.bsr-notif-popup{position:relative;background:var(--card,#fff);border:1px solid var(--border,#e2ddd2);border-radius:12px;' +
+      'box-shadow:0 12px 40px rgba(0,0,0,.22);padding:12px 36px 12px 12px;cursor:pointer;animation:bsrPopIn .25s ease-out}' +
+      '.bsr-notif-popup .t{font-weight:700;font-size:14px}' +
+      '.bsr-notif-popup .b{font-size:13px;color:var(--muted,#666);margin-top:2px}' +
+      '.bsr-notif-popup-a{display:inline-block;margin-top:6px;font-size:13px;font-weight:700;color:var(--accent,#1a5c3a)}' +
+      '.bsr-notif-popup-x{position:absolute;top:6px;right:8px;border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:var(--muted,#999)}' +
+      '@keyframes bsrPopIn{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}' +
       '.notif-enable{margin:8px;padding:10px;border:1px dashed var(--border,#ccc);border-radius:8px;text-align:center;font-size:13px}' +
       '.bsr-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1300;display:flex;align-items:center;justify-content:center;padding:16px}' +
       '.bsr-modal{background:var(--card,#fff);border-radius:14px;max-width:420px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}' +
