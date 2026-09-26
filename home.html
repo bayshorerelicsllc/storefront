@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var sale = p.compare_at_cents > p.price_cents
       ? ' <s>' + BSR.money(p.compare_at_cents) + '</s>' : '';
     return '<div class="card"><a class="card-link" href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' +
-      '<div class="card-img">' + img + '</div><div class="card-body">' +
+      '<div class="card-img">' + img + BSR.wishToggleHtml(p.slug) + '</div><div class="card-body">' +
       '<p class="card-title">' + BSR.esc(p.title) + '</p>' +
       '<p class="card-meta">' + BSR.esc(p.railroad || '') + (p.item_number ? ' · #' + BSR.esc(p.item_number) : '') + '</p>' +
       '<p class="card-price">' + BSR.money(p.price_cents) + sale + '</p>' +
