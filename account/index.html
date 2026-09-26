@@ -1241,6 +1241,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 tgl.checked = false;
                 BSR.toast('Could not update alerts', 'err');
               }).then(function () { tgl.disabled = false; });
+            } else if (!form.hidden) {
+              /* Tapping the toggle again dismisses the ask-once form. */
+              tgl.checked = false;
+              form.hidden = true;
             } else {
               /* Guest, first time: ask once, keep it for this browser. */
               tgl.checked = false;
