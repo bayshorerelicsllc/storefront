@@ -1,6 +1,6 @@
 {
-  "versionCode": 5,
-  "versionName": "1.4",
-  "url": "https://raw.githubusercontent.com/bayshorerelicsllc/storefront/main/boone/boone-1.4.apk",
-  "notes": "Boone's launcher icon is now the Muse avatar (Jolly)."
+  "versionCode": 6,
+  "versionName": "1.5",
+  "url": "https://raw.githubusercontent.com/bayshorerelicsllc/storefront/main/boone/boone-1.5.apk",
+  "notes": "Launcher icon is now the Muse avatar with headphones and laptop, sized to fit the icon mask."
 }
