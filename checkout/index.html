@@ -319,9 +319,9 @@ function showValidationModal(results, onDone){
     var buttonsHtml='';
     if(r.suggested){
       suggestedHtml=
-        '<div style="margin-bottom:14px;">'+
+        '<div style="margin-bottom:14px;display:flex;flex-direction:column;flex:1;">'+
           '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#1a3c22;margin-bottom:8px;">Suggested correction</div>'+
-          '<div style="background:#f1f8e9;border:2px solid #aed581;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#1a3c22;">'+fmtAddr(r.suggested)+'</div>'+
+          '<div style="background:#f1f8e9;border:2px solid #aed581;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#1a3c22;flex:1;display:flex;flex-direction:column;justify-content:center;min-height:110px;box-sizing:border-box;">'+fmtAddr(r.suggested)+'</div>'+
         '</div>';
       buttonsHtml=
         '<div style="display:flex;gap:10px;margin-bottom:14px;">'+
@@ -331,13 +331,13 @@ function showValidationModal(results, onDone){
     }
     
     var yoursHtml=
-      '<div>'+
+      '<div style="display:flex;flex-direction:column;flex:1;">'+
         '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#666;margin-bottom:8px;">'+(r.suggested?'Your entry':'Address')+'</div>'+
-        '<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#333;">'+fmtAddr(r.original)+'</div>'+
+        '<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#333;flex:1;display:flex;flex-direction:column;justify-content:center;min-height:110px;box-sizing:border-box;">'+fmtAddr(r.original)+'</div>'+
       '</div>';
     
     return ''+
-    '<div style="flex:1;min-width:260px;max-width:100%;">'+
+    '<div style="flex:1;min-width:260px;max-width:100%;display:flex;flex-direction:column;">'+
       '<div style="text-align:center;margin-bottom:18px;">'+
         '<div style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;letter-spacing:0.3px;">'+label+'</div>'+
       '</div>'+
