@@ -73,7 +73,10 @@ document.addEventListener('DOMContentLoaded', function () {
     '<div class="pay-options-grid"  style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">' +
     '<section class="card" id="express-checkout-card" style="margin:0"><h2>Express checkout</h2>' +
     '<p class="hint" style="margin-bottom:12px">Pay instantly — your wallet fills in shipping and billing.</p>' +
-    '<div style="width:250px;max-width:100%;margin:0 auto"><div id="pay-paypal-top"><div id="paypal-buttons"></div><div id="venmo-buttons" style="margin-top:8px"></div><div id="paylater-buttons" style="margin-top:8px"></div><div class="hint" id="paypal-msg"></div></div>' +
+    '<div style="width:250px;max-width:100%;margin:0 auto"><div id="pay-paypal-top">' +
+    '<button type="button" id="paypal-hosted-pay" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;box-sizing:border-box;background:#FFC439;color:#003087;border:none;border-radius:8px;padding:0 16px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(255,196,57,.35)"><img src="/assets/img/payments/paypal-official.svg" alt="" style="height:22px;width:auto"><span>Continue to PayPal</span></button>' +
+    '<div class="error" id="paypal-hosted-err" style="display:none"></div>' +
+    '<div class="hint" id="paypal-msg"></div></div>' +
     
     '</section>' +
     '<section class="card" style="margin:0"><h2>Credit or debit card</h2>' +
@@ -609,106 +612,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- load provider config (keys embedded - publishable by design) ---------- */
   (function () {
-    var paypalKey = 'BAAamSte2XC7P_gvmTGM7DNkrc0MQoL0cu7EHoHfRF7tKEF-6B3ksiHi6z6KJYAWGT-oMIvGGc0_LsT-uw';
-    if (!paypalKey) {
-      setPayEnabled('paypal', false, "PayPal isn't connected yet — please check back soon.");
-    } else {
-      var s = document.createElement('script');
-      s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(paypalKey) + '&currency=USD&intent=capture&enable-funding=paylater,venmo&components=buttons,card-fields';
-      s.onload = renderPayPalButtons;
-      s.onerror = function () {
-        document.getElementById('paypal-msg').textContent = 'PayPal could not load. Please try the card option.';
-      };
-      document.head.appendChild(s);
-    }
     updateDividers();
     wireStripeHosted();
+    wirePayPalHosted();
   })();
 
-  function renderPayPalButtons() {
-    if (!window.paypal) {
-      document.getElementById('paypal-msg').textContent = 'PayPal could not load. Please try the card option.';
-      return;
-    }
-    var ppConfig = {
-      createOrder: function () {
-        var ship = collectShipping();
-        var isWallet = !ship;
-        var billing = null;
-        if (!isWallet) {
-          billing = collectBilling(ship);
-          if (!billing) throw new Error('Please complete the billing address.');
-        }
-        if (isWallet) {
-          BSR.toast('PayPal will provide your shipping address.', 'info');
-        }
-        return BSR.api('/api/checkout/create', {
-          method: 'POST',
-          body: { slugs: slugs, promo_code: promoCode(), shipping: ship, billing: billing, wallet_order: isWallet }
-        }).then(function (j) {
-          if (!j.ok) throw new Error(j.error || 'Could not create the PayPal order.');
-          return j.orderID;
-        });
-      },
-      onShippingChange: function (data, actions) {
-        // PayPal provided the buyer's address — calculate live shipping and patch the order
-        var addr = data.shipping_address || {};
-        return BSR.api('/api/checkout/shipping-quote', {
-          method: 'POST',
-          body: { slugs: slugs, address: addr }
-        }).then(function (q) {
-          if (!q.ok) throw new Error(q.error || 'Could not calculate shipping.');
-          var shipCents = q.cheapest_cents;
-          var taxCents = 0;
-          // WI tax if applicable (q.tax_bps is basis points)
-          if (q.tax_bps > 0) {
-            // Need item total — get from the order, or calculate
-            // For now, use the stashed values; the backend verifies on capture
-            taxCents = Math.round((q.item_cents || 0) * q.tax_bps / 10000);
-          }
-          var newTotal = (q.item_cents || 0) - (q.discount_cents || 0) + shipCents + taxCents;
-          return actions.order.patch([{
-            op: 'replace',
-            path: "/purchase_units/@reference_id=='cart'/amount",
-            value: {
-              currency_code: 'USD',
-              value: (newTotal / 100).toFixed(2),
-              breakdown: {
-                item_total: { currency_code: 'USD', value: ((q.item_cents || 0) / 100).toFixed(2) },
-                shipping: { currency_code: 'USD', value: (shipCents / 100).toFixed(2) },
-                tax_total: { currency_code: 'USD', value: (taxCents / 100).toFixed(2) },
-              }
-            }
-          }]);
-        });
-      },
-      onApprove: function (data) {
-        return BSR.api('/api/checkout/capture', {
-          method: 'POST',
-          body: { orderID: data.orderID }
-        }).then(function (j) {
-          if (j.ok) { finishOrder(data.orderID); }
-          else { BSR.toast(j.error || 'Payment could not be captured.', 'err'); }
-        });
-      },
-      onCancel: function () { BSR.toast('PayPal payment cancelled.'); },
-      onError: function (err) { BSR.toast('PayPal error: ' + (err && err.message ? err.message : 'please try again.'), 'err'); }
-    };
-    // PayPal gold button
-    window.paypal.Buttons(Object.assign({ fundingSource: window.paypal.FUNDING.PAYPAL,
-      style: { color: 'gold', shape: 'rect', label: 'checkout', height: 44 } }, ppConfig)).render('#paypal-buttons');
-    // Venmo blue button (only if eligible)
-    try {
-      window.paypal.Buttons(Object.assign({ fundingSource: window.paypal.FUNDING.VENMO,
-        style: { color: 'blue', shape: 'rect', height: 44 } }, ppConfig)).render('#venmo-buttons');
-    } catch (e) { document.getElementById('venmo-buttons').style.display = 'none'; }
-    // Pay Later button (only if eligible)
-    try {
-      window.paypal.Buttons(Object.assign({ fundingSource: window.paypal.FUNDING.PAYLATER,
-        style: { color: 'blue', shape: 'rect', height: 44 } }, ppConfig)).render('#paylater-buttons');
-    } catch (e) { document.getElementById('paylater-buttons').style.display = 'none'; }
-
-  }
 
   /* ---------- Stripe Hosted Checkout ---------- */
   /* Collects the form data, creates a Stripe Checkout Session via the backend,
@@ -764,90 +672,52 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  /* ---------- PayPal Card Fields (embedded card form) ---------- */
-  function initPayPalCard() {
-    if (ppCardRendered) return;
-    if (!window.paypal || !paypal.CardFields) {
-      var errEl = document.getElementById('pp-card-err');
-      errEl.textContent = 'PayPal is still loading — please wait a moment and try again.';
-      errEl.style.display = '';
-      return;
-    }
-    try {
-      ppCardFields = paypal.CardFields({
-        createOrder: function () {
-          var inputs = collectCardInputs();
-          if (!inputs) throw new Error('Please complete the addresses above.');
-          return BSR.api('/api/checkout/create', {
-            method: 'POST',
-            body: { slugs: slugs, promo_code: promoCode(), shipping: inputs.ship, billing: inputs.billing }
-          }).then(function (j) {
-            if (!j.ok || !j.orderID) throw new Error(j.error || 'Could not create the PayPal order.');
-            return j.orderID;
-          });
-        },
-        onApprove: function (data) {
-          return BSR.api('/api/checkout/capture', {
-            method: 'POST',
-            body: { orderID: data.orderID }
-          }).then(function (j) {
-            if (j.ok) { finishOrder(data.orderID); }
-            else {
-              var errEl = document.getElementById('pp-card-err');
-              errEl.textContent = j.error || 'Payment could not be captured.';
-              errEl.style.display = '';
-            }
-          });
-        },
-        onError: function (err) {
-          var errEl = document.getElementById('pp-card-err');
-          errEl.textContent = (err && err.message) || 'The PayPal card payment failed.';
-          errEl.style.display = '';
-          var btn = document.getElementById('pp-card-pay');
-          btn.disabled = false; btn.innerHTML = 'Pay with <span style="font-weight:800;letter-spacing:-.02em">PayPal</span>';
+  /* ---------- PayPal Expanded Checkout (hosted redirect) ---------- */
+  /* Collects the form data, creates a PayPal order via the backend,
+     then redirects to PayPal's hosted checkout page. */
+  function wirePayPalHosted() {
+    var btn = document.getElementById('paypal-hosted-pay');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      var origText = btn.innerHTML;
+      btn.innerHTML = '<span>Redirecting to PayPal&hellip;</span>';
+      var payload = buildCheckoutPayload();
+      if (!payload) { btn.disabled = false; btn.innerHTML = origText; return; }
+      var timedOut = false;
+      var timer = setTimeout(function () {
+        timedOut = true;
+        btn.disabled = false;
+        btn.innerHTML = origText;
+        var errEl = document.getElementById('paypal-hosted-err');
+        var msg = 'PayPal is taking too long. Please try again.';
+        if (errEl) { errEl.textContent = msg; errEl.style.display = ''; }
+        else { alert(msg); }
+      }, 20000);
+      BSR.api('/api/checkout/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).then(function (j) {
+        if (timedOut) return;
+        clearTimeout(timer);
+        if (j && j.approval_url) {
+          window.location.href = j.approval_url;
+        } else {
+          throw new Error((j && j.error) || 'Could not start PayPal checkout.');
         }
+      }).catch(function (e) {
+        if (timedOut) return;
+        clearTimeout(timer);
+        btn.disabled = false;
+        btn.innerHTML = origText;
+        var errEl = document.getElementById('paypal-hosted-err');
+        if (errEl) { errEl.textContent = e.message || 'PayPal checkout failed. Please try again.'; errEl.style.display = ''; }
+        else { alert(e.message || 'PayPal checkout failed. Please try again.'); }
       });
-      if (!ppCardFields.isEligible()) {
-        document.getElementById('pp-card-err').textContent = 'Card payments via PayPal are not available — please use Stripe.';
-        document.getElementById('pp-card-err').style.display = '';
-        return;
-      }
-      ppCardFields.NumberField().render('#pp-card-number');
-      ppCardFields.ExpiryField().render('#pp-card-expiry');
-      ppCardFields.CVVField().render('#pp-card-cvv');
-      ppCardRendered = true;
-    } catch (e) {
-      var errEl = document.getElementById('pp-card-err');
-      errEl.textContent = 'PayPal card fields could not load — please use Stripe.';
-      errEl.style.display = '';
-    }
-  }
-  document.getElementById('pp-card-pay').addEventListener('click', function () {
-    var inputs = collectCardInputs();
-    if (!inputs) return;
-    if (!ppCardFields) {
-      initPayPalCard();
-      if (!ppCardFields) return;
-    }
-    var errEl = inputs.errEl;
-    var btn = document.getElementById('pp-card-pay');
-    btn.disabled = true; btn.textContent = 'Processing…';
-    var b = inputs.billing;
-    ppCardFields.submit({
-      billingAddress: {
-        addressLine1: b.address.line1 || '',
-        addressLine2: '',
-        adminArea2: b.address.city || '',
-        adminArea1: b.address.state || '',
-        postalCode: b.address.postal || '',
-        countryCode: b.address.country || 'US'
-      }
-    }).catch(function (e) {
-      errEl.textContent = (e && e.message) || 'The PayPal card payment failed.';
-      errEl.style.display = '';
-      btn.disabled = false; btn.innerHTML = 'Pay with <span style="font-weight:800;letter-spacing:-.02em">PayPal</span>';
     });
-  });
+  }
+
 });
 </script>
 </body>

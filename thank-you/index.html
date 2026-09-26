@@ -47,6 +47,30 @@ document.addEventListener('DOMContentLoaded', function () {
       '<a class="btn btn-ghost" href="/track/">Track an order</a></div></div>';
   }
 
+  // PayPal hosted redirect return: capture the approved order
+  var ppProvider = params.get('provider');
+  var ppToken = params.get('token');
+  if (ppProvider === 'paypal' && ppToken) {
+    root.innerHTML = '<div class="empty"><p>Confirming your PayPal payment…</p></div>';
+    BSR.api('/api/checkout/capture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderID: ppToken }),
+    }).then(function (j) {
+      if (j && j.ok) {
+        try { sessionStorage.setItem('bsr-last-order', j.order_ref || ppToken); } catch (e) {}
+        showSuccess(j.order_ref || ppToken);
+      } else {
+        root.innerHTML = '<div class="empty"><h2>Payment didn\'t go through</h2><p>' +
+          BSR.esc((j && j.error) || 'Please try checkout again.') +
+          '</p><div class="promo-row" style="justify-content:center"><a class="btn btn-primary" href="/checkout/">Back to checkout</a></div></div>';
+      }
+    }).catch(function () {
+      root.innerHTML = '<div class="empty"><h2>Payment didn\'t go through</h2><p>Please try checkout again.</p><div class="promo-row" style="justify-content:center"><a class="btn btn-primary" href="/checkout/">Back to checkout</a></div></div>';
+    });
+    return;
+  }
+
   // Redirect return (e.g. Amazon Pay): verify the payment intent
   if (piSecret) {
     root.innerHTML = '<div class="empty"><p>Confirming your payment…</p></div>';
