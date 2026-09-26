@@ -1,6 +1,6 @@
 {
-  "versionCode": 2,
-  "versionName": "1.1",
-  "url": "https://raw.githubusercontent.com/bayshorerelicsllc/storefront/main/boone/boone-1.1.apk",
-  "notes": "Boone now checks for updates on its own and installs them in-app. This is the last manual install."
+  "versionCode": 3,
+  "versionName": "1.2",
+  "url": "https://raw.githubusercontent.com/bayshorerelicsllc/storefront/main/boone/boone-1.2.apk",
+  "notes": "Fixes Boone not appearing in the phone's default-assistant list, and the setup button now opens Default apps directly."
 }
