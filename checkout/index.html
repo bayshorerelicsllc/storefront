@@ -163,8 +163,19 @@ var syncShipToBill=function(){
 };
 document.getElementById('f-ship-same').addEventListener('change',function(){
   document.getElementById('ship-fields').style.display=this.checked?'none':'block';
+  var picker=document.getElementById('ship-addr-picker');
+  if(picker) picker.style.display=this.checked?'none':'block';
   if(this.checked) syncShipToBill();
 });
+// Initial state: hide shipping picker/fields if "same" starts checked
+(function(){
+  var sameEl=document.getElementById('f-ship-same');
+  if(sameEl&&sameEl.checked){
+    var pk=document.getElementById('ship-addr-picker');
+    if(pk) pk.style.display='none';
+    syncShipToBill();
+  }
+})();
 // Keep shipping in sync if billing changes while "same" is checked
 ['f-bill-name','f-bill-company','f-bill-email','f-bill-phone','f-bill-line1','f-bill-line2','f-bill-city','f-bill-state','f-bill-postal','f-bill-country'].forEach(function(id){
   var el=document.getElementById(id);
