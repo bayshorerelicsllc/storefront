@@ -156,5 +156,24 @@
   wireButton('stripe-hosted-pay', 'hosted-err', '/api/stripe/create-checkout-session', 'Creating secure checkout…');
 })();
 </script>
+<script>
+// Remove any stale cached "Your cart is empty" message
+(function(){
+  function clean(){
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    var nodes = [];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function(n){
+      if(n.nodeValue && n.nodeValue.trim() === 'Your cart is empty.'){
+        var p = n.parentNode;
+        if(p) p.style.display = 'none';
+      }
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', clean);
+  else clean();
+  setTimeout(clean, 500);
+})();
+</script>
 </body>
 </html>
