@@ -427,7 +427,11 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
     });
   };
   var promises=[validateOne('bill', billPayload)];
-  if(!same) promises.push(validateOne('ship', shipPayload));
+  // Always validate shipping too, so both appear in the popup
+  var shipPayloadForVal=same?
+    {name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:cleanPhone(document.getElementById('f-bill-phone').value),address1:document.getElementById('f-bill-line1').value,address2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}:
+    shipPayload;
+  promises.push(validateOne('ship', shipPayloadForVal));
   Promise.all(promises).then(function(results){
     // Check for warnings (missing unit, undeliverable, etc.)
     var warnings=[];
