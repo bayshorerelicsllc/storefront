@@ -342,8 +342,8 @@ function showValidationModal(results, onDone){
     '<h3>Confirm your addresses</h3>'+
     '<p>'+(hasSuggestions?'Our address validator suggests corrections below. Review':'Please confirm')+' your billing and shipping addresses:</p>'+
     '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+cols+'</div>'+
-    '<div class="val-actions" style="margin-top:16px;">'+
-    '<button type="button" class="val-use" id="val-continue-btn" style="width:100%;">Continue to payment →</button>'+
+    '<div class="val-actions" style="margin-top:16px;display:flex;justify-content:center;">'+
+    '<button type="button" class="val-use" id="val-continue-btn" style="padding:12px 32px;min-width:280px;">Continue to payment →</button>'+
     '</div></div></div>';
   var choices={};
   results.forEach(function(r, idx){choices[idx]=r.suggested?'keep':'keep';});
