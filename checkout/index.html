@@ -713,6 +713,7 @@ proceedToPayment();
 });
 function proceedToPayment(){
 var _cart=[]; try{_cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){}
+if(!_cart||!_cart.length){alert('Your cart is empty. Please add an item before checking out.');return;}
 var same=document.getElementById('f-ship-same').checked;
 var p={slugs:_cart,
 billing:{name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:cleanPhone(document.getElementById('f-bill-phone').value),same_as_shipping:same,address:{line1:document.getElementById('f-bill-line1').value,line2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}},
