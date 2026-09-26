@@ -8,6 +8,7 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
 <script src="/assets/js/bsr.js?v=20260926e" defer></script>
+<style>.gallery-wrap{position:relative}</style>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -55,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderProduct(p) {
     var imgs = (p.images && p.images.length ? p.images : (p.image ? [{ url: p.image, alt: p.title }] : []));
-    var gallery = imgs.length
+    var galleryInner = imgs.length
       ? '<div class="gallery-main" id="gallery-main"><img src="' + BSR.esc(imgs[0].url) +
         '" alt="' + BSR.esc(imgs[0].alt || p.title) + '"></div>' +
         (imgs.length > 1
@@ -67,6 +68,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }).join('') + '</div>'
           : '')
       : '<div class="gallery-main"><span class="no-photo">' + BSR.icon('eye', 'ic-lg') + '</span></div>';
+    /* Heart sits top-right of the product image, exactly like the preview cards. */
+    var gallery = '<div class="gallery-wrap">' + BSR.wishToggleHtml(p.slug) + galleryInner + '</div>';
 
     var onSale = p.compare_at_cents && p.compare_at_cents > p.price_cents;
     var price = BSR.money(p.price_cents) +
@@ -158,29 +161,10 @@ document.addEventListener('DOMContentLoaded', function () {
       row.innerHTML =
         '<a class="btn btn-primary" href="/cart/">' + BSR.icon('check', 'ic-sm') + ' In your cart \u2014 view cart</a>';
     }
-    function wishBtnHtml() {
-      var on = BSR.wishlist.has(p.slug);
-      return '<button class="btn btn-ghost" id="wish-btn" type="button" aria-pressed="' + (on ? 'true' : 'false') + '">' +
-        BSR.icon('heart', 'ic-sm') + ' <span>' + (on ? 'Saved to wishlist' : 'Add to wishlist') + '</span></button>';
-    }
-    function bindWishBtn() {
-      var wb = document.getElementById('wish-btn');
-      if (!wb) return;
-      wb.addEventListener('click', function () {
-        if (BSR.wishlist.has(p.slug)) { BSR.wishlist.remove(p.slug); BSR.toast('Removed from your wishlist'); }
-        else { BSR.wishlist.add(p.slug); BSR.toast('Added to your wishlist'); }
-        var wrap = document.getElementById('wish-btn-wrap');
-        if (wrap) wrap.innerHTML = wishBtnHtml();
-        bindWishBtn();
-        BSR.paintWishToggles(document);
-      });
-    }
     function showAdd() {
       row.innerHTML =
         '<button class="btn btn-primary" id="add-btn">' + BSR.icon('cart', 'ic-sm') + ' Add to cart</button>' +
-        '<span id="wish-btn-wrap">' + wishBtnHtml() + '</span>' +
         '<a class="btn btn-secondary" href="/cart/">View cart</a>';
-      bindWishBtn();
       document.getElementById('add-btn').addEventListener('click', function () {
         var btn = document.getElementById('add-btn');
         btn.disabled = true;
