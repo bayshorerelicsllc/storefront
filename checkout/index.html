@@ -944,12 +944,14 @@ function initAddressPickers() {
         document.getElementById('ship-fields').style.display = 'block';
       }
     }
-    document.getElementById('ship-saved').addEventListener('change', function(){
-      var a = byId[String(this.value)]; clearShipForm(); if (a) fillShipForm(a);
+    var shipSaved = document.getElementById('ship-saved');
+    if (shipSaved) shipSaved.addEventListener('change', function(){
+      var a = byId[String(this.value)]; if (typeof clearShipForm==='function') clearShipForm(); if (a && typeof fillShipForm==='function') fillShipForm(a);
     });
-    document.getElementById('bill-saved').addEventListener('change', function(){
-      var a = byId[String(this.value)]; clearBillForm(); if (a) fillBillForm(a);
-    if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}});
+    var billSaved = document.getElementById('bill-saved');
+    if (billSaved) billSaved.addEventListener('change', function(){
+      var a = byId[String(this.value)]; if (typeof clearBillForm==='function') clearBillForm(); if (a && typeof fillBillForm==='function') fillBillForm(a);
+    });
   }).catch(function(){});
 }
 
