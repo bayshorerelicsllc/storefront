@@ -60,8 +60,7 @@
 
 <section class="card" id="ship-method-section">
 <h2><span class="step-num">2</span> Shipping method</h2>
-<div style="margin-bottom:10px"><button type="button" id="get-ship-rates" class="btn" style="padding:10px 20px">Show shipping options</button></div>
-<div id="ship-methods-loading" style="display:none;color:#666">Getting shipping rates…</div>
+<div id="ship-methods-loading" style="color:#666">Getting shipping rates…</div>
 <div id="ship-methods-error" class="error" style="display:none;color:#c00"></div>
 <div id="ship-methods-list"></div>
 </section>
@@ -1002,6 +1001,8 @@ document.addEventListener('click', function(e) {
     fetchShipRates();
   }
 });
+// Auto-load shipping rates when page loads
+setTimeout(function(){ try { fetchShipRates(); } catch(e) {} }, 1500);
 function initShipRates() {
   var postal = document.getElementById('f-postal');
   var billPostal = document.getElementById('f-bill-postal');
