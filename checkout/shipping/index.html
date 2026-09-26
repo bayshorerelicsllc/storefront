@@ -6,8 +6,9 @@
 <title>Shipping — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods9">
-<script src="/assets/js/bsr.js?v=20260925n" defer></script>
+<script src="/assets/js/bsr.js?v=20260926a" defer></script>
 <script src="/assets/js/addr-validate.js?v=20260925m" defer></script>
+<script src="/assets/js/checkout-common.js?v=20260926a" defer></script>
 
 <style>
 .bsr-val-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;overflow-y:auto;}
@@ -19,6 +20,7 @@
 .bsr-val-modal .val-actions button{flex:1;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;border:none;}
 .bsr-val-modal .val-use{background:var(--accent);color:var(--accent-ink);}
 .bsr-val-modal .val-keep{background:var(--bg-soft);color:var(--text);border:1px solid var(--line);}
+.ship-opt input[type=radio]{width:18px;height:18px;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -27,46 +29,50 @@
 <div class="wrap">
 <div class="page-head">
 <h1>Shipping</h1>
-<p>Each slide is a single physical item, sold once.</p>
+<p>Where should we send your slides?</p>
 <div id="login-prompt" style="display:none;background:#f0f7f0;border:1px solid #1a3c22;border-radius:8px;padding:12px 16px;margin:16px 0;text-align:center;">Have an account? <a href="/account/login/" style="color:#1a3c22;font-weight:700;">Log in</a> to use your saved addresses.</div>
 </div>
 
 <div class="checkout-layout">
 <div class="checkout-main">
 <section class="card" id="ship-section">
-<h2><span class="step-num">1</span> Shipping address</h2>
+<h2><span class="step-num">2</span> Shipping address</h2>
 <div id="ship-addr-picker"></div>
 <div class="addr-validate-msg" id="ship-val-msg"></div>
-<div class="field"><label><input type="checkbox" id="f-ship-same" style="accent-color:#1a3c22"> Same as billing</label></div>
+<div class="field"><label style="display:flex;gap:8px;align-items:center;font-weight:normal"><input type="checkbox" id="f-ship-same" style="width:18px;height:18px;"> Same as billing address</label></div>
 <div id="ship-fields">
-<div class="field"><label for="f-ship-name">Full name</label><input type="text" id="f-ship-name" class="input" data-ship-req></div>
+<div class="field"><label for="f-ship-name">Full name</label><input type="text" id="f-ship-name" class="input" required></div>
 <div class="field"><label for="f-ship-company">Company</label><input type="text" id="f-ship-company" class="input"></div>
 <div class="field-row">
-<div class="field"><label for="f-ship-email">Email</label><input type="email" id="f-ship-email" class="input" data-ship-req></div>
-<div class="field"><label for="f-ship-phone">Phone</label><input type="tel" id="f-ship-phone" class="input" data-ship-req></div>
+<div class="field"><label for="f-ship-email">Email</label><input type="email" id="f-ship-email" class="input" required></div>
+<div class="field"><label for="f-ship-phone">Phone</label><input type="tel" id="f-ship-phone" class="input" required></div>
 </div>
-<div class="field"><label for="f-line1">Street address</label><input type="text" id="f-line1" name="address1" class="input" data-ship-req></div>
-<div class="field"><label for="f-line2">Apt, suite, etc. <span class="opt">(optional)</span></label><input type="text" id="f-line2" name="address2" class="input"></div>
+<div class="field"><label for="f-ship-line1">Street address</label><input type="text" id="f-ship-line1" name="address1" class="input" required></div>
+<div class="field"><label for="f-ship-line2">Apt, suite, etc. <span class="opt">(optional)</span></label><input type="text" id="f-ship-line2" name="address2" class="input"></div>
 <div class="field-row">
-<div class="field"><label for="f-city">City</label><input type="text" id="f-city" name="city" class="input" data-ship-req></div>
-<div class="field"><label for="f-state">State / Province</label><input type="text" id="f-state" name="state" class="input" data-ship-req></div>
+<div class="field"><label for="f-ship-city">City</label><input type="text" id="f-ship-city" name="city" class="input" required></div>
+<div class="field"><label for="f-ship-state">State / Province</label><input type="text" id="f-ship-state" name="state" class="input" required></div>
 </div>
 <div class="field-row">
-<div class="field"><label for="f-postal">ZIP / Postal code</label><input type="text" id="f-postal" name="postal" class="input" data-ship-req></div>
-<div class="field"><label for="f-country">Country</label><input type="text" id="f-country" name="country" class="input" value="US" data-ship-req></div>
+<div class="field"><label for="f-ship-postal">ZIP / Postal code</label><input type="text" id="f-ship-postal" name="postal" class="input" required></div>
+<div class="field"><label for="f-ship-country">Country</label><input type="text" id="f-ship-country" name="country" class="input" value="US" required></div>
 </div>
 </div>
 </section>
 
 <section class="card" id="ship-method-section">
-<h2><span class="step-num">2</span> Shipping method</h2>
-<div id="ship-methods-loading" style="color:#666">Getting shipping rates…</div>
-<div id="ship-methods-error" class="error" style="display:none;color:#c00"></div>
+<h2><span class="step-num">3</span> Shipping method</h2>
+<p class="hint" style="margin-top:-6px;">Rates load automatically for your address.</p>
+<div id="ship-methods-loading" style="display:none;text-align:center;padding:20px;">Loading shipping rates&hellip;</div>
+<div id="ship-methods-error" class="error" style="display:none;color:#c00;margin:10px 0"></div>
 <div id="ship-methods-list"></div>
 </section>
 
 <section class="card" style="text-align:center">
-<button type="button" id="continue-to-payment" class="btn btn-primary" style="width:100%;padding:16px;font-size:1.1rem">Continue to payment →</button>
+<div style="display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+<a href="/checkout/" class="btn" style="text-decoration:none;">&larr; Back to billing</a>
+<button type="button" id="continue-to-payment" class="btn btn-primary" style="padding:14px 28px;font-size:1.05rem">Continue to payment &rarr;</button>
+</div>
 <div class="error" id="continue-err" style="display:none;color:#c00;margin-top:10px"></div>
 </section>
 </div>
@@ -74,9 +80,11 @@
 <aside class="card summary">
 <h2>Order summary</h2>
 <div id="sum-lines"></div>
-<div id="sum-rows"></div>
 <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.1rem;margin-top:12px;padding-top:12px;border-top:2px solid var(--line)">
-<span>Total</span><span id="sum-total">$0.00</span>
+<span>Items</span><span id="sum-total">$0.00</span>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:8px;color:#666;">
+<span>Shipping</span><span id="sum-ship">Calculated below</span>
 </div>
 </aside>
 </div>
@@ -88,715 +96,72 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 if (window.BSR && BSR.init) BSR.init();
-// Retry address pickers until BSR.api is ready (up to 5s)
+// Retry the shipping address picker until BSR.api is ready (up to 5s)
 var _addrTries = 0;
 var _addrTimer = setInterval(function(){
   _addrTries++;
   if ((window.BSR && BSR.api) || _addrTries > 25) {
     clearInterval(_addrTimer);
-    try { initAddressPickers(); } catch(e) {}
+    try { initShipPicker(); } catch(e) {}
   }
 }, 200);
-// Address validator: attach to shipping section (billing is on previous page)
-function attachShipValidator(){
-  try {
-    var shipSec = document.getElementById('ship-section');
-    if (shipSec && window.BSRAddrValidate && BSRAddrValidate.attachLive) {
-      BSRAddrValidate.attachLive(shipSec);
-      return true;
-    }
-  } catch(e) {}
-  return false;
-}
+// Address validator: live street suggestions for the shipping form
 var _valTries = 0;
 var _valTimer = setInterval(function(){
   _valTries++;
-  if (attachShipValidator() || _valTries > 30) {
+  if ((window.BSRAddrValidate && BSRAddrValidate.attachLive) || _valTries > 25) {
     clearInterval(_valTimer);
+    try {
+      var shipSec = document.getElementById('ship-section');
+      if (window.BSRAddrValidate && BSRAddrValidate.attachLive && shipSec) {
+        BSRAddrValidate.attachLive(shipSec);
+      }
+    } catch(e) {}
   }
 }, 200);
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(attachShipValidator, 500); });
-} else {
-  setTimeout(attachShipValidator, 500);
-}
-window.addEventListener('load', function(){ setTimeout(attachShipValidator, 500); });
+
 var cart=[]; try{cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){}
-var sumLines=document.getElementById('sum-lines');
-sumLines.innerHTML='<p>Loading…</p>';
+
+// ---- Order summary (items only; shipping adds up below) ----
 (function(){
-  if(!cart.length){sumLines.innerHTML='<p>Cart empty</p>';document.getElementById('sum-total').textContent='$0.00';return;}
-  // Fetch all products once, then match by slug
+  var sumLines=document.getElementById('sum-lines');
+  sumLines.innerHTML='<p>Loading&hellip;</p>';
+  if(!cart.length){sumLines.innerHTML='<p>Cart empty</p>';return;}
   BSR.api('/api/catalog/products').then(function(j){
     var all=(j&&j.ok&&j.products)?j.products:[];
     var bySlug={};
     all.forEach(function(p){bySlug[p.slug]=p;});
     var t=0,html='';
     cart.forEach(function(slug){
-      var p=bySlug[slug]||{slug:slug,title:slug,price_cents:0,image:''};
+      var p=bySlug[slug]||{slug:slug,title:slug,price_cents:0};
       var cents=p.price_cents||0;t+=cents;
-      var img=p.image?'<img src="'+BSR.esc(p.image)+'" alt="'+BSR.esc(p.title||p.slug)+'" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0;">':'<div style="width:60px;height:60px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#999;">No image</div>';
-      html+='<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #eee;align-items:center;">'+img+
-        '<div style="flex:1;min-width:0;"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+BSR.esc(p.title||p.slug)+'</div>'+
-        '<div style="font-size:12px;color:#666;">Qty 1 · '+BSR.esc(p.slug)+'</div></div>'+
-        '<div style="font-weight:600;white-space:nowrap;">'+BSR.money(cents)+'</div></div>';
+      html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>'+BSR.esc(p.title||p.slug)+'</span><span>'+BSR.money(cents)+'</span></div>';
     });
     sumLines.innerHTML=html;
     document.getElementById('sum-total').textContent=BSR.money(t);
   }).catch(function(){
-    // Fallback: show slugs only
-    var html=cart.map(function(slug){
-      return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>'+BSR.esc(slug)+'</span><span>—</span></div>';
+    sumLines.innerHTML=cart.map(function(slug){
+      return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>'+BSR.esc(slug)+'</span><span>&mdash;</span></div>';
     }).join('');
-    sumLines.innerHTML=html;
   });
 })();
-var syncShipToBill=function(){
-  var pairs=[['f-bill-name','f-ship-name'],['f-bill-company','f-ship-company'],['f-bill-email','f-ship-email'],['f-bill-phone','f-ship-phone'],['f-bill-line1','f-line1'],['f-bill-line2','f-line2'],['f-bill-city','f-city'],['f-bill-state','f-state'],['f-bill-postal','f-postal'],['f-bill-country','f-country']];
-  pairs.forEach(function(p){var b=document.getElementById(p[0]),s=document.getElementById(p[1]);if(b&&s)s.value=b.value;});
-};
-document.getElementById('f-ship-same').addEventListener('change',function(){
-  document.getElementById('ship-fields').style.display=this.checked?'none':'block';
-  var picker=document.getElementById('ship-addr-picker');
-  if(picker) picker.style.display=this.checked?'none':'block';
-  if(this.checked) syncShipToBill();
-});
-// Initial state: hide shipping picker/fields if "same" starts checked
-(function(){
-  var sameEl=document.getElementById('f-ship-same');
-  if(sameEl&&sameEl.checked){
-    var pk=document.getElementById('ship-addr-picker');
-    if(pk) pk.style.display='none';
-    syncShipToBill();
-  }
-})();
-// Keep shipping in sync if billing changes while "same" is checked
-['f-bill-name','f-bill-company','f-bill-email','f-bill-phone','f-bill-line1','f-bill-line2','f-bill-city','f-bill-state','f-bill-postal','f-bill-country'].forEach(function(id){
-  var el=document.getElementById(id);
-  if(el) el.addEventListener('input',function(){
-    if(document.getElementById('f-ship-same').checked) syncShipToBill();
-  });
-});
 
-
-function cleanPhone(v){
-  var s=String(v==null?'':v).trim();
-  if(!s) return '';
-  var plus=s.charAt(0)==='+'?'+':'';
-  return (plus+s.replace(/\D/g,'')).slice(0,41);
+// ---- Saved shipping addresses (signed-in only) ----
+function getBilling(){
+  try{ var b=JSON.parse(sessionStorage.getItem('bsr-billing')||'null'); if(b&&b.address) return b; }catch(e){}
+  return null;
 }
-function fieldErr(inputId, msg){
-  var input=document.getElementById(inputId);
-  if(!input) return;
-  var errId='e-'+inputId;
-  var errEl=document.getElementById(errId);
-  if(!errEl){
-    errEl=document.createElement('div');
-    errEl.id=errId;
-    errEl.className='field-error';
-    errEl.style.cssText='color:#c00;font-size:12px;margin-top:4px;display:none;';
-    input.parentNode.appendChild(errEl);
-  }
-  if(msg){
-    errEl.textContent=msg;
-    errEl.style.display='block';
-    input.style.borderColor='#c00';
-  } else {
-    errEl.style.display='none';
-    input.style.borderColor='';
-  }
+function fillShipForm(a) {
+  BSRCheckout.setV('f-ship-name', a.name); BSRCheckout.setV('f-ship-company', a.company);
+  BSRCheckout.setV('f-ship-email', a.email); BSRCheckout.setV('f-ship-phone', a.phone);
+  BSRCheckout.setV('f-ship-line1', a.address1); BSRCheckout.setV('f-ship-line2', a.address2);
+  BSRCheckout.setV('f-ship-city', a.city); BSRCheckout.setV('f-ship-state', a.state);
+  BSRCheckout.setV('f-ship-postal', a.postal); BSRCheckout.setSel('f-ship-country', a.country);
 }
-function clearAllFieldErrs(){
-  var errs=document.querySelectorAll('.field-error');
-  for(var i=0;i<errs.length;i++) errs[i].style.display='none';
-  var inputs=document.querySelectorAll('#bill-section input, #ship-section input');
-  for(var j=0;j<inputs.length;j++) inputs[j].style.borderColor='';
+function clearShipForm() {
+  ['f-ship-name','f-ship-company','f-ship-email','f-ship-phone','f-ship-line1','f-ship-line2','f-ship-city','f-ship-state','f-ship-postal'].forEach(function(id){ BSRCheckout.setV(id,''); });
+  BSRCheckout.setSel('f-ship-country','US');
 }
-
-
-function unitAlreadyInAddress(suggUnit, origAddr1, origAddr2){
-  // Smarter check: extract the unit identifier (number/letter combo) from the
-  // suggested unit and see if it appears as a standalone token in the original
-  // address. Handles "Apt 4" vs "#4", "Suite 200" vs "Ste 200", etc.
-  if(!suggUnit) return false;
-  var origFull=((origAddr1||'')+' '+(origAddr2||'')).toLowerCase();
-  var suggLower=suggUnit.toLowerCase().trim();
-  // First try: exact match (case-insensitive)
-  if(origFull.indexOf(suggLower)!==-1) return true;
-  // Second try: extract the unit identifier (alphanumeric token at the end)
-  // e.g. "PMB 116" -> "116", "Apt 4B" -> "4b", "Suite 200" -> "200"
-  var m=suggLower.match(/([a-z]*\d+[a-z]*|\d+)\s*$/);
-  if(m){
-    var unitId=m[1]||m[0];
-    // Check with word boundaries to avoid false positives (e.g. "4" in "1234")
-    var re=new RegExp('\\b'+unitId.replace(/[^a-z0-9]/g,'')+'\\b');
-    if(re.test(origFull)) return true;
-  }
-  return false;
-}
-
-function showWarningPopup(results, warnings, onDone){
-  // results: all [{kind, original, ...}], warnings: [{kind, message}, ...]
-  var root=document.getElementById('bsr-val-modal-root');
-  var fmtAddr=function(a){
-    var lines=[];
-    if(a.address1||a.street) lines.push(a.address1||a.street);
-    if(a.address2||a.street2) lines.push(a.address2||a.street2);
-    var csz='';
-    if(a.city&&a.state) csz=a.city+', '+a.state+' '+(a.postal||a.zip||'');
-    else csz=[a.city||'',a.state||'',a.postal||a.zip||''].filter(Boolean).join(' ');
-    if(csz) lines.push(csz);
-    if(a.country) lines.push(a.country);
-    return lines.join('<br>');
-  };
-  var warnByKind={};
-  warnings.forEach(function(w){warnByKind[w.kind]=w.message;});
-  // Check if billing and shipping are identical
-  var billRes=results.find(function(r){return r.kind==='bill';});
-  var shipRes=results.find(function(r){return r.kind==='ship';});
-  var identical=false;
-  if(billRes&&shipRes){
-    var b=billRes.original,s=shipRes.original;
-    identical=(b.address1===s.address1&&(b.address2||'')===(s.address2||'')&&b.city===s.city&&b.state===s.state&&(b.postal||b.zip)===(s.postal||s.zip));
-  }
-  var cols='';
-  if(identical&&billRes){
-    // Single consolidated view with both labels
-    var warnMsg=warnByKind['bill']||warnByKind['ship']||'';
-    var warnHtml=warnMsg?'<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:14px;color:#856404;margin:8px 0;">'+
-      '<strong>⚠ Heads up:</strong> '+warnMsg+'</div>':'';
-    cols='<div class="val-col" style="flex:1;">'+
-      '<div><span class="val-kind">Bill to</span> <span class="val-kind">Ship to</span></div>'+
-      '<div class="val-addr" style="margin:8px 0;">'+fmtAddr(billRes.original)+'</div>'+
-      warnHtml+'</div>';
-  } else {
-    cols=results.map(function(r){
-      var kindLabel=r.kind==='bill'?'Bill to':'Ship to';
-      var warnHtml='';
-      if(warnByKind[r.kind]){
-        warnHtml='<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:13px;line-height:1.5;color:#856404;margin:8px 0;word-wrap:break-word;overflow-wrap:break-word;">'+
-        '<strong>⚠ Heads up:</strong> '+warnByKind[r.kind]+'</div>';
-      }
-      return '<div class="val-col" style="flex:1;min-width:0;overflow:hidden;">'+
-      '<div style="text-align:center;margin-bottom:8px;"><span class="val-kind">'+kindLabel+'</span></div>'+
-      '<div class="val-addr" style="margin:0 0 8px 0;word-wrap:break-word;overflow-wrap:break-word;">'+fmtAddr(r.original)+'</div>'+
-      warnHtml+'</div>';
-    }).join('');
-  }
-  root.innerHTML=
-    '<div class="bsr-val-modal-overlay" id="warn-overlay">'+
-    '<div class="bsr-val-modal" style="max-width:600px;position:relative;box-sizing:border-box;overflow:hidden;">'+
-    '<button type="button" id="warn-close-btn" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">&times;</button>'+
-    '<h3 style="text-align:center;margin:0 0 8px 0;padding-right:32px;">Address issue'+(warnings.length>1?'s':'')+'</h3>'+
-    '<p style="text-align:center;margin:0 0 16px 0;font-size:12px;color:var(--warn);line-height:1.4;">'+
-      '⚠ Double-check: if your address has an apartment, unit, suite, or site number, make sure it\'s included.'+
-    '</p>'+
-    '<div style="display:flex;gap:16px;'+(window.innerWidth<640?'flex-direction:column;':'')+'">'+cols+'</div>'+
-    '<div class="val-actions" style="margin-top:20px;text-align:center;">'+
-    '<button type="button" class="val-use" id="warn-ok-btn" style="padding:12px 36px;font-size:15px;">I understand</button>'+
-    '</div></div></div>';
-  // Level the address boxes so they're even across
-  setTimeout(function(){
-    var boxes=root.querySelectorAll('.val-addr');
-    if(boxes.length>1){
-      var maxH=0;
-      boxes.forEach(function(b){
-        b.style.height='auto';
-        var h=b.offsetHeight;
-        if(h>maxH) maxH=h;
-      });
-      boxes.forEach(function(b){
-        b.style.height=maxH+'px';
-        b.style.boxSizing='border-box';
-      });
-    }
-  }, 50);
-  
-  var closeWarn=function(){root.innerHTML='';resetBtn();};
-  document.getElementById('warn-close-btn').addEventListener('click',closeWarn);
-  document.getElementById('warn-overlay').addEventListener('click',function(e){
-    if(e.target.id==='warn-overlay') closeWarn();
-  });
-  document.getElementById('warn-ok-btn').addEventListener('click',function(){
-    root.innerHTML='';onDone();
-  });
-}
-
-function showValidationModal(results, onDone){
-  var root=document.getElementById('bsr-val-modal-root');
-  
-  var fmtAddr=function(a){
-    var lines=[];
-    if(a.address1||a.street) lines.push(a.address1||a.street);
-    if(a.address2||a.street2) lines.push(a.address2||a.street2);
-    var csz='';
-    if(a.city&&a.state) csz=a.city+', '+a.state+' '+(a.postal||a.zip||'');
-    else csz=[a.city||'',a.state||'',a.postal||a.zip||''].filter(Boolean).join(' ');
-    if(csz) lines.push(csz);
-    if(a.country) lines.push(a.country);
-    return lines.join('<br>');
-  };
-  
-  var hasSuggestions=results.some(function(r){return r.suggested;});
-  
-  // Consolidate identical billing/shipping into one column with both indicators
-  var addrKey=function(a){
-    return [(a.address1||a.street||''),(a.address2||a.street2||''),(a.city||''),(a.state||''),(a.postal||a.zip||''),(a.country||'')].map(function(s){return String(s).trim().toLowerCase();}).join('|');
-  };
-  var isIdentical=false;
-  if(results.length===2){
-    var b=results.filter(function(r){return r.kind==='bill';})[0];
-    var s=results.filter(function(r){return r.kind!=='bill';})[0];
-    if(b&&s&&addrKey(b.original)===addrKey(s.original)){
-      // Also check suggested addresses match (or both have none)
-      var bSugg=b.suggested?addrKey(b.suggested):'';
-      var sSugg=s.suggested?addrKey(s.suggested):'';
-      if(bSugg===sSugg) isIdentical=true;
-    }
-  }
-  if(isIdentical){
-    // Merge into single result with both kinds
-    var merged=results.filter(function(r){return r.kind==='bill';})[0];
-    merged.bothKinds=true;
-    results=[merged];
-  }
-  
-  // Build address cards - TRUE GRID for perfect alignment
-  // Structure: each row is a grid row spanning all columns
-  var nCols = results.length;
-  var isMobileGrid = window.innerWidth < 640;
-  
-  // Helper to build a cell
-  var cell = function(html, extraStyle){
-    return '<div style="'+(extraStyle||'')+'">'+html+'</div>';
-  };
-  
-  // Row 1: Address type labels (Billing / Shipping, or both if identical)
-  var labelRow = results.map(function(r){
-    var labelHtml;
-    if(r.bothKinds){
-      labelHtml='<span style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;margin:0 4px;">Billing address</span>'+
-                '<span style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;margin:0 4px;">Shipping address</span>';
-    } else {
-      var label = r.kind==='bill' ? 'Billing address' : 'Shipping address';
-      labelHtml='<span style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;">'+label+'</span>';
-    }
-    return cell('<div style="text-align:center;">'+labelHtml+'</div>');
-  }).join('');
-  
-  // Row 2: "Suggested correction" labels
-  var suggLabelRow = results.map(function(r){
-    return cell(r.suggested ? '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#1a3c22;">Suggested correction</div>' : '');
-  }).join('');
-  
-  // Row 3: Suggested boxes (equal height via grid)
-  var suggBoxRow = results.map(function(r){
-    if(!r.suggested) return cell('');
-    return cell('<div style="background:#f1f8e9;border:2px solid #aed581;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#1a3c22;height:100%;box-sizing:border-box;">'+fmtAddr(r.suggested)+'</div>', 'height:100%;');
-  }).join('');
-  
-  // Row 4: Buttons (fixed height, uniform)
-  var btnRow = results.map(function(r, idx){
-    if(!r.suggested) return cell('');
-    return cell(
-      '<div style="display:flex;gap:8px;height:48px;">'+
-        '<button type="button" data-use="'+idx+'" style="flex:1;padding:8px;background:#fff;color:#1a3c22;border:2px solid #1a3c22;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;">Use suggested</button>'+
-        '<button type="button" data-keep="'+idx+'" style="flex:1;padding:8px;background:#1a3c22;color:#fff;border:2px solid #1a3c22;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;">✓ Keeping mine</button>'+
-      '</div>', 'height:100%;'
-    );
-  }).join('');
-  
-  // Row 5: "Your entry" labels
-  var yoursLabelRow = results.map(function(r){
-    return cell('<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#666;">'+(r.suggested?'Your entry':'Address')+'</div>');
-  }).join('');
-  
-  // Row 6: Your entry boxes (equal height via grid)
-  var yoursBoxRow = results.map(function(r){
-    return cell('<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#333;height:100%;box-sizing:border-box;">'+fmtAddr(r.original)+'</div>', 'height:100%;');
-  }).join('');
-  
-  // Row 7: Warnings (unit missing, or no suggested correction)
-  var warnRow = results.map(function(r){
-    var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
-    var unitInOrig=unitAlreadyInAddress(suggUnit, r.original.address1||r.original.street, r.original.address2||r.original.street2);
-    if(r.suggested&&suggUnit&&!unitInOrig){
-      return cell('<div style="background:#fff8e1;border:1px solid #ffd54f;border-radius:8px;padding:10px;font-size:12px;line-height:1.4;color:#5d4037;"><strong>⚠ Unit needed:</strong> Without it, your package may not arrive.</div>');
-    }
-    if(!r.suggested){
-      return cell('<div style="background:#fff8e1;border:1px solid #ffd54f;border-radius:8px;padding:10px;font-size:12px;line-height:1.4;color:#5d4037;"><strong>⚠ Please verify:</strong> If this address is incorrect, you may not receive your mail.</div>');
-    }
-    return cell('');
-  }).join('');
-  
-  var gridStyle = isMobileGrid ?
-    'display:grid;grid-template-columns:1fr;gap:12px;' :
-    'display:grid;grid-template-columns:repeat('+nCols+',1fr);gap:16px 20px;align-items:stretch;';
-  
-  var cards = '<div style="'+gridStyle+'">' + labelRow + suggLabelRow + suggBoxRow + btnRow + yoursLabelRow + yoursBoxRow + warnRow + '</div>';
-  
-  root.innerHTML=
-  '<div class="bsr-val-modal-overlay" id="val-overlay">'+
-    '<div class="bsr-val-modal" style="max-width:600px;">'+
-      '<button type="button" id="val-close-btn" aria-label="Close" style="position:absolute;top:16px;right:16px;width:36px;height:36px;background:#f5f5f5;border:none;border-radius:50%;font-size:20px;cursor:pointer;color:#666;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>'+
-      '<div style="text-align:center;margin-bottom:6px;">'+
-        '<h3 style="margin:0 0 8px 0;font-size:22px;font-weight:700;color:#1a3c22;letter-spacing:-0.3px;">Confirm your addresses</h3>'+
-        '<p style="margin:0;font-size:14px;color:#666;line-height:1.5;max-width:440px;margin-left:auto;margin-right:auto;">'+
-          (hasSuggestions?'We found some corrections for your addresses. Please review below.':'Please review your addresses below.')+
-        '</p>'+
-        '<p style="margin:8px 0 0 0;font-size:12px;color:var(--warn);line-height:1.4;max-width:440px;margin-left:auto;margin-right:auto;">'+
-          '⚠ Double-check: if your address has an apartment, unit, suite, or site number, make sure it\'s included above.'+
-        '</p>'+
-      '</div>'+
-      '<div style="height:1px;background:#e8e4d8;margin:20px 0;"></div>'+
-      cards+
-      '<div style="height:1px;background:#e8e4d8;margin:24px 0 20px 0;"></div>'+
-      '<div style="text-align:center;">'+
-        '<button type="button" id="val-continue-btn" style="padding:12px 36px;background:#1a3c22;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Continue to payment →</button>'+
-      '</div>'+
-    '</div>'+
-  '</div>';
-  
-  var choices={};
-  results.forEach(function(r, idx){choices[idx]='keep';});
-  
-  root.querySelectorAll('[data-use]').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var idx=btn.getAttribute('data-use');
-      choices[idx]='use';
-      btn.style.background='#1a3c22';btn.style.color='#fff';btn.style.border='none';
-      var kb=root.querySelector('[data-keep="'+idx+'"]');
-      if(kb){kb.style.background='#fff';kb.style.color='#1a3c22';kb.style.border='2px solid #1a3c22';}
-      btn.textContent='✓ Using suggested';
-      if(kb) kb.textContent='Keep mine';
-    });
-  });
-  root.querySelectorAll('[data-keep]').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var idx=btn.getAttribute('data-keep');
-      choices[idx]='keep';
-      btn.style.background='#1a3c22';btn.style.color='#fff';btn.style.border='none';
-      btn.textContent='✓ Keeping mine';
-      var ub=root.querySelector('[data-use="'+idx+'"]');
-      if(ub){ub.style.background='#fff';ub.style.color='#1a3c22';ub.style.border='2px solid #1a3c22';ub.textContent='Use suggested';}
-    });
-  });
-  // Default: "Keep mine" selected
-  root.querySelectorAll('[data-keep]').forEach(function(btn){
-    btn.style.background='#1a3c22';btn.style.color='#fff';btn.style.border='none';
-    btn.textContent='✓ Keeping mine';
-  });
-  
-  var closeModal=function(){root.innerHTML='';resetBtn();};
-  document.getElementById('val-close-btn').addEventListener('click',closeModal);
-  document.getElementById('val-overlay').addEventListener('click',function(e){
-    if(e.target.id==='val-overlay') closeModal();
-  });
-  // Force equal heights across columns for perfect alignment
-  setTimeout(function(){
-    var grid = root.querySelector('div[style*="grid-template-columns"]');
-    if(!grid) return;
-    var cols = nCols;
-    var items = Array.prototype.slice.call(grid.children);
-    // Group items by row (every 'cols' items = one row)
-    for(var r=0; r<items.length; r+=cols){
-      var rowItems = items.slice(r, r+cols);
-      var maxH = 0;
-      rowItems.forEach(function(el){
-        el.style.height='auto';
-        var h = el.offsetHeight;
-        if(h>maxH) maxH=h;
-      });
-      rowItems.forEach(function(el){
-        el.style.height=maxH+'px';
-        el.style.boxSizing='border-box';
-      });
-    }
-  }, 50);
-  
-  document.getElementById('val-continue-btn').addEventListener('click',function(){
-    root.innerHTML='';
-    var fixed=results.map(function(r, idx){
-      if(r.suggested&&choices[idx]==='use'){
-        var out={};for(var k in r.original) out[k]=r.original[k];
-        var c=r.suggestedRaw;
-        if(c.street) out.address1=c.street;
-        if(c.street2) out.address2=c.street2;
-        if(c.city) out.city=c.city;
-        if(c.state) out.state=c.state;
-        if(c.zip) out.postal=c.zip;
-        if(c.country) out.country=c.country;
-        return {kind:r.kind, address:out};
-      }
-      return {kind:r.kind, address:r.original};
-    });
-    onDone(fixed);
-  });
-}
-
-
-function validateRequiredFields(){
-  var err=document.getElementById('continue-err');
-  clearAllFieldErrs();
-  var same=document.getElementById('f-ship-same').checked;
-  var required=[
-    ['f-bill-name','Full name (billing)'],
-    ['f-bill-email','Email (billing)'],
-    ['f-bill-phone','Phone (billing)'],
-    ['f-bill-line1','Street address (billing)'],
-    ['f-bill-city','City (billing)'],
-    ['f-bill-state','State (billing)'],
-    ['f-bill-postal','ZIP (billing)'],
-    ['f-bill-country','Country (billing)']
-  ];
-  if(!same){
-    required=required.concat([
-      ['f-ship-name','Full name (shipping)'],
-      ['f-ship-email','Email (shipping)'],
-      ['f-ship-phone','Phone (shipping)'],
-      ['f-line1','Street address (shipping)'],
-      ['f-city','City (shipping)'],
-      ['f-state','State (shipping)'],
-      ['f-postal','ZIP (shipping)'],
-      ['f-country','Country (shipping)']
-    ]);
-  }
-  for(var i=0;i<required.length;i++){
-    var id=required[i][0], label=required[i][1];
-    var el=document.getElementById(id);
-    if(el && !el.value.trim()){
-      fieldErr(id, label+' is required');
-      err.textContent='Please fill in all required fields';
-      err.style.display='block';
-      el.focus();
-      return false;
-    } else {
-      fieldErr(id, null);
-    }
-  }
-  // Email format check
-  var emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  var bEmail=document.getElementById('f-bill-email').value.trim();
-  if(!emailRe.test(bEmail)){fieldErr('f-bill-email','Enter a valid email');err.textContent='Please fix the highlighted fields';err.style.display='block';return false;}
-  if(!same){
-    var sEmail=document.getElementById('f-ship-email').value.trim();
-    if(!emailRe.test(sEmail)){fieldErr('f-ship-email','Enter a valid email');err.textContent='Please fix the highlighted fields';err.style.display='block';return false;}
-  }
-  return true;
-}
-
-document.getElementById('continue-to-payment').addEventListener('click',function(){
-var btn=this;
-var err=document.getElementById('continue-err');err.style.display='none';
-if(!cart.length){err.textContent='Cart is empty';err.style.display='block';return;}
-if(!validateRequiredFields()){return;}
-// Shippo address validation before proceeding
-if (window.BSRAddrValidate && BSRAddrValidate.validate) {
-  btn.disabled=true; btn.textContent='Validating addresses…';
-  var resetBtn=function(){btn.disabled=false;btn.textContent='Continue to payment →';};
-  // Safety: ensure shipping matches billing if "same" is checked (catches programmatic changes)
-  if(document.getElementById('f-ship-same').checked && typeof syncShipToBill==='function'){ syncShipToBill(); }
-  var billSection=document.getElementById('bill-section');
-  var shipSection=document.getElementById('ship-section');
-  var same=document.getElementById('f-ship-same').checked;
-  var billPayload={
-    address1:document.getElementById('f-bill-line1').value.trim(),
-    address2:document.getElementById('f-bill-line2').value.trim(),
-    city:document.getElementById('f-bill-city').value.trim(),
-    state:document.getElementById('f-bill-state').value.trim(),
-    postal:document.getElementById('f-bill-postal').value.trim(),
-    country:document.getElementById('f-bill-country').value
-  };
-  var shipPayload=same?{
-    address1:document.getElementById('f-bill-line1').value.trim(),
-    address2:document.getElementById('f-bill-line2').value.trim(),
-    city:document.getElementById('f-bill-city').value.trim(),
-    state:document.getElementById('f-bill-state').value.trim(),
-    postal:document.getElementById('f-bill-postal').value.trim(),
-    country:document.getElementById('f-bill-country').value
-  }:{
-    address1:document.getElementById('f-line1').value.trim(),
-    address2:document.getElementById('f-line2').value.trim(),
-    city:document.getElementById('f-city').value.trim(),
-    state:document.getElementById('f-state').value.trim(),
-    postal:document.getElementById('f-postal').value.trim(),
-    country:document.getElementById('f-country').value
-  };
-  var writeBack=function(fixed, prefix){
-    if(!fixed) return;
-    var set=function(id, v){var el=document.getElementById(prefix+id); if(el&&v!==undefined) el.value=v;};
-    set('line1', fixed.address1); set('line2', fixed.address2);
-    set('city', fixed.city); set('state', fixed.state);
-    set('postal', fixed.postal||fixed.zip); set('country', fixed.country);
-  };
-  var doProceed=function(){
-    resetBtn();
-    proceedToPayment();
-  };
-  // Validate both addresses, then show single combined modal
-  var validateOne=function(kind, payload){
-    return new Promise(function(resolve){
-      if(!window.BSRAddrValidate||!BSRAddrValidate.validate){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:!(j&&j.deliverable)});return;}
-      BSRAddrValidate.validate(payload).then(function(j){
-        if(!j||!j.ok){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:true,validationFailed:true}).catch(function(){
-        if(timedOut) return;
-        clearTimeout(timer);
-        resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:true,validationFailed:true});
-      });return;}
-        var corrected=j.address||null;
-        var hasSuggestion=(j.corrected||(j.corrections&&j.corrections.length));
-        if(!hasSuggestion||!corrected){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:!(j&&j.deliverable)});return;}
-        var diff=false;
-        [['street','address1'],['city','city'],['state','state'],['zip','postal']].forEach(function(pair){
-          if(corrected[pair[0]]&&String(corrected[pair[0]]).toLowerCase()!==String(payload[pair[1]]||'').toLowerCase()) diff=true;
-        });
-        if(!diff){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:!(j&&j.deliverable)});return;}
-        var suggestedAddr={address1:corrected.street,address2:corrected.street2,city:corrected.city,state:corrected.state,postal:corrected.zip,country:corrected.country||payload.country};
-        resolve({kind:kind,original:payload,suggested:suggestedAddr,suggestedRaw:corrected});
-      }).catch(function(){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});});
-    });
-  };
-  var promises=[validateOne('bill', billPayload)];
-  // Always validate shipping too, so both appear in the popup
-  var shipPayloadForVal=same?
-    {name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:cleanPhone(document.getElementById('f-bill-phone').value),address1:document.getElementById('f-bill-line1').value,address2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}:
-    shipPayload;
-  promises.push(validateOne('ship', shipPayloadForVal));
-  Promise.all(promises).then(function(results){
-    // Check for warnings (missing unit, undeliverable, etc.)
-    var warnings=[];
-    results.forEach(function(r){
-      var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
-      var unitInOrig=unitAlreadyInAddress(suggUnit, r.original.address1, r.original.address2);
-      if(r.suggested&&suggUnit&&!unitInOrig){
-        warnings.push({kind:r.kind, address:r.original,
-          message:'Our address validator detected a unit/apartment number ('+suggUnit+') for this address that you did not include. Without it, you may not receive your item.'});
-      }
-      if(r.undeliverable){
-        var warnMsg=r.validationFailed?
-          'Our address validator could not verify this address. Please double-check it before continuing.' :
-          'Our address validator could not verify this address as deliverable. Please double-check it.';
-        warnings.push({kind:r.kind, address:r.original, message:warnMsg});
-      }
-    });
-    var showConfirm=function(){
-      // If no suggestions, skip the confirmation modal (warning was sufficient)
-      var hasSuggestions=results.some(function(r){return r.suggested;});
-      if(!hasSuggestions){ doProceed(); return; }
-      showValidationModal(results, function(fixed){
-        fixed.forEach(function(f){
-          if(f.kind==='bill') writeBack(f.address, 'f-bill-');
-          else writeBack(f.address, 'f-');
-        });
-        // Sync shipping to billing if "same" is checked (writeBack doesn't fire input events)
-        if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}
-        doProceed();
-      });
-    };
-    if(warnings.length){
-      showWarningPopup(results, warnings, showConfirm);
-    } else {
-      showConfirm();
-    }
-  });
-  return; // Don't proceed yet, wait for validation
-}
-// Fallback if validator not available
-proceedToPayment();
-});
-function proceedToPayment(){
-var _cart=[]; try{_cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){}
-if(!_cart||!_cart.length){alert('Your cart is empty. Please add an item before checking out.');return;}
-var same=document.getElementById('f-ship-same').checked;
-var billingData=null; try{billingData=JSON.parse(sessionStorage.getItem('bsr-billing')||'null');}catch(e){}
-if(!billingData||!billingData.billing){alert('Billing information is missing. Please go back and enter your billing address.');location.href='/checkout/';return;}
-var p={slugs:billingData.slugs||_cart,
-billing:billingData.billing,
-shipping:null};
-if(same){
-  var b=billingData.billing;
-  p.shipping={name:b.name,company:b.company,email:b.email,phone:b.phone,address:{line1:b.address.line1,line2:b.address.line2,city:b.address.city,state:b.address.state,postal:b.address.postal,country:b.address.country}};
-}else{
-  p.shipping={name:document.getElementById('f-ship-name').value,company:document.getElementById('f-ship-company').value,email:document.getElementById('f-ship-email').value,phone:cleanPhone(document.getElementById('f-ship-phone').value),address:{line1:document.getElementById('f-line1').value,line2:document.getElementById('f-line2').value,city:document.getElementById('f-city').value,state:document.getElementById('f-state').value,postal:document.getElementById('f-postal').value,country:document.getElementById('f-country').value}};
-}
-// Include selected shipping method (Shippo/Easyship rate)
-if (typeof selectedShipOption !== 'undefined' && selectedShipOption) {
-  p.shipping.rate_ref = selectedShipOption.ref || '';
-  p.shipping.provider = selectedShipOption.provider || '';
-  p.shipping.carrier = selectedShipOption.carrier || '';
-  p.shipping.service = selectedShipOption.service || '';
-}
-sessionStorage.setItem('bsr-checkout-payload',JSON.stringify(p));
-try{localStorage.setItem('bsr-checkout-payload-bak',JSON.stringify(p));}catch(e){}
-location.href='/checkout/payment/?t='+Date.now();
-}
-});
-
-
-// Postal code autocomplete - fill city/state/country from postal code (international)
-// Uses polling (bulletproof - no event dependency)
-(function(){
-  var countryMap={'united states':'us','usa':'us','canada':'ca','united kingdom':'gb','uk':'gb','great britain':'gb','germany':'de','france':'fr','australia':'au','mexico':'mx','japan':'jp','ireland':'ie','netherlands':'nl','spain':'es','italy':'it'};
-  var lastBillZip='', lastShipZip='';
-  // Detect country from postal code format (so user doesn't have to set it first)
-  function detectCountry(zip){
-    var z=zip.trim().toUpperCase();
-    if(/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/.test(z)) return 'ca'; // Canada: K1A 0B1
-    if(/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/.test(z)) return 'gb'; // UK: SW1A 1AA
-    if(/^\d{4}$/.test(z)) return 'au'; // Australia: 4 digits (also try de/fr)
-    if(/^\d{5}(-?\d{4})?$/.test(z)) return 'us'; // US: 5 digits or ZIP+4 with/without hyphen
-    return null;
-  }
-  function lookup(zip, cityId, stateId, countryId){
-    var countryEl=document.getElementById(countryId);
-    var countryRaw=countryEl?countryEl.value.trim().toLowerCase():'us';
-    var countryCode=countryMap[countryRaw]||countryRaw;
-    if(!/^[a-z]{2}$/.test(countryCode)) countryCode='us';
-    // Auto-detect: if ZIP format clearly indicates a different country, switch
-    var detected=detectCountry(zip);
-    if(detected&&detected!==countryCode){
-      countryCode=detected;
-      if(countryEl) countryEl.value=detected.toUpperCase();
-    }
-    // Strip ZIP+4 extension for the API (it only wants the 5-digit base)
-    var apiZip=zip;
-    if(countryCode==='us'){
-      var m5=/^(\d{5})(-?\d{4})?$/.exec(zip.trim());
-      if(m5) apiZip=m5[1];
-    }
-    fetch('https://api.zippopotam.us/'+countryCode+'/'+encodeURIComponent(apiZip))
-      .then(function(r){ if(!r.ok) throw new Error('not found'); return r.json(); })
-      .then(function(data){
-        var place=data.places&&data.places[0];
-        if(!place) return;
-        var cityEl=document.getElementById(cityId);
-        var stateEl=document.getElementById(stateId);
-        if(cityEl) cityEl.value=place['place name']||'';
-        if(stateEl) stateEl.value=place['state abbreviation']||place['state']||'';
-        if(countryEl&&data['country abbreviation']) countryEl.value=data['country abbreviation'];
-        if(document.getElementById('f-ship-same')&&document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}
-      })
-      .catch(function(){});
-  }
-  setInterval(function(){
-    var bZipEl=document.getElementById('f-bill-postal');
-    var sZipEl=document.getElementById('f-postal');
-    if(bZipEl){
-      var bZip=bZipEl.value.trim();
-      if(bZip&&bZip!==lastBillZip){ lastBillZip=bZip; lookup(bZip,'f-bill-city','f-bill-state','f-bill-country'); }
-      if(!bZip) lastBillZip='';
-    }
-    if(sZipEl){
-      var sZip=sZipEl.value.trim();
-      if(sZip&&sZip!==lastShipZip){ lastShipZip=sZip; lookup(sZip,'f-city','f-state','f-country'); }
-      if(!sZip) lastShipZip='';
-    }
-  }, 1000);
-})();
-
-// Saved address dropdowns (signed-in only)
-function setV(id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; }
-function setSel(id, v) { var el = document.getElementById(id); if (el) el.value = v || 'US'; }
 function addrLabel(a) {
   var street = [a.address1, a.address2].filter(Boolean).join(', ');
   var city = [a.city, a.state].filter(Boolean).join(', ');
@@ -805,29 +170,7 @@ function addrLabel(a) {
   var who = ((a.nickname || '').trim()) || ((a.name || '').trim());
   return (who ? who + ' \u2014 ' : '') + loc;
 }
-function fillShipForm(a) {
-  setV('f-ship-name', a.name); setV('f-ship-company', a.company);
-  setV('f-ship-email', a.email); setV('f-ship-phone', a.phone);
-  setV('f-line1', a.address1); setV('f-line2', a.address2); setV('f-city', a.city);
-  setV('f-state', a.state); setV('f-postal', a.postal);
-  setSel('f-country', a.country);
-}
-function fillBillForm(a) {
-  setV('f-bill-name', a.name); setV('f-bill-company', a.company);
-  setV('f-bill-email', a.email); setV('f-bill-phone', a.phone);
-  setV('f-bill-line1', a.address1); setV('f-bill-line2', a.address2); setV('f-bill-city', a.city);
-  setV('f-bill-state', a.state); setV('f-bill-postal', a.postal);
-  setSel('f-bill-country', a.country);
-}
-function clearShipForm() {
-  ['f-ship-name','f-ship-company','f-ship-email','f-ship-phone','f-line1','f-line2','f-city','f-state','f-postal'].forEach(function(id){ setV(id,''); });
-  setSel('f-country','US');
-}
-function clearBillForm() {
-  ['f-bill-name','f-bill-company','f-bill-email','f-bill-phone','f-bill-line1','f-bill-line2','f-bill-city','f-bill-state','f-bill-postal'].forEach(function(id){ setV(id,''); });
-  setSel('f-bill-country','US');
-}
-function initAddressPickers() {
+function initShipPicker() {
   if (!window.BSR || !BSR.api) return;
   BSR.api('/api/account/addresses').then(function(j) {
     if (!(j && j.ok && Array.isArray(j.addresses) && j.addresses.length)) {
@@ -837,10 +180,9 @@ function initAddressPickers() {
     }
     var list = j.addresses, byId = {};
     list.forEach(function(a){ byId[String(a.id)] = a; });
-    var defShip = null, defBill = null;
+    var defShip = null;
     list.forEach(function(a){
       if (a.is_default_shipping && !defShip) defShip = a;
-      if (a.is_default_billing && !defBill) defBill = a;
     });
     var opts = function(selId) {
       return '<option value="">Use a new address\u2026</option>' + list.map(function(a){
@@ -852,205 +194,286 @@ function initAddressPickers() {
     document.getElementById('ship-addr-picker').innerHTML =
       '<div class="field"><label for="ship-saved">Saved addresses</label>' +
       '<select id="ship-saved" class="input">' + opts(defShip && defShip.id) + '</select></div>';
-    document.getElementById('bill-addr-picker').innerHTML =
-      '<div class="field"><label for="bill-saved">Saved addresses</label>' +
-      '<select id="bill-saved" class="input">' + opts(defBill && defBill.id) + '</select></div>';
-    // Hide ship picker if "Same as billing" is checked
-    if(document.getElementById('f-ship-same').checked){
-      document.getElementById('ship-addr-picker').style.display='none';
-      document.getElementById('ship-fields').style.display='none';
-    }
     if (defShip) fillShipForm(defShip);
-    if (defBill) {
-      fillBillForm(defBill);
-      var sameRec = defShip && String(defBill.id) === String(defShip.id);
-      if (!sameRec) {
-        document.getElementById('f-ship-same').checked = false;
-        document.getElementById('ship-fields').style.display = 'block';
-      }
-    }
-    var shipSavedEl = document.getElementById('ship-saved');
-    if (shipSavedEl) {
-      shipSavedEl.addEventListener('change', function(){
-        var a = byId[String(this.value)];
-        if (typeof clearShipForm==='function') clearShipForm();
-        if (a && typeof fillShipForm==='function') fillShipForm(a);
-      });
-      // Auto-fill with the currently selected address on load
-      try {
-        var selId = shipSavedEl.value;
-        var selAddr = selId ? byId[String(selId)] : null;
-        if (selAddr && typeof fillShipForm==='function') fillShipForm(selAddr);
-      } catch(e) { console.log('Auto-fill failed:', e); }
-    }
-    // (Billing is on separate page - no bill-saved here)
-    // Polling fallback: check dropdown value periodically
-    var _lastShipVal = null;
-    setInterval(function(){
-      var el = document.getElementById('ship-saved');
-      if (!el) return;
-      var v = el.value;
-      if (v !== _lastShipVal) {
-        _lastShipVal = v;
-        var a = byId[String(v)];
-        if (a && typeof fillShipForm==='function') {
-          if (typeof clearShipForm==='function') clearShipForm();
-          fillShipForm(a);
-        }
-      }
-    }, 500);
+    document.getElementById('ship-saved').addEventListener('change', function(){
+      var a = byId[String(this.value)]; clearShipForm(); if (a) fillShipForm(a);
+      invalidateRates();
+    });
   }).catch(function(){});
 }
 
-/* Shipping methods - fetch live rates from Shippo/Easyship */
-var selectedShipOption = null;
-function fetchShipRates() {
-  var sameAsBilling = document.getElementById('f-ship-same');
-  var useBilling = sameAsBilling && sameAsBilling.checked;
-  var postal, country, city, state, street;
-  if (useBilling) {
-    // Read billing from sessionStorage (billing page saved it there)
-    try {
-      var billingData = JSON.parse(sessionStorage.getItem('bsr-billing') || 'null');
-      if (billingData && billingData.billing && billingData.billing.address) {
-        var addr = billingData.billing.address;
-        postal = { value: addr.postal || '' };
-        country = { value: addr.country || 'US' };
-        city = { value: addr.city || '' };
-        state = { value: addr.state || '' };
-        street = { value: addr.line1 || '' };
-      }
-    } catch(e) {}
-  } else {
-    postal = document.getElementById('f-postal');
-    country = document.getElementById('f-country');
-    city = document.getElementById('f-city');
-    state = document.getElementById('f-state');
-    street = document.getElementById('f-line1');
+// ---- Same as billing (starts unchecked) ----
+function onSameChange(){
+  var same=document.getElementById('f-ship-same').checked;
+  document.getElementById('ship-fields').style.display=same?'none':'';
+  document.getElementById('ship-addr-picker').style.display=same?'none':'';
+  invalidateRates();
+}
+document.getElementById('f-ship-same').addEventListener('change', onSameChange);
+
+// ---- Effective shipping address for rates/validation ----
+function shipAddrPayload(){
+  if(document.getElementById('f-ship-same').checked){
+    var b=getBilling(); var a=b&&b.address?b.address:{};
+    return {address1:a.line1||'',address2:a.line2||'',city:a.city||'',state:a.state||'',postal:a.postal||'',country:a.country||'US'};
   }
-  if (!postal || !postal.value.trim()) return;
-  
-  var section = document.getElementById('ship-method-section');
-  var loading = document.getElementById('ship-methods-loading');
-  var errDiv = document.getElementById('ship-methods-error');
-  var list = document.getElementById('ship-methods-list');
-  if (!section || !list) return;
-  
-  section.style.display = '';
-  loading.style.display = '';
-  errDiv.style.display = 'none';
-  list.innerHTML = '';
-  
-  // Get cart count for items estimate
-  var cartCount = 1;
-  try {
-    var cart = (window.BSR && BSR.cart) ? BSR.cart.list() : JSON.parse(localStorage.getItem('bsr-cart-v1') || '[]');
-    cartCount = Math.max(1, cart.length);
-  } catch (e) {}
-  
-  var items = [];
-  for (var i = 0; i < cartCount; i++) {
-    items.push({ title: 'Collectible 35mm slide', quantity: 1, unit_price: 500 });
+  return {
+    address1:BSRCheckout.val('f-ship-line1'),address2:BSRCheckout.val('f-ship-line2'),
+    city:BSRCheckout.val('f-ship-city'),state:BSRCheckout.val('f-ship-state'),
+    postal:BSRCheckout.val('f-ship-postal'),country:BSRCheckout.val('f-ship-country')||'US'
+  };
+}
+function normKey(a){
+  return JSON.stringify([a.address1,a.address2,a.city,a.state,a.postal,a.country].map(function(x){return String(x||'').trim().toLowerCase();}));
+}
+
+// ---- Shipping rates (automatic, no button) ----
+var shipOptions=[], selectedShipIdx=-1, selectedShipOption=null, lastRatesKey='', shipRateTimer=null, ratesInFlight=false;
+function renderRates(){
+  var list=document.getElementById('ship-methods-list');
+  if(!shipOptions.length){ list.innerHTML=''; return; }
+  var html=shipOptions.map(function(o,i){
+    var eta=o.eta?'<div style="font-size:12px;color:#666;">'+BSR.esc(o.eta)+'</div>':'';
+    var label=[o.carrier,o.service].filter(Boolean).join(' \u2014 ')||'Shipping';
+    return '<label class="ship-opt" style="display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;cursor:pointer;">'+
+      '<input type="radio" name="ship-method" value="'+i+'"'+(i===selectedShipIdx?' checked':'')+'>'+
+      '<div style="flex:1;"><div style="font-weight:600;">'+BSR.esc(label)+'</div>'+eta+'</div>'+
+      '<div style="font-weight:700;white-space:nowrap;">'+BSR.money(o.cents||0)+'</div></label>';
+  }).join('');
+  list.innerHTML=html;
+  var radios=list.querySelectorAll('input[name="ship-method"]');
+  for(var k=0;k<radios.length;k++){
+    radios[k].addEventListener('change',function(){
+      selectedShipIdx=parseInt(this.value,10);
+      selectedShipOption=shipOptions[selectedShipIdx]||null;
+      updateShipTotal();
+    });
   }
-  
-  var params = new URLSearchParams({
-    country: (country && country.value) || 'US',
-    postal: postal.value.trim(),
-    street: (street && street.value) || '',
-    city: (city && city.value) || '',
-    state: (state && state.value) || '',
-    items: JSON.stringify(items)
-  });
-  
-  var apiBase = (window.BSR && BSR.apiBase) ? BSR.apiBase : '';
-  // Use BSR.api if available, else fetch directly
-  var apiBase = 'https://cm.bayshorerelicsllc.com';
-  var fetchFn = (window.BSR && BSR.api) 
-    ? function() { return BSR.api('/api/shipping/rates?' + params.toString(), { method: 'GET' }); }
-    : function() { 
-        return fetch(apiBase + '/api/shipping/rates?' + params.toString(), { credentials: 'include' })
-          .then(function(r) { return r.json(); });
-      };
-  
-  fetchFn().then(function(j) {
-    loading.style.display = 'none';
-    if (!j || !j.ok || !j.options || !j.options.length) {
-      errDiv.textContent = (j && j.error) || 'Could not get shipping rates. The cheapest option will be used.';
-      errDiv.style.display = '';
-      return;
+}
+function updateShipTotal(){
+  var el=document.getElementById('sum-ship');
+  if(el) el.textContent=selectedShipOption?BSR.money(selectedShipOption.cents||0):'Calculated below';
+}
+function fetchShipRates(done){
+  var loading=document.getElementById('ship-methods-loading');
+  var errDiv=document.getElementById('ship-methods-error');
+  errDiv.style.display='none';
+  var a=shipAddrPayload();
+  var key=normKey(a);
+  if(!a.postal){ loading.style.display='none'; if(done) done(); return; }
+  if(!cart.length){ if(done) done(); return; }
+  loading.style.display='block';
+  ratesInFlight=true;
+  var items=[];
+  for(var i=0;i<cart.length;i++) items.push({title:'Collectible 35mm slide',quantity:1,unit_price:500});
+  var params=new URLSearchParams({country:a.country||'US',postal:a.postal.trim(),street:a.address1||'',city:a.city||'',state:a.state||'',items:JSON.stringify(items)});
+  BSR.api('/api/shipping/rates?'+params.toString(),{method:'GET'}).then(function(j){
+    loading.style.display='none'; ratesInFlight=false;
+    if(!j||!j.ok||!j.options||!j.options.length){
+      errDiv.textContent=(j&&j.error)||'Could not get shipping rates. You can still continue \u2014 the cheapest option will be used.';
+      errDiv.style.display='';
+      shipOptions=[]; selectedShipIdx=-1; selectedShipOption=null; lastRatesKey=key;
+      renderRates(); updateShipTotal();
+      if(done) done(); return;
     }
-    selectedShipOption = j.options[0]; // Default to first (cheapest)
-    var html = '';
-    j.options.forEach(function(opt, idx) {
-      var checked = idx === 0 ? ' checked' : '';
-      var price = '$' + (opt.cents / 100).toFixed(2);
-      var name = (opt.carrier || '') + ' ' + (opt.service || '');
-      var eta = opt.eta || '';
-      html += '<label style="display:block;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:8px;cursor:pointer">' +
-        '<input type="radio" name="ship-method" value="' + idx + '"' + checked + ' style="accent-color:#1a3c22"> ' +
-        '<strong>' + name + '</strong> — ' + price +
-        (eta ? ' <span style="color:#666">(' + eta + ')</span>' : '') +
-        '</label>';
-    });
-    list.innerHTML = html;
-    // Wire up selection
-    var radios = list.querySelectorAll('input[name="ship-method"]');
-    radios.forEach(function(radio) {
-      radio.addEventListener('change', function() {
-        selectedShipOption = j.options[parseInt(this.value, 10)];
-      });
-    });
-  }).catch(function(e) {
-    loading.style.display = 'none';
-    errDiv.textContent = 'Could not get shipping rates. The cheapest option will be used.';
-    errDiv.style.display = '';
+    // Preserve the previously selected rate across refetches when possible.
+    var prevRef=selectedShipOption&&selectedShipOption.ref;
+    shipOptions=j.options;
+    selectedShipIdx=0;
+    if(prevRef){
+      for(var k=0;k<shipOptions.length;k++){ if(shipOptions[k].ref===prevRef){ selectedShipIdx=k; break; } }
+    }
+    selectedShipOption=shipOptions[selectedShipIdx]||null;
+    lastRatesKey=key;
+    renderRates(); updateShipTotal();
+    if(done) done();
+  }).catch(function(){
+    loading.style.display='none'; ratesInFlight=false;
+    errDiv.textContent='Could not get shipping rates. You can still continue \u2014 the cheapest option will be used.';
+    errDiv.style.display='';
+    if(done) done();
   });
 }
+function scheduleRates(){
+  if(shipRateTimer) clearTimeout(shipRateTimer);
+  shipRateTimer=setTimeout(function(){ fetchShipRates(); },800);
+}
+function invalidateRates(){
+  selectedShipOption=null; selectedShipIdx=-1; shipOptions=[];
+  document.getElementById('ship-methods-list').innerHTML='';
+  updateShipTotal();
+  scheduleRates();
+}
+['f-ship-postal','f-ship-city','f-ship-state','f-ship-line1','f-ship-line2','f-ship-country'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('input', invalidateRates);
+});
+// Initial auto-load if the form already has a postal code (saved address)
+setTimeout(function(){ fetchShipRates(); },1500);
 
-// Fetch rates when postal code changes (debounced)
-var shipRateTimer = null;
-function scheduleShipRateFetch() {
-  if (shipRateTimer) clearTimeout(shipRateTimer);
-  shipRateTimer = setTimeout(fetchShipRates, 800);
+// ---- Postal code autofill (1-second polling, country auto-detect) ----
+(function(){
+  var countryMap={'united states':'us','usa':'us','canada':'ca','united kingdom':'gb','uk':'gb','great britain':'gb','germany':'de','france':'fr','australia':'au','mexico':'mx','japan':'jp','ireland':'ie','netherlands':'nl','spain':'es','italy':'it'};
+  var lastShipZip='';
+  function detectCountry(zip){
+    var z=zip.trim().toUpperCase();
+    if(/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/.test(z)) return 'ca';
+    if(/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/.test(z)) return 'gb';
+    if(/^\d{4}$/.test(z)) return 'au';
+    if(/^\d{5}(-?\d{4})?$/.test(z)) return 'us';
+    return null;
+  }
+  function lookup(zip){
+    var countryEl=document.getElementById('f-ship-country');
+    var countryRaw=countryEl?countryEl.value.trim().toLowerCase():'us';
+    var countryCode=countryMap[countryRaw]||countryRaw;
+    if(!/^[a-z]{2}$/.test(countryCode)) countryCode='us';
+    var detected=detectCountry(zip);
+    if(detected&&detected!==countryCode){
+      countryCode=detected;
+      if(countryEl) countryEl.value=detected.toUpperCase();
+    }
+    var apiZip=zip;
+    if(countryCode==='us'){
+      var m5=/^(\d{5})(-?\d{4})?$/.exec(zip.trim());
+      if(m5) apiZip=m5[1];
+    }
+    fetch('https://api.zippopotam.us/'+countryCode+'/'+encodeURIComponent(apiZip))
+      .then(function(r){ if(!r.ok) throw new Error('not found'); return r.json(); })
+      .then(function(data){
+        var place=data.places&&data.places[0];
+        if(!place) return;
+        var cityEl=document.getElementById('f-ship-city');
+        var stateEl=document.getElementById('f-ship-state');
+        if(cityEl) cityEl.value=place['place name']||'';
+        if(stateEl) stateEl.value=place['state abbreviation']||place['state']||'';
+        if(countryEl&&data['country abbreviation']) countryEl.value=data['country abbreviation'];
+      })
+      .catch(function(){});
+  }
+  setInterval(function(){
+    var sZipEl=document.getElementById('f-ship-postal');
+    if(!sZipEl) return;
+    var sZip=sZipEl.value.trim();
+    if(sZip&&sZip!==lastShipZip){ lastShipZip=sZip; lookup(sZip); }
+    if(!sZip) lastShipZip='';
+  }, 1000);
+})();
+
+// ---- Validation + Continue to payment ----
+function validateShipFields(){
+  var err=document.getElementById('continue-err');
+  BSRCheckout.clearFieldErrs('#ship-section');
+  if(document.getElementById('f-ship-same').checked) return true; // address came from billing
+  var required=[
+    ['f-ship-name','Full name'],
+    ['f-ship-email','Email'],
+    ['f-ship-phone','Phone'],
+    ['f-ship-line1','Street address'],
+    ['f-ship-city','City'],
+    ['f-ship-state','State'],
+    ['f-ship-postal','ZIP'],
+    ['f-ship-country','Country']
+  ];
+  for(var i=0;i<required.length;i++){
+    var id=required[i][0], label=required[i][1];
+    var el=document.getElementById(id);
+    if(el && !el.value.trim()){
+      BSRCheckout.fieldErr(id, label+' is required');
+      err.textContent='Please fill in all required fields';
+      err.style.display='block';
+      el.focus();
+      return false;
+    }
+  }
+  var sEmail=BSRCheckout.val('f-ship-email');
+  if(!BSRCheckout.emailOk(sEmail)){
+    BSRCheckout.fieldErr('f-ship-email','Enter a valid email');
+    err.textContent='Please fix the highlighted fields';
+    err.style.display='block';
+    return false;
+  }
+  return true;
 }
 
-// Attach listeners after DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initShipRates);
-} else {
-  initShipRates();
+function writeBackShip(addr){
+  if(!addr) return;
+  var set=function(id, v){ if(v!==undefined) BSRCheckout.setV(id, v); };
+  set('f-ship-line1', addr.address1); set('f-ship-line2', addr.address2);
+  set('f-ship-city', addr.city); set('f-ship-state', addr.state);
+  set('f-ship-postal', addr.postal || addr.zip); set('f-ship-country', addr.country);
 }
-document.addEventListener('click', function(e) {
-  if (e.target && e.target.id === 'get-ship-rates') {
-    fetchShipRates();
+
+function afterShipValidation(finalAddr, b, resetBtn){
+  var same=document.getElementById('f-ship-same').checked;
+  // If the validator changed the address while "same as billing" was on,
+  // shipping now differs from billing — switch to manual shipping.
+  if(same && normKey(finalAddr)!==normKey({address1:b.address.line1||'',address2:b.address.line2||'',city:b.address.city||'',state:b.address.state||'',postal:b.address.postal||'',country:b.address.country||'US'})){
+    document.getElementById('f-ship-same').checked=false;
+    onSameChange();
+  }
+  writeBackShip(finalAddr);
+  var go=function(){ resetBtn(); buildPayloadAndGo(); };
+  // The confirmation modal comes before rates are used: refetch for the
+  // final (possibly corrected) address before locking in the selected rate.
+  if(normKey(finalAddr)!==lastRatesKey){ fetchShipRates(go); }
+  else { go(); }
+}
+
+function buildPayloadAndGo(){
+  var err=document.getElementById('continue-err');
+  var b=getBilling();
+  if(!b){ err.textContent='Please complete the billing step first.'; err.style.display='block'; return; }
+  var same=document.getElementById('f-ship-same').checked;
+  var saddr=same?b.address:{
+    line1:BSRCheckout.val('f-ship-line1'),line2:BSRCheckout.val('f-ship-line2'),
+    city:BSRCheckout.val('f-ship-city'),state:BSRCheckout.val('f-ship-state'),
+    postal:BSRCheckout.val('f-ship-postal'),country:BSRCheckout.val('f-ship-country')||'US'
+  };
+  var ship={
+    name: same?b.name:BSRCheckout.val('f-ship-name'),
+    company: same?b.company:BSRCheckout.val('f-ship-company'),
+    email: same?b.email:BSRCheckout.val('f-ship-email'),
+    phone: BSRCheckout.cleanPhone(same?b.phone:BSRCheckout.val('f-ship-phone')),
+    address:{line1:saddr.line1||'',line2:saddr.line2||'',city:saddr.city||'',state:saddr.state||'',postal:saddr.postal||'',country:saddr.country||'US'}
+  };
+  if(selectedShipOption){
+    ship.rate_ref=selectedShipOption.ref||'';
+    ship.provider=selectedShipOption.provider||'';
+    ship.carrier=selectedShipOption.carrier||'';
+    ship.service=selectedShipOption.service||'';
+    ship.rate_cents=selectedShipOption.cents||0;
+  }
+  var billing={
+    name:b.name,company:b.company,email:b.email,phone:b.phone,
+    same_as_shipping:same,address:b.address
+  };
+  var p={slugs:cart,billing:billing,shipping:ship};
+  try{ sessionStorage.setItem('bsr-checkout-payload', JSON.stringify(p)); }catch(e){}
+  window.location.href='/checkout/payment/';
+}
+
+document.getElementById('continue-to-payment').addEventListener('click',function(){
+  var btn=this;
+  var err=document.getElementById('continue-err'); err.style.display='none';
+  if(!cart.length){ err.textContent='Cart is empty'; err.style.display='block'; return; }
+  var b=getBilling();
+  if(!b){ err.textContent='Please complete the billing step first.'; err.style.display='block'; return; }
+  if(!validateShipFields()){ return; }
+  var resetBtn=function(){ btn.disabled=false; btn.innerHTML='Continue to payment &rarr;'; };
+  var addrPayload=shipAddrPayload();
+  // Our address validator runs independently on the shipping page, with its
+  // own confirmation modal — before rates are locked in and before payment.
+  if(window.BSRAddrValidate && BSRAddrValidate.validate){
+    btn.disabled=true; btn.textContent='Validating address\u2026';
+    BSRCheckout.runValidationFlow('ship', addrPayload, { continueLabel: 'Continue to payment \u2192' }, function(finalAddr){
+      afterShipValidation(finalAddr, b, resetBtn);
+    }, resetBtn);
+  } else {
+    afterShipValidation(addrPayload, b, resetBtn);
   }
 });
-// Auto-load shipping rates when page loads
-setTimeout(function(){ try { fetchShipRates(); } catch(e) {} }, 1500);
-function initShipRates() {
-  var postal = document.getElementById('f-postal');
-  var billPostal = document.getElementById('f-bill-postal');
-  var sameChk = document.getElementById('f-ship-same');
-  if (postal) {
-    postal.addEventListener('input', scheduleShipRateFetch);
-    postal.addEventListener('change', scheduleShipRateFetch);
-  }
-  if (billPostal) {
-    billPostal.addEventListener('input', scheduleShipRateFetch);
-    billPostal.addEventListener('change', scheduleShipRateFetch);
-  }
-  if (sameChk) {
-    sameChk.addEventListener('change', function() {
-      setTimeout(fetchShipRates, 500);
-    });
-  }
-  // Fetch if postal already has a value (e.g., from saved address)
-  setTimeout(function() {
-    var p = (sameChk && sameChk.checked ? billPostal : postal);
-    if (p && p.value.trim()) fetchShipRates();
-  }, 1500);
-}
-
+});
 </script>
 <div id="bsr-val-modal-root"></div></body>
 </html>
