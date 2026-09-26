@@ -55,8 +55,41 @@
 </div>
 </section>
 
+<section class="card" id="ship-section">
+<h2><span class="step-num">2</span> Shipping address</h2>
+<div id="ship-addr-picker"></div>
+<div class="addr-validate-msg" id="ship-val-msg"></div>
+<div class="field"><label><input type="checkbox" id="f-ship-same" checked style="accent-color:#1a3c22"> Same as billing</label></div>
+<div id="ship-fields" style="display:none">
+<div class="field"><label for="f-ship-name">Full name</label><input type="text" id="f-ship-name" class="input" data-ship-req></div>
+<div class="field"><label for="f-ship-company">Company</label><input type="text" id="f-ship-company" class="input"></div>
+<div class="field-row">
+<div class="field"><label for="f-ship-email">Email</label><input type="email" id="f-ship-email" class="input" data-ship-req></div>
+<div class="field"><label for="f-ship-phone">Phone</label><input type="tel" id="f-ship-phone" class="input" data-ship-req></div>
+</div>
+<div class="field"><label for="f-line1">Street address</label><input type="text" id="f-line1" name="address1" class="input" data-ship-req></div>
+<div class="field"><label for="f-line2">Apt, suite, etc. <span class="opt">(optional)</span></label><input type="text" id="f-line2" name="address2" class="input"></div>
+<div class="field-row">
+<div class="field"><label for="f-city">City</label><input type="text" id="f-city" name="city" class="input" data-ship-req></div>
+<div class="field"><label for="f-state">State / Province</label><input type="text" id="f-state" name="state" class="input" data-ship-req></div>
+</div>
+<div class="field-row">
+<div class="field"><label for="f-postal">ZIP / Postal code</label><input type="text" id="f-postal" name="postal" class="input" data-ship-req></div>
+<div class="field"><label for="f-country">Country</label><input type="text" id="f-country" name="country" class="input" value="US" data-ship-req></div>
+</div>
+</div>
+</section>
+
+<section class="card" id="ship-method-section">
+<h2><span class="step-num">3</span> Shipping method</h2>
+<div style="margin-bottom:10px"><button type="button" id="get-ship-rates" class="btn" style="padding:10px 20px">Show shipping options</button></div>
+<div id="ship-methods-loading" style="display:none;color:#666">Getting shipping rates…</div>
+<div id="ship-methods-error" class="error" style="display:none;color:#c00"></div>
+<div id="ship-methods-list"></div>
+</section>
+
 <section class="card" style="text-align:center">
-<button type="button" id="continue-to-payment" class="btn btn-primary" style="width:100%;padding:16px;font-size:1.1rem" onclick="try{if(typeof proceedToShipping==='function'){proceedToShipping();}else{var c=[];try{c=JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){} if(!c.length){alert('Your cart is empty.');}else{var b={name:document.getElementById('f-bill-name').value,email:document.getElementById('f-bill-email').value,phone:document.getElementById('f-bill-phone').value,address:{line1:document.getElementById('f-bill-line1').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}};sessionStorage.setItem('bsr-billing',JSON.stringify({slugs:c,billing:b}));location.href='/checkout/shipping/?t='+Date.now();}}}catch(e){alert('Error: '+e.message);}">Continue to shipping →</button>
+<button type="button" id="continue-to-payment" class="btn btn-primary" style="width:100%;padding:16px;font-size:1.1rem">Continue to payment →</button>
 <div class="error" id="continue-err" style="display:none;color:#c00;margin-top:10px"></div>
 </section>
 </div>
@@ -87,107 +120,22 @@ var _addrTimer = setInterval(function(){
     try { initAddressPickers(); } catch(e) {}
   }
 }, 200);
-// Address validator: attach to billing section (shipping is on separate page)
-window._bsrValDebug = function(){
-  var out = [];
-  out.push('BSRAddrValidate: ' + (window.BSRAddrValidate ? 'DEFINED' : 'MISSING'));
-  out.push('BSR: ' + (window.BSR ? 'DEFINED' : 'MISSING'));
-  out.push('BSR.api: ' + (window.BSR && BSR.api ? 'DEFINED' : 'MISSING'));
-  var sec = document.getElementById('bill-section');
-  out.push('bill-section: ' + (sec ? 'FOUND' : 'MISSING'));
-  if (sec) {
-    var inp = sec.querySelector('input[name="address1"]');
-    out.push('address1 input: ' + (inp ? 'FOUND' : 'MISSING'));
-    out.push('already attached: ' + (sec._bsrLiveAttached ? 'YES' : 'NO'));
-  }
-  return out.join('\n');
-};
-function attachBillValidator(){
-  try {
-    var billSec = document.getElementById('bill-section');
-    if (billSec && window.BSRAddrValidate && BSRAddrValidate.attachLive) {
-      BSRAddrValidate.attachLive(billSec);
-      return true;
-    }
-  } catch(e) {}
-  return false;
-}
+// Address validator: Geoapify live suggestions (same as account address book)
 var _valTries = 0;
 var _valTimer = setInterval(function(){
   _valTries++;
-  if (attachBillValidator() || _valTries > 30) {
+  if ((window.BSRAddrValidate && BSRAddrValidate.attachLive) || _valTries > 25) {
     clearInterval(_valTimer);
+    try {
+      var billSec = document.getElementById('bill-section');
+      var shipSec = document.getElementById('ship-section');
+      if (window.BSRAddrValidate && BSRAddrValidate.attachLive) {
+        if (billSec) BSRAddrValidate.attachLive(billSec);
+        if (shipSec) BSRAddrValidate.attachLive(shipSec);
+      }
+    } catch(e) {}
   }
 }, 200);
-// Also try on DOMContentLoaded and window load as fallbacks
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(attachBillValidator, 500); });
-} else {
-  setTimeout(attachBillValidator, 500);
-}
-window.addEventListener('load', function(){ setTimeout(attachBillValidator, 500); });
-
-// Minimal inline address autocomplete (bypasses external script)
-(function(){
-  var streetEl = document.getElementById('f-bill-line1');
-  if (!streetEl || streetEl._inlineValAttached) return;
-  streetEl._inlineValAttached = true;
-  
-  var dd = document.createElement('div');
-  dd.style.cssText = 'position:absolute;background:#fff;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:1000;max-height:200px;overflow-y:auto;display:none;';
-  streetEl.parentNode.style.position = 'relative';
-  streetEl.parentNode.appendChild(dd);
-  
-  var timer = null;
-  streetEl.addEventListener('input', function(){
-    var q = streetEl.value.trim();
-    if (q.length < 3) { dd.style.display='none'; return; }
-    clearTimeout(timer);
-    timer = setTimeout(function(){
-      var apiBase = 'https://cm.bayshorerelicsllc.com';
-      fetch(apiBase + '/api/shipping/autocomplete?q=' + encodeURIComponent(q), {credentials:'include'})
-        .then(function(r){ return r.json(); })
-        .then(function(j){
-          var suggestions = (j && j.suggestions) || (j && j.results) || [];
-          if (!suggestions.length) { dd.style.display='none'; return; }
-          dd.innerHTML = '';
-          suggestions.slice(0,5).forEach(function(s){
-            var label = s.label || s.formatted || s.address || JSON.stringify(s);
-            var div = document.createElement('div');
-            div.textContent = label;
-            div.style.cssText = 'padding:10px;cursor:pointer;border-bottom:1px solid #eee;';
-            div.onmousedown = function(e){
-              e.preventDefault();
-              streetEl.value = s.street || s.address1 || label.split(',')[0];
-              if (s.city) { var c=document.getElementById('f-bill-city'); if(c) c.value=s.city; }
-              if (s.state) { var st=document.getElementById('f-bill-state'); if(st) st.value=s.state; }
-              if (s.postal || s.zip) { var z=document.getElementById('f-bill-postal'); if(z) z.value=s.postal||s.zip; }
-              dd.style.display='none';
-            };
-            div.onmouseover = function(){ div.style.background='#f0f0f0'; };
-            div.onmouseout = function(){ div.style.background='#fff'; };
-            dd.appendChild(div);
-          });
-          dd.style.display='block';
-          dd.style.width = streetEl.offsetWidth + 'px';
-          dd.style.top = (streetEl.offsetTop + streetEl.offsetHeight) + 'px';
-          dd.style.left = streetEl.offsetLeft + 'px';
-        })
-        .catch(function(){ dd.style.display='none'; });
-    }, 300);
-  });
-  
-  document.addEventListener('click', function(e){
-    if (e.target !== streetEl && e.target.parentNode !== dd) dd.style.display='none';
-  });
-})();
-
-// Fallback: attach on first focus of street field (ensures script is loaded)
-document.addEventListener('focusin', function(e){
-  if (e.target && e.target.id === 'f-bill-line1') {
-    setTimeout(attachBillValidator, 100);
-  }
-});
 var cart=[]; try{cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){}
 var sumLines=document.getElementById('sum-lines');
 sumLines.innerHTML='<p>Loading…</p>';
@@ -519,7 +467,7 @@ function showValidationModal(results, onDone){
       cards+
       '<div style="height:1px;background:#e8e4d8;margin:24px 0 20px 0;"></div>'+
       '<div style="text-align:center;">'+
-        '<button type="button" id="val-continue-btn" style="padding:12px 36px;background:#1a3c22;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Continue to shipping →</button>'+
+        '<button type="button" id="val-continue-btn" style="padding:12px 36px;background:#1a3c22;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Continue to payment →</button>'+
       '</div>'+
     '</div>'+
   '</div>';
@@ -652,8 +600,7 @@ function validateRequiredFields(){
   return true;
 }
 
-document.getElementById('continue-to-payment').addEventListener('click',function(){ try { proceedToShipping(); } catch(e) { alert('Error: ' + e.message); } return; });// old handler disabled
-
+document.getElementById('continue-to-payment').addEventListener('click',function(){
 var btn=this;
 var err=document.getElementById('continue-err');err.style.display='none';
 if(!cart.length){err.textContent='Cart is empty';err.style.display='block';return;}
@@ -661,7 +608,7 @@ if(!validateRequiredFields()){return;}
 // Shippo address validation before proceeding
 if (window.BSRAddrValidate && BSRAddrValidate.validate) {
   btn.disabled=true; btn.textContent='Validating addresses…';
-  var resetBtn=function(){btn.disabled=false;btn.textContent='Continue to shipping →';};
+  var resetBtn=function(){btn.disabled=false;btn.textContent='Continue to payment →';};
   // Safety: ensure shipping matches billing if "same" is checked (catches programmatic changes)
   if(document.getElementById('f-ship-same').checked && typeof syncShipToBill==='function'){ syncShipToBill(); }
   var billSection=document.getElementById('bill-section');
@@ -772,46 +719,30 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
 // Fallback if validator not available
 proceedToPayment();
 });
-function proceedToShipping(){
+function proceedToPayment(){
 var _cart=[]; try{_cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localStorage.getItem('bsr-cart-v1')||'[]');}catch(e){}
 if(!_cart||!_cart.length){alert('Your cart is empty. Please add an item before checking out.');return;}
-var _cp=function(p){try{if(typeof cleanPhone==='function')return cleanPhone(p);}catch(e){} return (p||'').replace(/[^0-9+]/g,'');};
-var billing={name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:_cp(document.getElementById('f-bill-phone').value),address:{line1:document.getElementById('f-bill-line1').value,line2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}};
-var doSave=function(b){
-  sessionStorage.setItem('bsr-billing',JSON.stringify({slugs:_cart,billing:b}));
-  location.href='/checkout/shipping/?t='+Date.now();
-};
-// Validate billing address with Shippo, show modal if correction suggested
-try {
-  // Debug: check validator status
-  var _vs = 'Validator: ' + (window.BSRAddrValidate ? 'loaded' : 'MISSING');
-  if (window.BSRAddrValidate) _vs += ', validate=' + (typeof BSRAddrValidate.validate);
-  console.log(_vs);
-  if (window.BSRAddrValidate && BSRAddrValidate.validate) {
-    var payload={address1:billing.address.line1,address2:billing.address.line2,city:billing.address.city,state:billing.address.state,postal:billing.address.postal,country:billing.address.country};
-    BSRAddrValidate.validate(payload).then(function(j){
-      // Show validation modal for the billing address (matches old behavior)
-      var corrected = (j && j.address) || null;
-      var hasSuggestion = j && (j.corrected || (j.corrections && j.corrections.length));
-      var results=[{kind:'bill',original:payload,suggested:hasSuggestion?corrected:null,suggestedRaw:j,undeliverable:!(j&&j.deliverable)}];
-      if (typeof showValidationModal==='function') {
-        showValidationModal(results, function(fixed){
-          var b = billing;
-          if (fixed) {
-            b.address.line1=fixed.address1||b.address.line1;
-            b.address.line2=fixed.address2||b.address.line2;
-            b.address.city=fixed.city||b.address.city;
-            b.address.state=fixed.state||b.address.state;
-            b.address.postal=(fixed.postal||fixed.zip)||b.address.postal;
-            b.address.country=fixed.country||b.address.country;
-          }
-          doSave(b);
-        });
-      } else { doSave(billing); }
-    }).catch(function(){ doSave(billing); });
-  } else { doSave(billing); }
-} catch(e) { doSave(billing); }
+var same=document.getElementById('f-ship-same').checked;
+var p={slugs:_cart,
+billing:{name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:cleanPhone(document.getElementById('f-bill-phone').value),same_as_shipping:same,address:{line1:document.getElementById('f-bill-line1').value,line2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}},
+shipping:null};
+if(same){
+  p.shipping={name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:cleanPhone(document.getElementById('f-bill-phone').value),address:{line1:document.getElementById('f-bill-line1').value,line2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}};
+}else{
+  p.shipping={name:document.getElementById('f-ship-name').value,company:document.getElementById('f-ship-company').value,email:document.getElementById('f-ship-email').value,phone:cleanPhone(document.getElementById('f-ship-phone').value),address:{line1:document.getElementById('f-line1').value,line2:document.getElementById('f-line2').value,city:document.getElementById('f-city').value,state:document.getElementById('f-state').value,postal:document.getElementById('f-postal').value,country:document.getElementById('f-country').value}};
 }
+// Include selected shipping method (Shippo/Easyship rate)
+if (typeof selectedShipOption !== 'undefined' && selectedShipOption) {
+  p.shipping.rate_ref = selectedShipOption.ref || '';
+  p.shipping.provider = selectedShipOption.provider || '';
+  p.shipping.carrier = selectedShipOption.carrier || '';
+  p.shipping.service = selectedShipOption.service || '';
+}
+sessionStorage.setItem('bsr-checkout-payload',JSON.stringify(p));
+try{localStorage.setItem('bsr-checkout-payload-bak',JSON.stringify(p));}catch(e){}
+location.href='/checkout/payment/?t='+Date.now();
+}
+});
 
 
 // Postal code autocomplete - fill city/state/country from postal code (international)
@@ -930,24 +861,32 @@ function initAddressPickers() {
           addrLabel(a).replace(/</g,'&lt;') + '</option>';
       }).join('');
     };
-    var billPicker = document.getElementById('bill-addr-picker');
-    if (billPicker) billPicker.innerHTML =
+    document.getElementById('ship-addr-picker').innerHTML =
+      '<div class="field"><label for="ship-saved">Saved addresses</label>' +
+      '<select id="ship-saved" class="input">' + opts(defShip && defShip.id) + '</select></div>';
+    document.getElementById('bill-addr-picker').innerHTML =
       '<div class="field"><label for="bill-saved">Saved addresses</label>' +
       '<select id="bill-saved" class="input">' + opts(defBill && defBill.id) + '</select></div>';
-    // (Shipping moved to separate page - skip ship picker hide logic)
+    // Hide ship picker if "Same as billing" is checked
+    if(document.getElementById('f-ship-same').checked){
+      document.getElementById('ship-addr-picker').style.display='none';
+      document.getElementById('ship-fields').style.display='none';
+    }
     if (defShip) fillShipForm(defShip);
     if (defBill) {
       fillBillForm(defBill);
-      // (Shipping is on separate page - skip same-as-billing sync)
+      var sameRec = defShip && String(defBill.id) === String(defShip.id);
+      if (!sameRec) {
+        document.getElementById('f-ship-same').checked = false;
+        document.getElementById('ship-fields').style.display = 'block';
+      }
     }
-    var shipSaved = document.getElementById('ship-saved');
-    if (shipSaved) shipSaved.addEventListener('change', function(){
-      var a = byId[String(this.value)]; if (typeof clearShipForm==='function') clearShipForm(); if (a && typeof fillShipForm==='function') fillShipForm(a);
+    document.getElementById('ship-saved').addEventListener('change', function(){
+      var a = byId[String(this.value)]; clearShipForm(); if (a) fillShipForm(a);
     });
-    var billSaved = document.getElementById('bill-saved');
-    if (billSaved) billSaved.addEventListener('change', function(){
-      var a = byId[String(this.value)]; if (typeof clearBillForm==='function') clearBillForm(); if (a && typeof fillBillForm==='function') fillBillForm(a);
-    });
+    document.getElementById('bill-saved').addEventListener('change', function(){
+      var a = byId[String(this.value)]; clearBillForm(); if (a) fillBillForm(a);
+    if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}});
   }).catch(function(){});
 }
 
