@@ -196,40 +196,60 @@ function clearAllFieldErrs(){
 
 
 function showValidationModal(results, onDone){
-  // results: [{kind:'bill'|'ship', original, suggested}, ...]
   var root=document.getElementById('bsr-val-modal-root');
   var fmtAddr=function(a){
-    return [a.address1||a.street, a.address2||a.street2, (a.city||'')+', '+(a.state||'')+' '+(a.postal||a.zip), a.country].filter(Boolean).join('<br>');
+    var lines=[];
+    if(a.address1||a.street) lines.push(a.address1||a.street);
+    if(a.address2||a.street2) lines.push(a.address2||a.street2);
+    var csz=[a.city||'',a.state||'',a.postal||a.zip||''].filter(Boolean).join(' ').trim();
+    if(a.city&&a.state) csz=a.city+', '+a.state+' '+(a.postal||a.zip||'');
+    if(csz) lines.push(csz);
+    if(a.country) lines.push(a.country);
+    return lines.join('<br>');
   };
   var cols=results.map(function(r, idx){
     var kindLabel=r.kind==='bill'?'Bill to':'Ship to';
-    return '<div class="val-col" data-idx="'+idx+'" style="flex:1;min-width:200px;">'+
+    var unitWarning='';
+    // Check if Shippo suggests adding a unit/apt number
+    var origUnit=(r.original.address2||r.original.street2||'').trim();
+    var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
+    if(r.suggested&&!origUnit&&suggUnit){
+      unitWarning='<div class="val-warn" style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;margin:8px 0;font-size:13px;color:#856404;">'+
+      '<strong>⚠ Unit number detected:</strong> Shippo found a unit/apartment number for this address. Without it, you may not receive your item.</div>';
+    }
+    var suggestedHtml='';
+    if(r.suggested){
+      suggestedHtml='<div class="val-addr"><strong>Shippo suggests:</strong><br>'+fmtAddr(r.suggested)+'</div>'+
+      '<div class="val-choice" style="display:flex;gap:8px;margin:8px 0;">'+
+      '<button type="button" class="val-use" data-use="'+idx+'">Use suggested</button>'+
+      '<button type="button" class="val-keep" data-keep="'+idx+'">Keep mine</button></div>';
+    }
+    return '<div class="val-col" data-idx="'+idx+'" style="flex:1;min-width:220px;">'+
     '<div class="val-kind">'+kindLabel+'</div>'+
-    '<div class="val-addr"><strong>Suggested:</strong><br>'+fmtAddr(r.suggested)+'</div>'+
-    '<div class="val-addr"><strong>Yours:</strong><br>'+fmtAddr(r.original)+'</div>'+
-    '<div class="val-choice" style="display:flex;gap:8px;margin-top:8px;">'+
-    '<button type="button" class="val-use" data-use="'+idx+'" style="flex:1;">Use suggested</button>'+
-    '<button type="button" class="val-keep" data-keep="'+idx+'" style="flex:1;">Keep mine</button>'+
-    '</div></div>';
+    unitWarning+
+    suggestedHtml+
+    '<div class="val-addr"><strong>'+(r.suggested?'Yours:':'Address:')+'</strong><br>'+fmtAddr(r.original)+'</div>'+
+    '</div>';
   }).join('');
+  var hasSuggestions=results.some(function(r){return r.suggested;});
   root.innerHTML=
     '<div class="bsr-val-modal-overlay">'+
-    '<div class="bsr-val-modal" style="max-width:700px;">'+
-    '<h3>Verify your addresses</h3>'+
-    '<p>Shippo suggests corrections:</p>'+
+    '<div class="bsr-val-modal" style="max-width:720px;max-height:90vh;overflow-y:auto;">'+
+    '<h3>Confirm your addresses</h3>'+
+    '<p>'+(hasSuggestions?'Shippo suggests corrections below. Review':'Please confirm')+' your billing and shipping addresses:</p>'+
     '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+cols+'</div>'+
     '<div class="val-actions" style="margin-top:16px;">'+
-    '<button type="button" class="val-use" id="val-continue-btn" style="width:100%;">Continue →</button>'+
+    '<button type="button" class="val-use" id="val-continue-btn" style="width:100%;">Continue to payment →</button>'+
     '</div></div></div>';
   var choices={};
-  results.forEach(function(r, idx){choices[idx]='keep';}); // default to keep
+  results.forEach(function(r, idx){choices[idx]=r.suggested?'keep':'keep';});
   root.querySelectorAll('[data-use]').forEach(function(btn){
     btn.addEventListener('click',function(){
       var idx=btn.getAttribute('data-use');
       choices[idx]='use';
       btn.style.background='#1a3c22';btn.style.color='#fff';
-      var keepBtn=root.querySelector('[data-keep="'+idx+'"]');
-      if(keepBtn){keepBtn.style.background='#f0f0f0';keepBtn.style.color='#333';}
+      var kb=root.querySelector('[data-keep="'+idx+'"]');
+      if(kb){kb.style.background='#f0f0f0';kb.style.color='#333';}
     });
   });
   root.querySelectorAll('[data-keep]').forEach(function(btn){
@@ -237,18 +257,17 @@ function showValidationModal(results, onDone){
       var idx=btn.getAttribute('data-keep');
       choices[idx]='keep';
       btn.style.background='#1a3c22';btn.style.color='#fff';
-      var useBtn=root.querySelector('[data-use="'+idx+'"]');
-      if(useBtn){useBtn.style.background='#f0f0f0';useBtn.style.color='#333';}
+      var ub=root.querySelector('[data-use="'+idx+'"]');
+      if(ub){ub.style.background='#f0f0f0';ub.style.color='#333';}
     });
   });
-  // Highlight default 'keep' buttons
   root.querySelectorAll('[data-keep]').forEach(function(btn){
     btn.style.background='#1a3c22';btn.style.color='#fff';
   });
   document.getElementById('val-continue-btn').addEventListener('click',function(){
     root.innerHTML='';
     var fixed=results.map(function(r, idx){
-      if(choices[idx]==='use'){
+      if(r.suggested&&choices[idx]==='use'){
         var out={};for(var k in r.original) out[k]=r.original[k];
         var c=r.suggestedRaw;
         if(c.street) out.address1=c.street;
@@ -264,8 +283,6 @@ function showValidationModal(results, onDone){
     onDone(fixed);
   });
 }
-
-
 function validateRequiredFields(){
   var err=document.getElementById('continue-err');
   clearAllFieldErrs();
@@ -377,13 +394,8 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
   var promises=[validateOne('bill', billPayload)];
   if(!same) promises.push(validateOne('ship', shipPayload));
   Promise.all(promises).then(function(results){
-    var needModal=results.filter(function(r){return r.suggested;});
-    if(!needModal.length){
-      // No suggestions, proceed directly
-      doProceed();
-      return;
-    }
-    showValidationModal(needModal, function(fixed){
+    // ALWAYS show the confirmation modal
+    showValidationModal(results, function(fixed){
       fixed.forEach(function(f){
         if(f.kind==='bill') writeBack(f.address, 'f-bill-');
         else writeBack(f.address, 'f-');
