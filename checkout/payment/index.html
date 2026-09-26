@@ -230,10 +230,10 @@ document.getElementById('promo-apply').addEventListener('click',function(){
       }
       paypal.Buttons(ppConfig).render('#pp-paypal-btn').catch(function(e){ppErr(String((e&&e.message)||e));});
       if(paypal.FUNDING&&paypal.FUNDING.VENMO){
-        paypal.Buttons(Object.assign({},ppConfig,{fundingSource:paypal.FUNDING.VENMO,style:{layout:'vertical',color:'blue',shape:'rect',label:'venmo'}})).render('#pp-venmo-btn').catch(function(){});
+        paypal.Buttons(Object.assign({},ppConfig,{fundingSource:paypal.FUNDING.VENMO,style:{layout:'vertical',color:'blue',shape:'rect'}})).render('#pp-venmo-btn').catch(function(){});
       }
       if(paypal.FUNDING&&paypal.FUNDING.PAYLATER){
-        paypal.Buttons(Object.assign({},ppConfig,{fundingSource:paypal.FUNDING.PAYLATER,style:{layout:'vertical',color:'gold',shape:'rect',label:'paylater'}})).render('#pp-paylater-btn').catch(function(){});
+        paypal.Buttons(Object.assign({},ppConfig,{fundingSource:paypal.FUNDING.PAYLATER,style:{layout:'vertical',color:'gold',shape:'rect'}})).render('#pp-paylater-btn').catch(function(){});
       }
       initPPCardFields(ship,bill);
     }catch(e){
