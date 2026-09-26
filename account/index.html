@@ -1375,6 +1375,18 @@ document.addEventListener('input', function (e) {
       if(!val) seen[formId]='';
     }
   }, 1000);
+  /* Geoapify live address suggestions (same as checkout) - persistent check for dynamically created forms */
+  setInterval(function(){
+    try{
+      if(window.BSRAddrValidate&&BSRAddrValidate.attachLive){
+        var forms=document.querySelectorAll('form.addr-form:not([data-live-attached])');
+        for(var i=0;i<forms.length;i++){
+          forms[i].setAttribute('data-live-attached','1');
+          BSRAddrValidate.attachLive(forms[i]);
+        }
+      }
+    }catch(e){}
+  },500);
 })();
 </script>
 </body>
