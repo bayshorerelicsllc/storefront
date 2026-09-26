@@ -273,6 +273,23 @@ function showWarningPopup(results, warnings, onDone){
     '<div class="val-actions" style="margin-top:20px;text-align:center;">'+
     '<button type="button" class="val-use" id="warn-ok-btn" style="padding:12px 36px;font-size:15px;">I understand</button>'+
     '</div></div></div>';
+  // Level the address boxes so they're even across
+  setTimeout(function(){
+    var boxes=root.querySelectorAll('.val-addr');
+    if(boxes.length>1){
+      var maxH=0;
+      boxes.forEach(function(b){
+        b.style.height='auto';
+        var h=b.offsetHeight;
+        if(h>maxH) maxH=h;
+      });
+      boxes.forEach(function(b){
+        b.style.height=maxH+'px';
+        b.style.boxSizing='border-box';
+      });
+    }
+  }, 50);
+  
   var closeWarn=function(){root.innerHTML='';resetBtn();};
   document.getElementById('warn-close-btn').addEventListener('click',closeWarn);
   document.getElementById('warn-overlay').addEventListener('click',function(e){
