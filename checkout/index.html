@@ -195,6 +195,41 @@ function clearAllFieldErrs(){
 }
 
 
+function showWarningPopup(warnings, onDone){
+  // warnings: [{kind:'bill'|'ship', address, message}, ...]
+  var root=document.getElementById('bsr-val-modal-root');
+  var fmtAddr=function(a){
+    var lines=[];
+    if(a.address1||a.street) lines.push(a.address1||a.street);
+    if(a.address2||a.street2) lines.push(a.address2||a.street2);
+    var csz='';
+    if(a.city&&a.state) csz=a.city+', '+a.state+' '+(a.postal||a.zip||'');
+    else csz=[a.city||'',a.state||'',a.postal||a.zip||''].filter(Boolean).join(' ');
+    if(csz) lines.push(csz);
+    if(a.country) lines.push(a.country);
+    return lines.join('<br>');
+  };
+  var items=warnings.map(function(w){
+    var kindLabel=w.kind==='bill'?'Bill to':'Ship to';
+    return '<div style="margin-bottom:16px;">'+
+    '<div class="val-kind">'+kindLabel+'</div>'+
+    '<div class="val-addr" style="margin:8px 0;">'+fmtAddr(w.address)+'</div>'+
+    '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:14px;color:#856404;">'+
+    '<strong>⚠ Heads up:</strong> '+w.message+'</div></div>';
+  }).join('');
+  root.innerHTML=
+    '<div class="bsr-val-modal-overlay">'+
+    '<div class="bsr-val-modal" style="max-width:520px;">'+
+    '<h3>Address issue'+(warnings.length>1?'s':'')+'</h3>'+
+    items+
+    '<div class="val-actions">'+
+    '<button type="button" class="val-use" id="warn-ok-btn" style="width:100%;">I understand</button>'+
+    '</div></div></div>';
+  document.getElementById('warn-ok-btn').addEventListener('click',function(){
+    root.innerHTML='';onDone();
+  });
+}
+
 function showValidationModal(results, onDone){
   var root=document.getElementById('bsr-val-modal-root');
   var fmtAddr=function(a){
@@ -375,17 +410,17 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
   // Validate both addresses, then show single combined modal
   var validateOne=function(kind, payload){
     return new Promise(function(resolve){
-      if(!window.BSRAddrValidate||!BSRAddrValidate.validate){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});return;}
+      if(!window.BSRAddrValidate||!BSRAddrValidate.validate){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:!(j&&j.deliverable)});return;}
       BSRAddrValidate.validate(payload).then(function(j){
-        if(!j||!j.ok){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});return;}
+        if(!j||!j.ok){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:false});return;}
         var corrected=j.address||null;
         var hasSuggestion=(j.corrected||(j.corrections&&j.corrections.length));
-        if(!hasSuggestion||!corrected){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});return;}
+        if(!hasSuggestion||!corrected){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:!(j&&j.deliverable)});return;}
         var diff=false;
         [['street','address1'],['city','city'],['state','state'],['zip','postal']].forEach(function(pair){
           if(corrected[pair[0]]&&String(corrected[pair[0]]).toLowerCase()!==String(payload[pair[1]]||'').toLowerCase()) diff=true;
         });
-        if(!diff){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});return;}
+        if(!diff){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null,undeliverable:!(j&&j.deliverable)});return;}
         var suggestedAddr={address1:corrected.street,address2:corrected.street2,city:corrected.city,state:corrected.state,postal:corrected.zip,country:corrected.country||payload.country};
         resolve({kind:kind,original:payload,suggested:suggestedAddr,suggestedRaw:corrected});
       }).catch(function(){resolve({kind:kind,original:payload,suggested:null,suggestedRaw:null});});
@@ -394,14 +429,34 @@ if (window.BSRAddrValidate && BSRAddrValidate.validate) {
   var promises=[validateOne('bill', billPayload)];
   if(!same) promises.push(validateOne('ship', shipPayload));
   Promise.all(promises).then(function(results){
-    // ALWAYS show the confirmation modal
-    showValidationModal(results, function(fixed){
-      fixed.forEach(function(f){
-        if(f.kind==='bill') writeBack(f.address, 'f-bill-');
-        else writeBack(f.address, 'f-');
-      });
-      doProceed();
+    // Check for warnings (missing unit, undeliverable, etc.)
+    var warnings=[];
+    results.forEach(function(r){
+      var origUnit=(r.original.address2||'').trim();
+      var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
+      if(r.suggested&&!origUnit&&suggUnit){
+        warnings.push({kind:r.kind, address:r.original,
+          message:'Shippo detected a unit/apartment number ('+suggUnit+') for this address that you did not include. Without it, you may not receive your item.'});
+      }
+      if(r.undeliverable){
+        warnings.push({kind:r.kind, address:r.original,
+          message:'Shippo could not verify this address as deliverable. Please double-check it.'});
+      }
     });
+    var showConfirm=function(){
+      showValidationModal(results, function(fixed){
+        fixed.forEach(function(f){
+          if(f.kind==='bill') writeBack(f.address, 'f-bill-');
+          else writeBack(f.address, 'f-');
+        });
+        doProceed();
+      });
+    };
+    if(warnings.length){
+      showWarningPopup(warnings, showConfirm);
+    } else {
+      showConfirm();
+    }
   });
   return; // Don't proceed yet, wait for validation
 }
