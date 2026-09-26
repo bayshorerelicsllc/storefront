@@ -7,6 +7,7 @@
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods9">
 <script src="/assets/js/bsr.js?v=acceptbadge1" defer></script>
+<script src="/assets/js/addr-validate.js?v=20260925m" defer></script>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -19,7 +20,7 @@
 
 <div class="checkout-layout">
 <div class="checkout-main">
-<section class="card">
+<section class="card" id="bill-section">
 <h2><span class="step-num">1</span> Billing address</h2>
 <div id="bill-addr-picker"></div>
 <div class="field"><label for="f-bill-name">Full name</label><input type="text" id="f-bill-name" class="input"></div>
@@ -40,7 +41,7 @@
 </div>
 </section>
 
-<section class="card">
+<section class="card" id="ship-section">
 <h2><span class="step-num">2</span> Shipping address</h2>
 <div id="ship-addr-picker"></div>
 <div class="field"><label><input type="checkbox" id="f-ship-same" checked> Same as billing</label></div>
@@ -94,6 +95,22 @@ var _addrTimer = setInterval(function(){
   if ((window.BSR && BSR.api) || _addrTries > 25) {
     clearInterval(_addrTimer);
     try { initAddressPickers(); } catch(e) {}
+  }
+}, 200);
+// Address validator: Geoapify live suggestions (same as account address book)
+var _valTries = 0;
+var _valTimer = setInterval(function(){
+  _valTries++;
+  if ((window.BSRAddrValidate && BSRAddrValidate.attachLive) || _valTries > 25) {
+    clearInterval(_valTimer);
+    try {
+      var billSec = document.getElementById('bill-section');
+      var shipSec = document.getElementById('ship-section');
+      if (window.BSRAddrValidate && BSRAddrValidate.attachLive) {
+        if (billSec) BSRAddrValidate.attachLive(billSec);
+        if (shipSec) BSRAddrValidate.attachLive(shipSec);
+      }
+    } catch(e) {}
   }
 }, 200);
 var cart=[]; try{cart=JSON.parse(localStorage.getItem('bsr-cart')||'[]');}catch(e){}
