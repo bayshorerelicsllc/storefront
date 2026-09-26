@@ -718,32 +718,38 @@ location.href='/checkout/payment/';
 });
 
 
-// ZIP code autocomplete - fill city/state/country from ZIP
+// Postal code autocomplete - fill city/state/country from postal code (international)
 function setupZipLookup(zipId, cityId, stateId, countryId){
   var zipEl=document.getElementById(zipId);
   if(!zipEl) return;
-  var lastZip='';
+  var lastLookup='';
+  // Map common full country names to ISO codes
+  var countryMap={'united states':'us','usa':'us','canada':'ca','united kingdom':'gb','uk':'gb','great britain':'gb','germany':'de','france':'fr','australia':'au','mexico':'mx','japan':'jp','ireland':'ie','netherlands':'nl','spain':'es','italy':'it'};
   zipEl.addEventListener('blur', function(){
     var zip=zipEl.value.trim();
-    // Only US 5-digit ZIPs
-    if(!/^[0-9]{5}$/.test(zip)) return;
-    if(zip===lastZip) return;
-    lastZip=zip;
-    fetch('https://api.zippopotam.us/us/'+zip)
+    if(!zip) return;
+    var countryEl=document.getElementById(countryId);
+    var countryRaw=countryEl?countryEl.value.trim().toLowerCase():'us';
+    var countryCode=countryMap[countryRaw]||countryRaw;
+    // Only 2-letter codes supported by the API
+    if(!/^[a-z]{2}$/.test(countryCode)) countryCode='us';
+    var lookupKey=countryCode+':'+zip;
+    if(lookupKey===lastLookup) return;
+    lastLookup=lookupKey;
+    fetch('https://api.zippopotam.us/'+countryCode+'/'+encodeURIComponent(zip))
       .then(function(r){ if(!r.ok) throw new Error('not found'); return r.json(); })
       .then(function(data){
         var place=data.places&&data.places[0];
         if(!place) return;
         var cityEl=document.getElementById(cityId);
         var stateEl=document.getElementById(stateId);
-        var countryEl=document.getElementById(countryId);
         if(cityEl) cityEl.value=place['place name']||'';
-        if(stateEl) stateEl.value=place['state abbreviation']||'';
-        if(countryEl) countryEl.value='US';
+        if(stateEl) stateEl.value=place['state abbreviation']||place['state']||'';
+        if(countryEl&&data['country abbreviation']) countryEl.value=data['country abbreviation'];
         // Trigger sync if "same as billing" is checked
         if(document.getElementById('f-ship-same').checked&&typeof syncShipToBill==='function'){syncShipToBill();}
       })
-      .catch(function(){ /* Invalid ZIP or API down - leave fields alone */ });
+      .catch(function(){ /* Invalid postal code or API down - leave fields alone */ });
   });
 }
 setupZipLookup('f-bill-postal','f-bill-city','f-bill-state','f-bill-country');
