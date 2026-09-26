@@ -701,8 +701,36 @@ var _cart=[]; try{_cart=(window.BSR&&BSR.cart)?BSR.cart.list():JSON.parse(localS
 if(!_cart||!_cart.length){alert('Your cart is empty. Please add an item before checking out.');return;}
 var _cp=function(p){try{if(typeof cleanPhone==='function')return cleanPhone(p);}catch(e){} return (p||'').replace(/[^0-9+]/g,'');};
 var billing={name:document.getElementById('f-bill-name').value,company:document.getElementById('f-bill-company').value,email:document.getElementById('f-bill-email').value,phone:_cp(document.getElementById('f-bill-phone').value),address:{line1:document.getElementById('f-bill-line1').value,line2:document.getElementById('f-bill-line2').value,city:document.getElementById('f-bill-city').value,state:document.getElementById('f-bill-state').value,postal:document.getElementById('f-bill-postal').value,country:document.getElementById('f-bill-country').value}};
-sessionStorage.setItem('bsr-billing',JSON.stringify({slugs:_cart,billing:billing}));
-location.href='/checkout/shipping/?t='+Date.now();
+var doSave=function(b){
+  sessionStorage.setItem('bsr-billing',JSON.stringify({slugs:_cart,billing:b}));
+  location.href='/checkout/shipping/?t='+Date.now();
+};
+// Validate billing address with Shippo, show modal if correction suggested
+try {
+  if (window.BSRAddrValidate && BSRAddrValidate.validate) {
+    var payload={address1:billing.address.line1,address2:billing.address.line2,city:billing.address.city,state:billing.address.state,postal:billing.address.postal,country:billing.address.country};
+    BSRAddrValidate.validate(payload).then(function(j){
+      if (j && j.ok && (j.corrected || (j.corrections && j.corrections.length)) && j.address) {
+        // Show validation modal with suggestion
+        var corrected=j.address;
+        var results=[{kind:'billing',original:payload,suggested:corrected,suggestedRaw:j,undeliverable:!(j.deliverable)}];
+        if (typeof showValidationModal==='function') {
+          showValidationModal(results, function(fixed){
+            if (fixed) {
+              b.address.line1=fixed.address1||b.address.line1;
+              b.address.line2=fixed.address2||b.address.line2;
+              b.address.city=fixed.city||b.address.city;
+              b.address.state=fixed.state||b.address.state;
+              b.address.postal=(fixed.postal||fixed.zip)||b.address.postal;
+              b.address.country=fixed.country||b.address.country;
+            }
+            doSave(b);
+          });
+        } else { doSave(billing); }
+      } else { doSave(billing); }
+    }).catch(function(){ doSave(billing); });
+  } else { doSave(billing); }
+} catch(e) { doSave(billing); }
 }
 
 
