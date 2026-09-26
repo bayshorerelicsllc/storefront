@@ -53,6 +53,8 @@ input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radiu
 </div>
 <div id="bsr-footer"></div>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+if (window.BSR && BSR.init) BSR.init();
 var cart=[]; try{cart=JSON.parse(localStorage.getItem('bsr-cart')||'[]');}catch(e){}
 var html='',t=0;
 cart.forEach(function(i){var p=parseFloat(i.price||0);t+=p;html+='<div class="line"><span>'+(i.title||i.slug)+'</span><span>$'+p.toFixed(2)+'</span></div>';});
@@ -71,6 +73,7 @@ if(same){p.ship=p.bill;}
 sessionStorage.setItem('bsr-checkout-payload',JSON.stringify(p));
 location.href='/checkout/payment/';
 };
+});
 </script>
 </body>
 </html>
