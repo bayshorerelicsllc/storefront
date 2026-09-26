@@ -184,6 +184,67 @@
     for (var i = 0; i < els.length; i++) els[i].textContent = n > 0 ? n : '';
   }
 
+  /* ---------------- per-item notification watches ----------------
+     Guests pick one email address the first time they enable email alerts;
+     it is kept in this browser (local storage, cleared with site data) and
+     reused for every item. Signed-in shoppers always use their account email.
+     When a guest later creates an account, their guest-email watch rows move
+     onto the account email (migrateGuestState, run at init). Wishlist and
+     cart already live in local storage, so they survive sign-in untouched. */
+  var GUEST_EMAIL_KEY = 'bsr-guest-email';
+  function guestEmail() {
+    try { return (localStorage.getItem(GUEST_EMAIL_KEY) || '').trim(); } catch (e) { return ''; }
+  }
+  function setGuestEmail(email) {
+    try {
+      if (email) localStorage.setItem(GUEST_EMAIL_KEY, email);
+      else localStorage.removeItem(GUEST_EMAIL_KEY);
+    } catch (e) {}
+  }
+  function validEmailLoose(s) { return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s || '').trim()); }
+  /* Which email should item alerts go to? Resolves to the account email when
+     signed in, the stored guest email when one was given, else null. */
+  function resolveNotifyEmail() {
+    return me().then(function (c) {
+      if (c && c.email) return c.email;
+      return guestEmail() || null;
+    }).catch(function () { return guestEmail() || null; });
+  }
+  function watchStatus(slug) {
+    return api('/api/waitlist/status?slug=' + encodeURIComponent(slug) + '&bid=' + encodeURIComponent(bid()))
+      .then(function (j) { return (j && j.ok) ? j : { watching: false, browser_on: 0, email: '' }; })
+      .catch(function () { return { watching: false, browser_on: 0, email: '' }; });
+  }
+  function setWatchBrowser(slug, on) {
+    if (on) {
+      /* Watcher row first (bell/popup alerts always), push permission best-effort. */
+      return api('/api/waitlist', { method: 'POST', body: { slug: slug, bid: bid(), browser_on: 1 } })
+        .then(function () { return enableBrowserNotifications(''); })
+        .then(function () { pollNotifications(); return true; });
+    }
+    return api('/api/waitlist', { method: 'POST', body: { slug: slug, bid: bid(), browser_on: 0 } }).then(function () { return true; });
+  }
+  function setWatchEmail(slug, email) {
+    if (email) return api('/api/waitlist', { method: 'POST', body: { slug: slug, email: email, bid: bid() } }).then(function () { return true; });
+    return api('/api/waitlist', { method: 'POST', body: { slug: slug, bid: bid(), clear_email: true } }).then(function () { return true; });
+  }
+  /* After any sign-in (modal, OAuth, passkey): move guest-email watch rows
+     onto the account email so alerts follow the new account. Idempotent. */
+  var _migrated = false;
+  function migrateGuestState() {
+    if (_migrated) return Promise.resolve();
+    var ge = guestEmail();
+    if (!ge) { _migrated = true; return Promise.resolve(); }
+    return me().then(function (c) {
+      _migrated = true;
+      if (!c || !c.email) return;
+      var ae = String(c.email).toLowerCase();
+      setGuestEmail(''); /* the browser no longer needs the guest copy */
+      if (ae === ge.toLowerCase()) return;
+      return api('/api/waitlist/migrate-email', { method: 'POST', body: { from_email: ge, to_email: ae } }).catch(function () {});
+    }).catch(function () {});
+  }
+
   /* ---------------- wishlist toggle button: one shared affordance for every
      product card / preview, mirroring Add to cart. Pages render it with
      BSR.wishToggleHtml(slug) inside .card-img; one delegated handler below
@@ -448,6 +509,23 @@
       '.notify-email .notify-sub{display:block;margin-bottom:10px}' +
       '.notify-email .field{margin:0 0 10px}' +
       '.notify-email .notify-row .btn{flex:1 1 0}' +
+      '.wish-notify{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border,#e2ddd2)}' +
+      '.wish-notify-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#888)}' +
+      '.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text,#333);user-select:none}' +
+      '.switch input{position:absolute;opacity:0;width:0;height:0}' +
+      '.switch .sl{position:relative;flex:0 0 auto;width:40px;height:22px;border-radius:999px;background:#d8d2c2;transition:background .18s}' +
+      '.switch .sl::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .18s}' +
+      '.switch input:checked+.sl{background:#1f5c3f}' +
+      '.switch input:checked+.sl::after{left:20px}' +
+      '.switch input:focus-visible+.sl{outline:2px solid #1f5c3f;outline-offset:2px}' +
+      '.switch input:disabled+.sl{opacity:.5}' +
+      '.switch .sw-ic{display:inline-flex;color:var(--muted,#888)}' +
+      '.switch input:checked~.sw-ic{color:#1f5c3f}' +
+      '.wish-email-form{display:flex;gap:8px;margin-top:10px}' +
+      '.wish-email-form .field{margin:0;flex:1}' +
+      '.wish-status{display:inline-block;font-size:11px;font-weight:700;padding:2px 10px;border-radius:999px;letter-spacing:.04em}' +
+      '.wish-status.avail{background:rgba(31,92,63,.12);color:#1f5c3f}' +
+      '.wish-status.held{background:rgba(201,162,39,.16);color:#8a6d1a}' +
       '.notify-done{display:flex;gap:12px;align-items:flex-start}' +
       '.notify-done strong{display:block;font-size:15px;margin-bottom:2px}' +
       '@media(max-width:480px){.notify-row{flex-direction:column}.notify-row .btn{width:100%}}' +
@@ -999,6 +1077,7 @@
     document.addEventListener('visibilitychange', function () { if (!document.hidden) { markActive(); upkeepTick(); } });
     upkeepTick();
     pollNotifications();
+    migrateGuestState();
     return me().catch(function () { return null; });
   }
 
@@ -1095,6 +1174,9 @@
     bid: bid, pollNotifications: pollNotifications, notifyLocal: notifyLocal,
     enableBrowserNotifications: enableBrowserNotifications, markNotifsRead: markNotifsRead,
     dropToWishlist: dropToWishlist,
+    guestEmail: guestEmail, setGuestEmail: setGuestEmail, resolveNotifyEmail: resolveNotifyEmail,
+    watchStatus: watchStatus, setWatchBrowser: setWatchBrowser, setWatchEmail: setWatchEmail,
+    migrateGuestState: migrateGuestState,
     loadTheme: loadTheme, applyTheme: applyTheme, loadMenus: loadMenus,
     me: me, toast: toast, init: init,
     setConsent: setConsent, consentState: consentState,

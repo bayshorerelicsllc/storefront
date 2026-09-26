@@ -6,7 +6,7 @@
 <title>Your account — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260926j" defer></script>
+<script src="/assets/js/bsr.js?v=20260926k" defer></script>
 <script src="/assets/js/addr-validate.js?v=20260925m"></script>
 <script src="https://js.stripe.com/v3/" defer></script>
 <style>
@@ -1142,15 +1142,20 @@ document.addEventListener('DOMContentLoaded', function () {
     var img = p.image
       ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy">'
       : '<div class="empty-icon">' + BSR.icon('box') + '</div>';
-    return '<div class="cart-line" data-slug="' + esc(p.slug) + '">' +
+    var slug = esc(p.slug);
+    return '<div class="cart-line" data-slug="' + slug + '">' +
       '<a class="t" href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' + img + '</a>' +
       '<div class="m"><div class="t"><a href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' + esc(p.title) + '</a></div>' +
-      '<div class="hint">Item ' + esc(p.item_number || p.slug) + '</div>' +
-      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
-      '<button class="btn btn-secondary btn-sm" type="button" data-wadd="' + esc(p.slug) + '">Add back to cart</button>' +
-      '<button class="btn btn-ghost btn-sm" type="button" data-wrm="' + esc(p.slug) + '" style="color:#9c2b1e">Remove</button>' +
-      '</div></div>' +
-      '<div class="p">' + BSR.money(p.price_cents) + '</div></div>';
+      '<div class="hint">Item ' + esc(p.item_number || p.slug) + ' &middot; <span class="wish-status" data-wstat>Checking&hellip;</span></div>' +
+      '<div class="wish-notify"><span class="wish-notify-label">Alerts</span>' +
+      '<label class="switch"><input type="checkbox" data-wb="' + slug + '"><span class="sl"></span><span class="sw-ic">' + BSR.icon('bell') + '</span>Browser</label>' +
+      '<label class="switch"><input type="checkbox" data-we="' + slug + '"><span class="sl"></span><span class="sw-ic">' + BSR.icon('mail') + '</span>Email</label>' +
+      '</div>' +
+      '<div class="wish-email-form" data-weform hidden><div class="field"><input type="email" inputmode="email" placeholder="Email for alerts" aria-label="Email for alerts"></div>' +
+      '<button type="button" class="btn btn-secondary btn-sm" data-wesave>Save</button></div>' +
+      '</div>' +
+      '<div class="p">' + BSR.money(p.price_cents) +
+      '<div class="rm"><button type="button" class="btn btn-ghost btn-sm" data-wrm="' + slug + '" style="color:#9c2b1e">Remove</button></div></div></div>';
   }
   function bindWishlist() {
     var col = document.getElementById('wish-list');
@@ -1173,18 +1178,88 @@ document.addEventListener('DOMContentLoaded', function () {
       products.sort(function (a, b) { return slugs.indexOf(a.slug) - slugs.indexOf(b.slug); });
       if (!products.length) { col.innerHTML = emptyWish(); return; }
       col.innerHTML = '<div class="cart-lines">' + products.map(wishRow).join('') + '</div>';
-      col.querySelectorAll('[data-wadd]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var slug = btn.getAttribute('data-wadd');
-          btn.disabled = true; btn.textContent = 'Reserving\u2026';
-          BSR.cart.add(slug).then(function (res) {
-            if (res && res.ok) {
-              BSR.wishlist.remove(slug);
-              BSR.toast('Back in your cart \u2014 reserved for 30 minutes');
-              bindWishlist();
+      /* Live availability per item (one batched call) + current alert toggles. */
+      var live = products.map(function (p) { return p.slug; });
+      BSR.api('/api/cart/status', { method: 'POST', body: { slugs: live, tokens: {} } })
+        .then(function (j) { return (j && j.ok && j.status) || {}; })
+        .catch(function () { return {}; })
+        .then(function (st) {
+          col.querySelectorAll('[data-wstat]').forEach(function (el) {
+            var s = st[el.closest('.cart-line').getAttribute('data-slug')] || 'available';
+            var label = s === 'held' ? 'On hold' : s === 'mine' ? 'In your cart' : 'Available';
+            el.textContent = label;
+            el.className = 'wish-status ' + (s === 'held' ? 'held' : 'avail');
+          });
+        });
+      products.forEach(function (p) {
+        BSR.watchStatus(p.slug).then(function (w) {
+          var row = col.querySelector('.cart-line[data-slug="' + CSS.escape(p.slug) + '"]');
+          if (!row) return;
+          var wb = row.querySelector('[data-wb]'), we = row.querySelector('[data-we]');
+          if (wb) wb.checked = !!w.browser_on;
+          if (we) we.checked = !!w.email;
+        });
+      });
+      /* Browser-alert toggle. */
+      col.querySelectorAll('[data-wb]').forEach(function (tgl) {
+        tgl.addEventListener('change', function () {
+          var slug = tgl.getAttribute('data-wb'), on = tgl.checked;
+          tgl.disabled = true;
+          BSR.setWatchBrowser(slug, on).then(function () {
+            BSR.toast(on ? 'Browser alerts on — you\u2019ll get a popup and bell alert about this slide' : 'Browser alerts off');
+          }).catch(function () {
+            tgl.checked = !on;
+            BSR.toast('Could not update alerts', 'err');
+          }).then(function () { tgl.disabled = false; });
+        });
+      });
+      /* Email-alert toggle: signed-in shoppers use their account email
+         automatically; guests are asked once and the address is kept in this
+         browser until site data is cleared. */
+      col.querySelectorAll('[data-we]').forEach(function (tgl) {
+        tgl.addEventListener('change', function () {
+          var slug = tgl.getAttribute('data-we');
+          var row = tgl.closest('.cart-line');
+          var form = row.querySelector('[data-weform]');
+          if (!tgl.checked) {
+            form.hidden = true;
+            tgl.disabled = true;
+            BSR.setWatchEmail(slug, null).then(function () {
+              BSR.toast('Email alerts off');
+            }).catch(function () {
+              tgl.checked = true;
+              BSR.toast('Could not update alerts', 'err');
+            }).then(function () { tgl.disabled = false; });
+            return;
+          }
+          BSR.resolveNotifyEmail().then(function (em) {
+            if (em) {
+              tgl.disabled = true;
+              BSR.setWatchEmail(slug, em).then(function () {
+                BSR.toast('Email alerts on — ' + em);
+              }).catch(function () {
+                tgl.checked = false;
+                BSR.toast('Could not update alerts', 'err');
+              }).then(function () { tgl.disabled = false; });
             } else {
-              btn.disabled = false; btn.textContent = 'Add back to cart';
-              BSR.toast((res && res.error) || 'Could not add back', 'err');
+              /* Guest, first time: ask once, keep it for this browser. */
+              tgl.checked = false;
+              form.hidden = false;
+              var input = form.querySelector('input');
+              input.focus();
+              form.querySelector('[data-wesave]').onclick = function () {
+                var v = input.value.trim();
+                if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { BSR.toast('Enter a valid email address', 'err'); input.focus(); return; }
+                BSR.setGuestEmail(v);
+                tgl.disabled = true;
+                BSR.setWatchEmail(slug, v).then(function () {
+                  form.hidden = true;
+                  tgl.checked = true;
+                  BSR.toast('Email alerts on — ' + v);
+                }).catch(function () {
+                  BSR.toast('Could not update alerts', 'err');
+                }).then(function () { tgl.disabled = false; });
+              };
             }
           });
         });
