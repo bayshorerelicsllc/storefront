@@ -1381,6 +1381,8 @@ document.addEventListener('input', function (e) {
       if(window.BSRAddrValidate&&BSRAddrValidate.attachLive){
         var forms=document.querySelectorAll('form.addr-form:not([data-live-attached])');
         for(var i=0;i<forms.length;i++){
+          var streetEl=forms[i].querySelector('input[name="address1"]');
+          if(!streetEl) continue;
           forms[i].setAttribute('data-live-attached','1');
           BSRAddrValidate.attachLive(forms[i]);
         }
