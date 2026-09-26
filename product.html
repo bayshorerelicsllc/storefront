@@ -7,7 +7,7 @@
 <meta name="description" id="meta-desc" content="Vintage 35mm railroad slide — a single physical item, sold once.">
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260925n" defer></script>
+<script src="/assets/js/bsr.js?v=20260926b" defer></script>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -137,22 +137,77 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderBuyRow(p) {
     var row = document.getElementById('buy-row');
-    var inCart = BSR.cart.has(p.slug);
-    if (inCart) {
+    if (BSR.cart.has(p.slug)) { showInCart(); return; }
+    row.innerHTML = '<div class="sk" style="height:42px;width:220px"></div>';
+    BSR.api('/api/cart/status', { method: 'POST', body: { slugs: [p.slug], tokens: BSR.cart.tokens() } }).then(function (j) {
+      var st = (j && j.ok && j.status) ? j.status[p.slug] : 'available';
+      if (BSR.cart.has(p.slug)) { showInCart(); return; }
+      if (st === 'sold') {
+        row.innerHTML = '<div class="held-note">' + BSR.icon('info', 'ic-sm') + '<span><strong>Sold.</strong> This one-of-a-kind slide has found a new home.</span></div>';
+      } else if (st === 'held') { showHeld(); }
+      else if (st === 'gone') {
+        row.innerHTML = '<div class="held-note">' + BSR.icon('info', 'ic-sm') + '<span>This slide is no longer available.</span></div>';
+      } else { showAdd(); }
+    }).catch(function () { if (!BSR.cart.has(p.slug)) showAdd(); });
+
+    function showInCart() {
       row.innerHTML =
-        '<a class="btn btn-primary" href="/cart/">' + BSR.icon('check', 'ic-sm') + ' In your cart — view cart</a>';
-      return;
+        '<a class="btn btn-primary" href="/cart/">' + BSR.icon('check', 'ic-sm') + ' In your cart \u2014 view cart</a>';
     }
-    row.innerHTML =
-      '<button class="btn btn-primary" id="add-btn">' + BSR.icon('cart', 'ic-sm') + ' Add to cart</button>' +
-      '<a class="btn btn-secondary" href="/cart/">View cart</a>';
-    document.getElementById('add-btn').addEventListener('click', function () {
-      BSR.cart.add(p.slug);
-      BSR.updateCartBadge();
-      BSR.toast('Added to your cart');
+    function showAdd() {
       row.innerHTML =
-        '<a class="btn btn-primary" href="/cart/">' + BSR.icon('check', 'ic-sm') + ' In your cart — view cart</a>';
-    });
+        '<button class="btn btn-primary" id="add-btn">' + BSR.icon('cart', 'ic-sm') + ' Add to cart</button>' +
+        '<a class="btn btn-secondary" href="/cart/">View cart</a>';
+      document.getElementById('add-btn').addEventListener('click', function () {
+        var btn = document.getElementById('add-btn');
+        btn.disabled = true;
+        btn.textContent = 'Reserving\u2026';
+        BSR.cart.add(p.slug).then(function (res) {
+          if (res && res.ok) {
+            BSR.toast('Added \u2014 reserved for 30 minutes');
+            showInCart();
+          } else {
+            BSR.toast((res && res.error) || 'Could not add to cart', 'err');
+            renderBuyRow(p);
+          }
+        });
+      });
+    }
+    function showHeld() {
+      row.innerHTML =
+        '<div class="held-note">' + BSR.icon('info', 'ic-sm') + '<span><strong>In someone\u2019s cart</strong> right now. If their reservation ends, it\u2019s yours to grab.</span></div>' +
+        '<div class="notify-box" id="notify-box">' +
+        '<p><strong>Want it if it frees up?</strong> Leave your email and we\u2019ll tell you the moment it\u2019s available.</p>' +
+        '<div class="row"><input type="email" id="wl-email" class="field" placeholder="Email address" aria-label="Email address">' +
+        '<button class="btn btn-secondary" id="wl-btn" type="button">Notify me</button></div>' +
+        '<p style="margin-top:8px"><button class="btn btn-ghost btn-sm" id="wl-push" type="button">Or notify me in this browser</button></p>' +
+        '</div>';
+      document.getElementById('wl-btn').addEventListener('click', function () {
+        var em = document.getElementById('wl-email').value.trim();
+        var btn = document.getElementById('wl-btn');
+        btn.disabled = true;
+        BSR.api('/api/waitlist', { method: 'POST', body: { slug: p.slug, email: em, bid: BSR.bid() } }).then(function (j) {
+          if (j && j.ok) {
+            document.getElementById('notify-box').innerHTML =
+              '<p>' + BSR.icon('check', 'ic-sm') + ' <strong>You\u2019re on the list.</strong> We\u2019ll email you if this slide becomes available.</p>';
+            BSR.pollNotifications();
+          } else {
+            btn.disabled = false;
+            BSR.toast((j && j.error) || 'Could not join the list', 'err');
+          }
+        });
+      });
+      document.getElementById('wl-push').addEventListener('click', function () {
+        BSR.enableBrowserNotifications('').then(function (ok) {
+          if (!ok) return;
+          BSR.api('/api/waitlist', { method: 'POST', body: { slug: p.slug, bid: BSR.bid(), watch: true } }).then(function () {
+            var nb = document.getElementById('notify-box');
+            if (nb) nb.innerHTML =
+              '<p>' + BSR.icon('check', 'ic-sm') + ' <strong>Watching this slide.</strong> We\u2019ll notify this browser if it frees up.</p>';
+          });
+        });
+      });
+    }
   }
 
   if (!slug) { unavailable(); return; }

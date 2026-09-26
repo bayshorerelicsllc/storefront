@@ -12,6 +12,7 @@
   var PATHS = {
     search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
     account: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
+    bell: '<path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/>',
     cart: '<path d="M3 4h2l2.4 12.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L20.5 8H6"/><circle cx="9.5" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
     close: '<path d="M6 6l12 12M18 6L6 18"/>',
@@ -67,32 +68,443 @@
     return '$' + (Math.round(cents || 0) / 100).toFixed(2);
   }
 
-  /* ---------------- cart (localStorage, slugs only, qty always 1) ---------------- */
+  /* ---------------- cart: server-reserved, qty always 1 ---------------- */
   var CART_KEY = 'bsr-cart-v1';
+  var WISH_KEY = 'bsr-wishlist-v1';
+  var BID_KEY = 'bsr-bid-v1';
+  var NOTIF_SEEN_KEY = 'bsr-notif-seen-v1';
+  var LOCAL_NOTIF_KEY = 'bsr-notif-local-v1';
+  var HOLD_MS = 30 * 60 * 1000;   /* reservation length */
+  var WARN_MS = 5 * 60 * 1000;    /* warn this long before expiry */
+  var IDLE_MS = 5 * 60 * 1000;    /* no input this long = inactive */
+
+  function bid() {
+    try {
+      var b = localStorage.getItem(BID_KEY);
+      if (!b) {
+        b = 'b-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+        localStorage.setItem(BID_KEY, b);
+      }
+      return b;
+    } catch (e) { return 'b-anon'; }
+  }
+
   function readCart() {
     try {
       var a = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
-      return Array.isArray(a) ? a.filter(function (s) { return typeof s === 'string'; }) : [];
+      if (!Array.isArray(a)) return [];
+      return a.map(function (it) {
+        if (typeof it === 'string') return { slug: it, token: '', exp: 0 };
+        if (it && typeof it.slug === 'string') return { slug: it.slug, token: it.token || '', exp: it.exp || 0 };
+        return null;
+      }).filter(Boolean);
     } catch (e) { return []; }
   }
-  function writeCart(a) { localStorage.setItem(CART_KEY, JSON.stringify(a)); updateCartBadge(); }
+  function writeCart(a) { try { localStorage.setItem(CART_KEY, JSON.stringify(a)); } catch (e) {} updateCartBadge(); }
+
   var cart = {
-    list: readCart,
+    items: readCart,
+    list: function () { return readCart().map(function (i) { return i.slug; }); },
     count: function () { return readCart().length; },
-    has: function (slug) { return readCart().indexOf(slug) !== -1; },
-    add: function (slug) {
-      var a = readCart();
-      if (a.indexOf(slug) === -1) { a.push(slug); writeCart(a); }
-      return a.length;
+    has: function (slug) { return readCart().some(function (i) { return i.slug === slug; }); },
+    tokens: function () {
+      var t = {};
+      readCart().forEach(function (i) { if (i.token) t[i.slug] = i.token; });
+      return t;
     },
-    remove: function (slug) { writeCart(readCart().filter(function (s) { return s !== slug; })); },
-    clear: function () { writeCart([]); }
+    /* Reserve on the server, then add locally. Resolves {ok:true} or {ok:false,error}. */
+    add: function (slug) {
+      return api('/api/cart/reserve', { method: 'POST', body: { slug: slug, bid: bid() } }).then(function (j) {
+        if (j && j.ok && j.token) {
+          var a = readCart().filter(function (i) { return i.slug !== slug; });
+          a.push({ slug: slug, token: j.token, exp: j.expires_at || (Date.now() + HOLD_MS) });
+          writeCart(a);
+          markActive();
+          return { ok: true };
+        }
+        return { ok: false, error: (j && j.error) || 'Could not reserve this slide.' };
+      });
+    },
+    release: function (slug, purchased) {
+      var it = null, rest = [];
+      readCart().forEach(function (i) { if (i.slug === slug) it = i; else rest.push(i); });
+      writeCart(rest);
+      if (it && it.token) {
+        api('/api/cart/release', { method: 'POST', body: { slug: slug, token: it.token, purchased: !!purchased } });
+      }
+    },
+    remove: function (slug) { cart.release(slug, false); },
+    clear: function (purchased) {
+      var items = readCart();
+      writeCart([]);
+      items.forEach(function (it) {
+        if (it.token) api('/api/cart/release', { method: 'POST', body: { slug: it.slug, token: it.token, purchased: !!purchased } });
+      });
+    },
+    heartbeatOne: function (it) {
+      return api('/api/cart/heartbeat', { method: 'POST', body: { slug: it.slug, token: it.token } }).then(function (j) {
+        if (j && j.ok) {
+          var a = readCart();
+          a.forEach(function (x) { if (x.slug === it.slug && x.token === it.token) x.exp = j.expires_at || (Date.now() + HOLD_MS); });
+          writeCart(a);
+          return true;
+        }
+        return false;
+      }).catch(function () { return true; }); /* network blip: never drop on a failed ping */
+    }
   };
   function updateCartBadge() {
     var els = document.querySelectorAll('.cart-count');
     var n = cart.count();
     for (var i = 0; i < els.length; i++) els[i].textContent = n > 0 ? n : '';
   }
+
+  /* ---------------- wishlist (local; survives across visits until site data is cleared) ---------------- */
+  function readWish() {
+    try {
+      var a = JSON.parse(localStorage.getItem(WISH_KEY) || '[]');
+      return Array.isArray(a) ? a.filter(function (s) { return typeof s === 'string'; }) : [];
+    } catch (e) { return []; }
+  }
+  function writeWish(a) { try { localStorage.setItem(WISH_KEY, JSON.stringify(a)); } catch (e) {} updateWishBadge(); }
+  var wishlist = {
+    list: readWish,
+    count: function () { return readWish().length; },
+    has: function (slug) { return readWish().indexOf(slug) !== -1; },
+    add: function (slug) {
+      var a = readWish();
+      if (a.indexOf(slug) === -1) { a.push(slug); writeWish(a); }
+    },
+    remove: function (slug) { writeWish(readWish().filter(function (s) { return s !== slug; })); }
+  };
+  function updateWishBadge() {
+    var els = document.querySelectorAll('.wish-count');
+    var n = wishlist.count();
+    for (var i = 0; i < els.length; i++) els[i].textContent = n > 0 ? n : '';
+  }
+
+  /* ---------------- notifications: bell + browser ---------------- */
+  function readLocalNotifs() {
+    try {
+      var a = JSON.parse(localStorage.getItem(LOCAL_NOTIF_KEY) || '[]');
+      return Array.isArray(a) ? a : [];
+    } catch (e) { return []; }
+  }
+  function readSeenIds() {
+    try { return JSON.parse(localStorage.getItem(NOTIF_SEEN_KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function writeSeenIds(o) {
+    try {
+      var keys = Object.keys(o);
+      if (keys.length > 100) { keys.slice(0, keys.length - 100).forEach(function (k) { delete o[k]; }); }
+      localStorage.setItem(NOTIF_SEEN_KEY, JSON.stringify(o));
+    } catch (e) {}
+  }
+  var serverNotifs = [];
+  function allNotifs() {
+    var local = readLocalNotifs();
+    var merged = serverNotifs.concat(local);
+    merged.sort(function (a, b) { return (b.created_at || 0) - (a.created_at || 0); });
+    return merged.slice(0, 30);
+  }
+  function unreadCount() {
+    var n = 0;
+    serverNotifs.forEach(function (x) { if (!x.read) n++; });
+    readLocalNotifs().forEach(function (x) { if (!x.read) n++; });
+    return n;
+  }
+  function updateNotifBadge() {
+    var els = document.querySelectorAll('.notif-count');
+    var n = unreadCount();
+    for (var i = 0; i < els.length; i++) {
+      els[i].textContent = n > 0 ? (n > 9 ? '9+' : n) : '';
+      els[i].style.display = n > 0 ? '' : 'none';
+    }
+  }
+  function relTime(ts) {
+    var d = Date.now() - (ts || 0);
+    if (d < 60000) return 'just now';
+    if (d < 3600000) return Math.floor(d / 60000) + 'm ago';
+    if (d < 86400000) return Math.floor(d / 3600000) + 'h ago';
+    return Math.floor(d / 86400000) + 'd ago';
+  }
+  function pollNotifications() {
+    return api('/api/notifications?bid=' + encodeURIComponent(bid())).then(function (j) {
+      if (!j || !j.ok) return;
+      serverNotifs = j.notifications || [];
+      var seen = readSeenIds(), changed = false;
+      if (('Notification' in window) && Notification.permission === 'granted') {
+        serverNotifs.forEach(function (n) {
+          if (!n.read && !seen[n.id]) {
+            seen[n.id] = 1; changed = true;
+            try { new Notification(n.title, { body: n.body, icon: '/assets/img/logo.png', tag: n.id }); } catch (e) {}
+          }
+        });
+      } else {
+        serverNotifs.forEach(function (n) { if (!seen[n.id]) { seen[n.id] = 1; changed = true; } });
+      }
+      if (changed) writeSeenIds(seen);
+      updateNotifBadge();
+      renderNotifPanel();
+    }).catch(function () {});
+  }
+  /* A notification created on this device (e.g. wishlist moves). */
+  function notifyLocal(title, body, slug) {
+    var a = readLocalNotifs();
+    a.unshift({ id: 'l' + Date.now(), title: title, body: body, slug: slug || '',
+      url: slug ? '/product.html?slug=' + encodeURIComponent(slug) : '/cart/',
+      created_at: Date.now(), read: false });
+    try { localStorage.setItem(LOCAL_NOTIF_KEY, JSON.stringify(a.slice(0, 20))); } catch (e) {}
+    updateNotifBadge();
+    renderNotifPanel();
+    if (('Notification' in window) && Notification.permission === 'granted') {
+      try { new Notification(title, { body: body, icon: '/assets/img/logo.png' }); } catch (e) {}
+    }
+  }
+  function markNotifsRead() {
+    var ids = serverNotifs.filter(function (n) { return !n.read; }).map(function (n) { return n.id; });
+    serverNotifs.forEach(function (n) { n.read = true; });
+    var local = readLocalNotifs(), touched = false;
+    local.forEach(function (n) { if (!n.read) { n.read = true; touched = true; } });
+    if (touched) { try { localStorage.setItem(LOCAL_NOTIF_KEY, JSON.stringify(local)); } catch (e) {} }
+    updateNotifBadge();
+    renderNotifPanel();
+    if (ids.length) api('/api/notifications/read', { method: 'POST', body: { bid: bid(), ids: ids } }).catch(function () {});
+  }
+
+  /* Bell dropdown panel (built once). */
+  var notifPanelEl = null;
+  function notifCss() {
+    if (document.getElementById('bsr-notif-css')) return;
+    var st = document.createElement('style');
+    st.id = 'bsr-notif-css';
+    st.textContent =
+      '.notif-btn{position:relative}' +
+      '.notif-count{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;' +
+      'background:#c0392b;color:#fff;font-size:10px;line-height:16px;text-align:center;font-weight:700}' +
+      '.notif-panel{position:fixed;top:64px;right:12px;width:min(360px,calc(100vw - 24px));max-height:70vh;overflow:auto;' +
+      'background:var(--card,#fff);border:1px solid var(--border,#e2ddd2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.18);' +
+      'z-index:1200;padding:8px;display:none}' +
+      '.notif-panel.open{display:block}' +
+      '.notif-panel h3{margin:6px 8px 4px;font-size:15px}' +
+      '.notif-item{display:block;padding:10px 8px;border-top:1px solid var(--border,#eee);text-decoration:none;color:inherit}' +
+      '.notif-item:first-of-type{border-top:0}' +
+      '.notif-item .t{font-weight:700;font-size:14px}' +
+      '.notif-item .b{font-size:13px;color:var(--muted,#666);margin-top:2px}' +
+      '.notif-item .w{font-size:11px;color:var(--muted,#999);margin-top:4px}' +
+      '.notif-item.unread .t::before{content:"";display:inline-block;width:8px;height:8px;border-radius:4px;background:#c0392b;margin-right:6px}' +
+      '.notif-empty{padding:18px 8px;text-align:center;color:var(--muted,#777);font-size:14px}' +
+      '.notif-enable{margin:8px;padding:10px;border:1px dashed var(--border,#ccc);border-radius:8px;text-align:center;font-size:13px}' +
+      '.bsr-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1300;display:flex;align-items:center;justify-content:center;padding:16px}' +
+      '.bsr-modal{background:var(--card,#fff);border-radius:14px;max-width:420px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}' +
+      '.bsr-modal h2{margin:0 0 10px;font-size:20px}' +
+      '.bsr-modal p{margin:0 0 10px;font-size:15px}' +
+      '.bsr-modal .muted{color:var(--muted,#666);font-size:13px}' +
+      '.bsr-modal #bsr-exp-count{font-variant-numeric:tabular-nums}' +
+      '.bsr-modal-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}' +
+      '.held-note{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border,#e2ddd2);' +
+      'border-radius:8px;background:var(--chip,#f7f4ec);font-size:14px;margin-bottom:10px}' +
+      '.notify-box{border:1px solid var(--border,#e2ddd2);border-radius:8px;padding:12px;margin-bottom:10px}' +
+      '.notify-box p{margin:0 0 8px;font-size:14px}' +
+      '.notify-box .row{display:flex;gap:8px}' +
+      '.notify-box input{flex:1}' +
+      '.wish-line{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--border,#eee)}';
+    document.head.appendChild(st);
+  }
+  function renderNotifPanel() {
+    if (!notifPanelEl) return;
+    var items = allNotifs();
+    var permNote = '';
+    if (('Notification' in window) && Notification.permission === 'default') {
+      permNote = '<div class="notif-enable">Want a pop-up when a watched slide frees up?<br>' +
+        '<button class="btn btn-secondary btn-sm" id="notif-enable-btn" type="button" style="margin-top:8px">Enable browser notifications</button></div>';
+    }
+    notifPanelEl.innerHTML = '<h3>Notifications</h3>' + permNote +
+      (items.length ? items.map(function (n) {
+        return '<a class="notif-item' + (n.read ? '' : ' unread') + '" href="' + esc(n.url || '/shop/') + '">' +
+          '<div class="t">' + esc(n.title) + '</div>' +
+          '<div class="b">' + esc(n.body) + '</div>' +
+          '<div class="w">' + relTime(n.created_at) + '</div></a>';
+      }).join('') : '<div class="notif-empty">Nothing here yet.<br>We\u2019ll let you know when a watched slide becomes available.</div>');
+    var eb = document.getElementById('notif-enable-btn');
+    if (eb) eb.addEventListener('click', function () { enableBrowserNotifications(''); });
+  }
+  function wireNotifBell() {
+    notifCss();
+    var btn = document.getElementById('bsr-notif-btn');
+    if (!btn) return;
+    notifPanelEl = document.createElement('div');
+    notifPanelEl.className = 'notif-panel';
+    notifPanelEl.id = 'bsr-notif-panel';
+    document.body.appendChild(notifPanelEl);
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = notifPanelEl.classList.toggle('open');
+      if (open) { renderNotifPanel(); markNotifsRead(); }
+    });
+    document.addEventListener('click', function (e) {
+      if (notifPanelEl && notifPanelEl.classList.contains('open') &&
+          !notifPanelEl.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        notifPanelEl.classList.remove('open');
+      }
+    });
+    updateNotifBadge();
+    renderNotifPanel();
+  }
+
+  /* ---------------- browser push ---------------- */
+  function urlB64ToU8(s) {
+    s = String(s).replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s), b = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b;
+  }
+  function enableBrowserNotifications(email) {
+    if (!('Notification' in window)) { toast('This browser doesn\u2019t support notifications', 'err'); return Promise.resolve(false); }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return Notification.requestPermission().then(function (p) {
+        if (p === 'granted') { toast('Notifications on for this visit'); pollNotifications(); return true; }
+        return false;
+      });
+    }
+    return Notification.requestPermission().then(function (p) {
+      if (p !== 'granted') { toast('Notifications blocked in this browser', 'err'); return false; }
+      return navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        return api('/api/push/vapid-key').then(function (j) {
+          if (!j || !j.ok || !j.key) throw new Error('no vapid key');
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToU8(j.key) });
+        }).then(function (sub) {
+          var sj = sub.toJSON();
+          function sendInit() {
+            try {
+              var c = reg.active || reg.waiting;
+              if (c) c.postMessage({ type: 'bsr-init', api: API, bid: bid() });
+            } catch (e) {}
+          }
+          sendInit();
+          if (reg.active) { try { reg.active.addEventListener('statechange', sendInit); } catch (e) {} }
+          return api('/api/push/subscribe', { method: 'POST',
+            body: { endpoint: sj.endpoint, keys: sj.keys, email: email || '', bid: bid() } });
+        }).then(function () {
+          toast('Browser notifications on');
+          renderNotifPanel();
+          pollNotifications();
+          return true;
+        });
+      });
+    }).catch(function () { toast('Could not turn on notifications', 'err'); return false; });
+  }
+
+  /* ---------------- reservation upkeep: activity heartbeat + expiry warning ---------------- */
+  var lastActive = Date.now();
+  function markActive() { lastActive = Date.now(); }
+  ['mousemove', 'keydown', 'touchstart', 'click', 'scroll'].forEach(function (ev) {
+    document.addEventListener(ev, markActive, { passive: true });
+  });
+
+  function dropToWishlist(slug) {
+    cart.release(slug, false);
+    if (!wishlist.has(slug)) wishlist.add(slug);
+    notifyLocal('Moved to your wishlist',
+      'Your reservation ended before checkout. It\u2019s in your wishlist \u2014 add it back while it\u2019s still available.', slug);
+    toast('Moved to your wishlist');
+    if (window.BSR && BSR._onCartDrop) { try { BSR._onCartDrop(slug); } catch (e) {} }
+  }
+
+  var expiryModalOpen = false, expiryTimer = null;
+  function closeExpiryModal() {
+    expiryModalOpen = false;
+    if (expiryTimer) { clearInterval(expiryTimer); expiryTimer = null; }
+    var m = document.getElementById('bsr-expiry-modal');
+    if (m && m.parentNode) m.parentNode.removeChild(m);
+  }
+  function showExpiryModal(count) {
+    if (expiryModalOpen) return;
+    expiryModalOpen = true;
+    notifCss();
+    var overlay = document.createElement('div');
+    overlay.id = 'bsr-expiry-modal';
+    overlay.className = 'bsr-modal-overlay';
+    var plural = count === 1 ? 'slide' : 'slides';
+    overlay.innerHTML =
+      '<div class="bsr-modal" role="dialog" aria-modal="true" aria-label="Reservation expiring">' +
+      '<h2>Need more time?</h2>' +
+      '<p>Your reservation for ' + count + ' ' + plural + ' ends in <strong id="bsr-exp-count">5:00</strong>.</p>' +
+      '<p class="muted">After that ' + (count === 1 ? 'it goes' : 'they go') + ' back on sale and ' +
+      (count === 1 ? 'moves' : 'move') + ' to your wishlist.</p>' +
+      '<div class="bsr-modal-actions">' +
+      '<button class="btn btn-primary" id="bsr-exp-keep" type="button">Yes \u2014 keep my ' + plural + '</button>' +
+      '<button class="btn btn-secondary" id="bsr-exp-release" type="button">Release them</button>' +
+      '</div></div>';
+    document.body.appendChild(overlay);
+    var tick = function () {
+      var items = readCart().filter(function (i) { return i.token; });
+      if (!items.length) { closeExpiryModal(); return; }
+      var left = Math.min.apply(null, items.map(function (i) { return (i.exp || 0) - Date.now(); }));
+      var el = document.getElementById('bsr-exp-count');
+      if (el) {
+        var s = Math.max(0, Math.ceil(left / 1000));
+        el.textContent = Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+      }
+      if (left <= 0) {
+        closeExpiryModal();
+        items.forEach(function (it) {
+          cart.heartbeatOne(it).then(function (alive) { if (!alive) dropToWishlist(it.slug); });
+        });
+      }
+    };
+    expiryTimer = setInterval(tick, 1000);
+    tick();
+    document.getElementById('bsr-exp-keep').addEventListener('click', function () {
+      markActive();
+      var items = readCart().filter(function (i) { return i.token; });
+      if (!items.length) { closeExpiryModal(); return; }
+      var pending = items.length;
+      items.forEach(function (it) {
+        cart.heartbeatOne(it).then(function (alive) {
+          if (!alive) dropToWishlist(it.slug);
+          if (--pending <= 0) {
+            closeExpiryModal();
+            toast('Reservation extended 30 minutes');
+            pollNotifications();
+          }
+        });
+      });
+    });
+    document.getElementById('bsr-exp-release').addEventListener('click', function () {
+      readCart().filter(function (i) { return i.token; }).forEach(function (it) { dropToWishlist(it.slug); });
+      closeExpiryModal();
+    });
+  }
+
+  function upkeepTick() {
+    if (document.hidden) return;
+    var items = readCart().filter(function (i) { return i.token; });
+    if (!items.length) { if (expiryModalOpen) closeExpiryModal(); return; }
+    var idle = (Date.now() - lastActive) > IDLE_MS;
+    if (!idle) {
+      /* Shopping actively: extend every hold. */
+      if (expiryModalOpen) closeExpiryModal();
+      items.forEach(function (it) {
+        cart.heartbeatOne(it).then(function (alive) { if (!alive) dropToWishlist(it.slug); });
+      });
+      pollNotifications();
+      return;
+    }
+    /* Idle: only warn as the reservation runs out. */
+    var now = Date.now();
+    var minLeft = Math.min.apply(null, items.map(function (i) { return (i.exp || 0) - now; }));
+    if (minLeft <= 0) {
+      closeExpiryModal();
+      items.forEach(function (it) {
+        cart.heartbeatOne(it).then(function (alive) { if (!alive) dropToWishlist(it.slug); });
+      });
+      return;
+    }
+    if (minLeft < WARN_MS && !expiryModalOpen) showExpiryModal(items.length);
+  }
+
 
   /* ---------------- theme ---------------- */
   var themeCache = null;
@@ -255,6 +667,7 @@
         '<nav class="main-nav" aria-label="Main">' + navHtml + '</nav>' +
         '<div class="header-icons">' +
         '<button class="icon-btn" id="bsr-search-btn" aria-label="Search">' + icon('search') + '</button>' +
+        '<button class="icon-btn notif-btn" id="bsr-notif-btn" aria-label="Notifications">' + icon('bell') + '<span class="notif-count"></span></button>' +
         '<button class="icon-btn" data-account-btn aria-label="Account">' + icon('account') + '</button>' +
         '<a class="icon-btn" href="/cart/" aria-label="Cart">' + icon('cart') + '<span class="cart-count"></span></a>' +
         '</div></div></div>' +
@@ -394,6 +807,12 @@
     loadTheme();
     loadMenus();
     renderConsent();
+    wireNotifBell();
+    updateWishBadge();
+    setInterval(upkeepTick, 30 * 1000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { markActive(); upkeepTick(); } });
+    upkeepTick();
+    pollNotifications();
     return me().catch(function () { return null; });
   }
 
@@ -485,7 +904,10 @@
 
   window.BSR = {
     api: api, money: money, esc: esc, icon: icon,
-    cart: cart, updateCartBadge: updateCartBadge,
+    cart: cart, updateCartBadge: updateCartBadge, wishlist: wishlist, updateWishBadge: updateWishBadge,
+    bid: bid, pollNotifications: pollNotifications, notifyLocal: notifyLocal,
+    enableBrowserNotifications: enableBrowserNotifications, markNotifsRead: markNotifsRead,
+    dropToWishlist: dropToWishlist,
     loadTheme: loadTheme, applyTheme: applyTheme, loadMenus: loadMenus,
     me: me, toast: toast, init: init,
     setConsent: setConsent, consentState: consentState,

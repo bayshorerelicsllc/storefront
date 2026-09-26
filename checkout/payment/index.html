@@ -6,7 +6,7 @@
 <title>Payment — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods9">
-<script src="/assets/js/bsr.js?v=20260926a" defer></script>
+<script src="/assets/js/bsr.js?v=20260926b" defer></script>
 <style>
 .payment-card{background:var(--bg-card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px;}
 .payment-card h3{margin-top:0;font-size:1.15rem;color:var(--accent-deep);font-family:var(--font-head);}
@@ -79,13 +79,13 @@ function buildCheckoutPayload(ship,bill,walletOrder){
   var promoCode='';try{var p=JSON.parse(sessionStorage.getItem('bsr-promo')||'null');if(p&&p.code)promoCode=p.code;}catch(e){}
   var metaPrep={billing:bill};
   if(ship)metaPrep.shipping=ship;
-  var pl={slugs:slugs,prep:metaPrep,meta:{prep:metaPrep},promo_code:promoCode,contact_email:bill.email||ship.contact_email||'',wallet_order:!!walletOrder};
+  var pl={slugs:slugs,cart_tokens:(window.BSR&&BSR.cart)?BSR.cart.tokens():{},prep:metaPrep,meta:{prep:metaPrep},promo_code:promoCode,contact_email:bill.email||ship.contact_email||'',wallet_order:!!walletOrder};
   if(ship){pl.shipping=ship;}
   return pl;
 }
 function getPromo(){try{var p=JSON.parse(sessionStorage.getItem('bsr-promo')||'null');return (p&&p.code)?p:null;}catch(e){return null;}}
 function finishOrder(j){
-  if(window.BSR&&BSR.cart)BSR.cart.clear();
+  if(window.BSR&&BSR.cart)BSR.cart.clear(true);
   try{sessionStorage.setItem('bsr-last-order',JSON.stringify({order_id:j&&j.order_id,amount_cents:j&&j.amount_cents,captured_at:new Date().toISOString()}));}catch(e){}
   window.location.href='/thank-you/';
 }

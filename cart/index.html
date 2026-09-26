@@ -6,7 +6,7 @@
 <title>Cart — Bay Shore Relics LLC</title>
 <link rel="icon" href="/assets/img/logo-icon.png">
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods5">
-<script src="/assets/js/bsr.js?v=20260925n" defer></script>
+<script src="/assets/js/bsr.js?v=20260926b" defer></script>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -17,6 +17,7 @@
 <p>Each slide is a single physical item, sold once.</p>
 </div>
 <div id="cart-root"></div>
+<div id="wish-host" style="margin-top:36px"></div>
 </div>
 </main>
 <div id="bsr-footer"></div>
@@ -159,7 +160,94 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  renderLines();
+  function renderWishlist() {
+    var host = document.getElementById('wish-host');
+    if (!host) return;
+    var w = BSR.wishlist.list();
+    if (!w.length) { host.innerHTML = ''; return; }
+    host.innerHTML = '<h2>Your wishlist</h2><p class="hint">Saved for later \u2014 add them back while they\u2019re still available.</p><div id="wish-lines"><p class="hint">Loading\u2026</p></div>';
+    var lines = document.getElementById('wish-lines');
+    var products = [], pending = w.length;
+    w.forEach(function (slug) {
+      BSR.api('/api/catalog/products/' + encodeURIComponent(slug)).then(function (j) {
+        products.push((j && j.ok && j.product) ? j.product : { slug: slug, title: slug, price_cents: 0, image: '' });
+        if (--pending === 0) finishWish(products, w);
+      }).catch(function () {
+        products.push({ slug: slug, title: slug, price_cents: 0, image: '' });
+        if (--pending === 0) finishWish(products, w);
+      });
+    });
+    function finishWish(list, order) {
+      list.sort(function (a, b) { return order.indexOf(a.slug) - order.indexOf(b.slug); });
+      lines.innerHTML = list.map(function (p) {
+        var img = p.image
+          ? '<img src="' + BSR.esc(p.image) + '" alt="' + BSR.esc(p.title) + '" loading="lazy">'
+          : '<div class="empty-icon">' + BSR.icon('box') + '</div>';
+        return '<div class="cart-line" data-slug="' + BSR.esc(p.slug) + '">' +
+          '<a class="t" href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' + img + '</a>' +
+          '<div class="m"><div class="t"><a href="/product.html?slug=' + encodeURIComponent(p.slug) + '">' + BSR.esc(p.title) + '</a></div>' +
+          '<div class="hint">Item ' + BSR.esc(p.slug) + ' \u00b7 Qty 1</div></div>' +
+          '<div class="p">' + BSR.money(p.price_cents) + '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+          '<button class="btn btn-secondary btn-sm" type="button" data-wadd="' + BSR.esc(p.slug) + '">Add back to cart</button>' +
+          '<button class="rm" type="button" data-wrm="' + BSR.esc(p.slug) + '">' + BSR.icon('trash', 'ic-sm') + '<span>Remove</span></button>' +
+          '</div></div>';
+      }).join('');
+      lines.querySelectorAll('[data-wadd]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var slug = btn.getAttribute('data-wadd');
+          btn.disabled = true; btn.textContent = 'Reserving\u2026';
+          BSR.cart.add(slug).then(function (res) {
+            if (res && res.ok) {
+              BSR.wishlist.remove(slug);
+              BSR.toast('Back in your cart \u2014 reserved for 30 minutes');
+              renderLines(); renderWishlist();
+            } else {
+              btn.disabled = false; btn.textContent = 'Add back to cart';
+              BSR.toast((res && res.error) || 'Could not add back', 'err');
+            }
+          });
+        });
+      });
+      lines.querySelectorAll('[data-wrm]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          BSR.wishlist.remove(btn.getAttribute('data-wrm'));
+          renderWishlist();
+        });
+      });
+    }
+  }
+
+  /* On return visits: re-reserve anything whose hold died while away, else wishlist it. */
+  function reconcileThenRender() {
+    renderWishlist();
+    var items = BSR.cart.items();
+    if (!items.length) { renderLines(); return; }
+    BSR.api('/api/cart/status', { method: 'POST', body: {
+      slugs: items.map(function (i) { return i.slug; }),
+      tokens: BSR.cart.tokens()
+    } }).then(function (j) {
+      var st = (j && j.ok && j.status) || {};
+      var pending = 0, done = false;
+      function maybeDone() { if (!done && pending === 0) { done = true; renderLines(); renderWishlist(); } }
+      items.forEach(function (it) {
+        var s = st[it.slug];
+        if (it.token && s !== 'mine') {
+          pending++;
+          BSR.cart.add(it.slug).then(function (r) {
+            if (!r.ok) BSR.dropToWishlist(it.slug);
+            pending--; maybeDone();
+          });
+        } else if (!it.token && s === 'available') {
+          pending++;
+          BSR.cart.add(it.slug).then(function () { pending--; maybeDone(); });
+        }
+      });
+      maybeDone();
+    }).catch(function () { renderLines(); });
+  }
+  BSR._onCartDrop = function () { renderLines(); renderWishlist(); };
+  reconcileThenRender();
 });
 </script>
 </body>
