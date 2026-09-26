@@ -300,55 +300,69 @@ function showValidationModal(results, onDone){
   
   var hasSuggestions=results.some(function(r){return r.suggested;});
   
-  // Build address cards - professional, symmetrical layout
-  var cards=results.map(function(r, idx){
-    var label=r.kind==='bill'?'Billing address':'Shipping address';
-    var icon=r.kind==='bill'?'▣':'▢';
-    
-    var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
-    var unitInOrig=unitAlreadyInAddress(suggUnit, r.original.address1||r.original.street, r.original.address2||r.original.street2);
-    
-    var warnHtml='';
-    if(r.suggested&&suggUnit&&!unitInOrig){
-      warnHtml='<div style="background:#fff8e1;border:1px solid #ffd54f;border-radius:10px;padding:12px 14px;margin:0 0 16px 0;font-size:13px;line-height:1.5;color:#5d4037;text-align:left;">'+
-        '<div style="font-weight:700;margin-bottom:4px;color:#e65100;">⚠ Unit number needed</div>'+
-        'Our validator found a unit number for this address. Without it, your package may not arrive.</div>';
-    }
-    
-    var suggestedHtml='';
-    var buttonsHtml='';
-    if(r.suggested){
-      suggestedHtml=
-        '<div style="margin-bottom:14px;display:flex;flex-direction:column;flex:1;">'+
-          '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#1a3c22;margin-bottom:8px;">Suggested correction</div>'+
-          '<div style="background:#f1f8e9;border:2px solid #aed581;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#1a3c22;flex:1;display:flex;flex-direction:column;justify-content:center;min-height:110px;box-sizing:border-box;">'+fmtAddr(r.suggested)+'</div>'+
-        '</div>';
-      buttonsHtml=
-        '<div style="display:flex;gap:10px;margin-bottom:14px;">'+
-          '<button type="button" data-use="'+idx+'" style="flex:1;padding:11px 16px;background:#1a3c22;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Use suggested</button>'+
-          '<button type="button" data-keep="'+idx+'" style="flex:1;padding:11px 16px;background:#fff;color:#1a3c22;border:2px solid #1a3c22;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Keep mine</button>'+
-        '</div>';
-    }
-    
-    var yoursHtml=
-      '<div style="display:flex;flex-direction:column;flex:1;">'+
-        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#666;margin-bottom:8px;">'+(r.suggested?'Your entry':'Address')+'</div>'+
-        '<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#333;flex:1;display:flex;flex-direction:column;justify-content:center;min-height:110px;box-sizing:border-box;">'+fmtAddr(r.original)+'</div>'+
-      '</div>';
-    
-    return ''+
-    '<div style="flex:1;min-width:260px;max-width:100%;display:flex;flex-direction:column;">'+
-      '<div style="text-align:center;margin-bottom:18px;">'+
-        '<div style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;letter-spacing:0.3px;">'+label+'</div>'+
-      '</div>'+
-      warnHtml+suggestedHtml+buttonsHtml+yoursHtml+
-    '</div>';
+  // Build address cards - TRUE GRID for perfect alignment
+  // Structure: each row is a grid row spanning all columns
+  var nCols = results.length;
+  var isMobileGrid = window.innerWidth < 640;
+  
+  // Helper to build a cell
+  var cell = function(html, extraStyle){
+    return '<div style="'+(extraStyle||'')+'">'+html+'</div>';
+  };
+  
+  // Row 1: Address type labels (Billing / Shipping)
+  var labelRow = results.map(function(r){
+    var label = r.kind==='bill' ? 'Billing address' : 'Shipping address';
+    return cell('<div style="text-align:center;"><span style="display:inline-block;background:#1a3c22;color:#fff;font-size:12px;font-weight:700;padding:6px 18px;border-radius:20px;">'+label+'</span></div>');
   }).join('');
   
-  var isMobile=window.innerWidth<640;
-  var cardsStyle=isMobile?
-    'display:flex;flex-direction:column;gap:24px;':
-    'display:flex;gap:24px;justify-content:center;align-items:flex-start;';
+  // Row 2: "Suggested correction" labels
+  var suggLabelRow = results.map(function(r){
+    return cell(r.suggested ? '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#1a3c22;">Suggested correction</div>' : '');
+  }).join('');
+  
+  // Row 3: Suggested boxes (equal height via grid)
+  var suggBoxRow = results.map(function(r){
+    if(!r.suggested) return cell('');
+    return cell('<div style="background:#f1f8e9;border:2px solid #aed581;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#1a3c22;height:100%;box-sizing:border-box;">'+fmtAddr(r.suggested)+'</div>', 'height:100%;');
+  }).join('');
+  
+  // Row 4: Buttons (fixed height, uniform)
+  var btnRow = results.map(function(r, idx){
+    if(!r.suggested) return cell('');
+    return cell(
+      '<div style="display:flex;gap:8px;height:48px;">'+
+        '<button type="button" data-use="'+idx+'" style="flex:1;padding:8px;background:#fff;color:#1a3c22;border:2px solid #1a3c22;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;">Use suggested</button>'+
+        '<button type="button" data-keep="'+idx+'" style="flex:1;padding:8px;background:#1a3c22;color:#fff;border:2px solid #1a3c22;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;">✓ Keeping mine</button>'+
+      '</div>', 'height:100%;'
+    );
+  }).join('');
+  
+  // Row 5: "Your entry" labels
+  var yoursLabelRow = results.map(function(r){
+    return cell('<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#666;">'+(r.suggested?'Your entry':'Address')+'</div>');
+  }).join('');
+  
+  // Row 6: Your entry boxes (equal height via grid)
+  var yoursBoxRow = results.map(function(r){
+    return cell('<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;color:#333;height:100%;box-sizing:border-box;">'+fmtAddr(r.original)+'</div>', 'height:100%;');
+  }).join('');
+  
+  // Row 7: Unit warnings (if any)
+  var warnRow = results.map(function(r){
+    var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
+    var unitInOrig=unitAlreadyInAddress(suggUnit, r.original.address1||r.original.street, r.original.address2||r.original.street2);
+    if(r.suggested&&suggUnit&&!unitInOrig){
+      return cell('<div style="background:#fff8e1;border:1px solid #ffd54f;border-radius:8px;padding:10px;font-size:12px;line-height:1.4;color:#5d4037;"><strong>⚠ Unit needed:</strong> Without it, your package may not arrive.</div>');
+    }
+    return cell('');
+  }).join('');
+  
+  var gridStyle = isMobileGrid ?
+    'display:grid;grid-template-columns:1fr;gap:12px;' :
+    'display:grid;grid-template-columns:repeat('+nCols+',1fr);gap:16px 20px;align-items:stretch;';
+  
+  var cards = '<div style="'+gridStyle+'">' + labelRow + suggLabelRow + suggBoxRow + btnRow + yoursLabelRow + yoursBoxRow + warnRow + '</div>';
   
   root.innerHTML=
   '<div class="bsr-val-modal-overlay" id="val-overlay">'+
@@ -361,7 +375,7 @@ function showValidationModal(results, onDone){
         '</p>'+
       '</div>'+
       '<div style="height:1px;background:#e8e4d8;margin:20px 0;"></div>'+
-      '<div style="'+cardsStyle+'">'+cards+'</div>'+
+      cards+
       '<div style="height:1px;background:#e8e4d8;margin:24px 0 20px 0;"></div>'+
       '<div style="text-align:center;">'+
         '<button type="button" id="val-continue-btn" style="padding:12px 36px;background:#1a3c22;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Continue to payment →</button>'+
