@@ -1,6 +1,6 @@
 {
-  "versionCode": 4,
-  "versionName": "1.3",
-  "url": "https://raw.githubusercontent.com/bayshorerelicsllc/storefront/main/boone/boone-1.3.apk",
-  "notes": "Fixes Boone not appearing in the phone's default-assistant list, and makes update checks always get a fresh answer."
+  "versionCode": 5,
+  "versionName": "1.4",
+  "url": "https://raw.githubusercontent.com/bayshorerelicsllc/storefront/main/boone/boone-1.4.apk",
+  "notes": "Boone's launcher icon is now the Muse avatar (Jolly)."
 }
