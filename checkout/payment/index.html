@@ -38,6 +38,7 @@
 </main>
 <div id="bsr-footer"></div>
 <script>
+document.addEventListener('DOMContentLoaded',function(){
 (function(){
 if(window.BSR&&BSR.init)BSR.init();
 var root=document.getElementById('payment-root');
@@ -429,6 +430,7 @@ function onExpressConfirm(event){
   }).catch(function(e){stripeMsg(String((e&&e.message)||e));});
 }
 })();
+});
 </script>
 </body>
 </html>
