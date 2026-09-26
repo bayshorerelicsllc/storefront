@@ -141,7 +141,7 @@
       BSR.api(apiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(getPayload()),
+        body: JSON.stringify(pl),
       }).then(function (j) {
         if (timedOut) return;
         clearTimeout(timer);
