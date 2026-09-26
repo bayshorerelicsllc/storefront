@@ -813,10 +813,8 @@ function initAddressPickers() {
           addrLabel(a).replace(/</g,'&lt;') + '</option>';
       }).join('');
     };
-    document.getElementById('ship-addr-picker').innerHTML =
-      '<div class="field"><label for="ship-saved">Saved addresses</label>' +
-      '<select id="ship-saved" class="input">' + opts(defShip && defShip.id) + '</select></div>';
-    document.getElementById('bill-addr-picker').innerHTML =
+    var billPicker = document.getElementById('bill-addr-picker');
+    if (billPicker) billPicker.innerHTML =
       '<div class="field"><label for="bill-saved">Saved addresses</label>' +
       '<select id="bill-saved" class="input">' + opts(defBill && defBill.id) + '</select></div>';
     // (Shipping moved to separate page - skip ship picker hide logic)
