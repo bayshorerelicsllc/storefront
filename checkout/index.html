@@ -127,9 +127,13 @@ sumLines.innerHTML='<p>Loading…</p>';
     all.forEach(function(p){bySlug[p.slug]=p;});
     var t=0,html='';
     cart.forEach(function(slug){
-      var p=bySlug[slug]||{slug:slug,title:slug,price_cents:0};
+      var p=bySlug[slug]||{slug:slug,title:slug,price_cents:0,image:''};
       var cents=p.price_cents||0;t+=cents;
-      html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>'+BSR.esc(p.title||p.slug)+'</span><span>'+BSR.money(cents)+'</span></div>';
+      var img=p.image?'<img src="'+BSR.esc(p.image)+'" alt="'+BSR.esc(p.title||p.slug)+'" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0;">':'<div style="width:60px;height:60px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#999;">No image</div>';
+      html+='<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #eee;align-items:center;">'+img+
+        '<div style="flex:1;min-width:0;"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+BSR.esc(p.title||p.slug)+'</div>'+
+        '<div style="font-size:12px;color:#666;">Qty 1 · '+BSR.esc(p.slug)+'</div></div>'+
+        '<div style="font-weight:600;white-space:nowrap;">'+BSR.money(cents)+'</div></div>';
     });
     sumLines.innerHTML=html;
     document.getElementById('sum-total').textContent=BSR.money(t);
