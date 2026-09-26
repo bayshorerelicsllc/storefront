@@ -309,7 +309,7 @@ function showValidationModal(results, onDone){
   var cols=displayResults.map(function(r, idx){
     var kindLabel;
     if(sameAddr){kindLabel='<span class="val-kind">Bill to</span> <span class="val-kind">Ship to</span>';}
-    else{kindLabel='<span class="val-kind">'+(r.kind==='bill'?'Bill to':'Ship to')+'</span>';}
+    else{kindLabel='<div style="text-align:center;"><span class="val-kind">'+(r.kind==='bill'?'Bill to':'Ship to')+'</span></div>';}
     var unitWarning='';
     var suggUnit=(r.suggested&&r.suggested.address2?r.suggested.address2:'').trim();
     var unitInOrig=unitAlreadyInAddress(suggUnit, r.original.address1||r.original.street, r.original.address2||r.original.street2);
@@ -319,14 +319,14 @@ function showValidationModal(results, onDone){
     }
     var suggestedHtml='';
     if(r.suggested){
-      suggestedHtml='<div class="val-addr" style="margin:0 0 12px 0;"><strong>Suggested:</strong><br>'+fmtAddr(r.suggested)+'</div>'+
-      '<div class="val-choice" style="display:flex;gap:8px;margin:0 0 12px 0;">'+
+      suggestedHtml='<div class="val-addr" style="margin:0 0 12px 0;text-align:left;width:100%;box-sizing:border-box;"><strong>Suggested:</strong><br>'+fmtAddr(r.suggested)+'</div>'+
+      '<div class="val-choice" style="display:flex;gap:8px;margin:0 0 12px 0;justify-content:center;width:100%;">'+
       '<button type="button" class="val-use" data-use="'+idx+'" style="flex:1;">Use suggested</button>'+
       '<button type="button" class="val-keep" data-keep="'+idx+'" style="flex:1;">Keep mine</button></div>';
     }
-    var yoursHtml='<div class="val-addr" style="margin:0;"><strong>'+(r.suggested?'Yours:':'Address:')+'</strong><br>'+fmtAddr(r.original)+'</div>';
-    return '<div data-idx="'+idx+'" style="flex:1;min-width:0;display:flex;flex-direction:column;">'+
-      '<div style="margin-bottom:12px;">'+kindLabel+'</div>'+
+    var yoursHtml='<div class="val-addr" style="margin:0;text-align:left;width:100%;box-sizing:border-box;"><strong>'+(r.suggested?'Yours:':'Address:')+'</strong><br>'+fmtAddr(r.original)+'</div>';
+    return '<div data-idx="'+idx+'" style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;">'+
+      '<div style="margin-bottom:12px;width:100%;">'+kindLabel+'</div>'+
       unitWarning+suggestedHtml+yoursHtml+
       '</div>';
   }).join('');
@@ -339,8 +339,8 @@ function showValidationModal(results, onDone){
     '<div class="bsr-val-modal-overlay" id="val-overlay">'+
     '<div class="bsr-val-modal" style="max-width:720px;max-height:90vh;overflow-y:auto;position:relative;">'+
     '<button type="button" id="val-close-btn" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">&times;</button>'+
-    '<h3>Confirm your addresses</h3>'+
-    '<p>'+(hasSuggestions?'Our address validator suggests corrections below. Review':'Please confirm')+' your billing and shipping addresses:</p>'+
+    '<h3 style="text-align:center;margin-bottom:8px;">Confirm your addresses</h3>'+
+    '<p style="text-align:center;margin-bottom:20px;">'+(hasSuggestions?'Our address validator suggests corrections below. Review':'Please confirm')+' your billing and shipping addresses:</p>'+
     '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+cols+'</div>'+
     '<div class="val-actions" style="margin-top:16px;display:flex;justify-content:center;">'+
     '<button type="button" class="val-use" id="val-continue-btn" style="padding:12px 32px;min-width:280px;">Continue to payment →</button>'+
