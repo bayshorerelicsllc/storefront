@@ -140,8 +140,7 @@
       }, 20000);
       BSR.api(apiPath, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pl),
+        body: pl,
       }).then(function (j) {
         if (timedOut) return;
         clearTimeout(timer);
