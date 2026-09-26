@@ -1,277 +1,73 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Checkout — Bay Shore Relics LLC</title>
-<link rel="icon" href="/assets/img/logo-icon.png">
-<link rel="stylesheet" href="/assets/css/theme.css?v=northwoods9">
-<script src="/assets/js/bsr.js?v=acceptbadge1" defer></script>
-<script src="/assets/js/addr-validate.js?v=20260925m"></script>
+<link rel="stylesheet" href="/assets/css/theme.css">
 <style>
-.checkout-grid {
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 32px;
-  align-items: start;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-.checkout-form { min-width: 0; }
-.checkout-summary { min-width: 0; }
-@media (max-width: 900px) {
-  .checkout-grid { grid-template-columns: 1fr; }
-}
-.form-section {
-  background: var(--card, #fff);
-  border: 1px solid var(--line, #e2d9c3);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 20px;
-}
-.form-section h2 {
-  margin: 0 0 16px 0;
-  font-size: 1.2rem;
-}
-.form-row { margin-bottom: 14px; }
-.form-row label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-.form-row input, .form-row select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--line, #ddd);
-  border-radius: 8px;
-  font-size: 1rem;
-  box-sizing: border-box;
-}
-.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.btn-continue {
-  width: 100%;
-  padding: 16px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  background: #2d5016;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-}
-.btn-continue:hover { background: #1e3a0f; }
-.summary-card {
-  background: var(--card, #fff);
-  border: 1px solid var(--line, #e2d9c3);
-  border-radius: 12px;
-  padding: 24px;
-  position: sticky;
-  top: 20px;
-}
-.summary-card h2 { margin: 0 0 16px 0; font-size: 1.2rem; }
-.summary-line {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line, #eee);
-}
-.summary-total {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 0 0 0;
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-.error { color: #c00; font-size: 0.9rem; margin-top: 8px; display: none; }
+.checkout-wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+.checkout-grid { display: grid; grid-template-columns: 1fr 360px; gap: 30px; }
+.card { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 22px; margin-bottom: 18px; }
+.card h2 { margin-top: 0; }
+label { display: block; margin: 10px 0 4px; font-weight: 600; }
+input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn { width: 100%; padding: 15px; background: #2d5016; color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
+.summary { position: sticky; top: 20px; }
+.line { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
+.total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.15rem; padding-top: 10px; }
+@media (max-width: 800px) { .checkout-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-<div id="bsr-header"></div>
-<main id="content">
-<div class="wrap">
-<div class="page-head">
+<div class="checkout-wrap">
 <h1>Checkout</h1>
-<p>Each slide is a single physical item, sold once.</p>
-</div>
-
 <div class="checkout-grid">
-  <!-- LEFT: Form -->
-  <div class="checkout-form">
-    <div class="form-section">
-      <h2><span class="step-num">1</span> Contact</h2>
-      <div class="form-row">
-        <label for="f-email">Email</label>
-        <input type="email" id="f-email" autocomplete="email">
-      </div>
-      <div class="form-row">
-        <label for="f-name">Full name</label>
-        <input type="text" id="f-name" autocomplete="name">
-      </div>
-      <div class="form-row">
-        <label for="f-phone">Phone</label>
-        <input type="tel" id="f-phone" autocomplete="tel">
-      </div>
-    </div>
-
-    <div class="form-section">
-      <h2><span class="step-num">2</span> Billing address</h2>
-      <div class="form-row">
-        <label for="f-bill-name">Full name</label>
-        <input type="text" id="f-bill-name">
-      </div>
-      <div class="form-row">
-        <label for="f-bill-line1">Street address</label>
-        <input type="text" id="f-bill-line1">
-      </div>
-      <div class="form-row-2">
-        <div class="form-row">
-          <label for="f-bill-city">City</label>
-          <input type="text" id="f-bill-city">
-        </div>
-        <div class="form-row">
-          <label for="f-bill-state">State</label>
-          <input type="text" id="f-bill-state">
-        </div>
-      </div>
-      <div class="form-row-2">
-        <div class="form-row">
-          <label for="f-bill-postal">ZIP</label>
-          <input type="text" id="f-bill-postal">
-        </div>
-        <div class="form-row">
-          <label for="f-bill-country">Country</label>
-          <select id="f-bill-country"><option value="US">United States</option></select>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <h2><span class="step-num">3</span> Shipping address</h2>
-      <div class="form-row">
-        <label><input type="checkbox" id="f-ship-same" checked> Same as billing</label>
-      </div>
-      <div id="ship-fields" style="display:none">
-        <div class="form-row">
-          <label for="f-line1">Street address</label>
-          <input type="text" id="f-line1">
-        </div>
-        <div class="form-row-2">
-          <div class="form-row">
-            <label for="f-city">City</label>
-            <input type="text" id="f-city">
-          </div>
-          <div class="form-row">
-            <label for="f-state">State</label>
-            <input type="text" id="f-state">
-          </div>
-        </div>
-        <div class="form-row-2">
-          <div class="form-row">
-            <label for="f-postal">ZIP</label>
-            <input type="text" id="f-postal">
-          </div>
-          <div class="form-row">
-            <label for="f-country">Country</label>
-            <select id="f-country"><option value="US">United States</option></select>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-section" style="text-align:center">
-      <button type="button" id="continue-to-payment" class="btn-continue">Continue to payment →</button>
-      <div class="error" id="continue-err"></div>
-    </div>
-  </div>
-
-  <!-- RIGHT: Order Summary -->
-  <div class="checkout-summary">
-    <div class="summary-card">
-      <h2>Order summary</h2>
-      <div id="sum-lines"></div>
-      <div id="sum-rows"></div>
-      <div class="summary-total">
-        <span>Total</span>
-        <span id="sum-total">$0.00</span>
-      </div>
-    </div>
-  </div>
+<div>
+<div class="card"><h2>1. Contact</h2>
+<label>Email <input type="email" id="email"></label>
+<label>Name <input type="text" id="name"></label>
+<label>Phone <input type="tel" id="phone"></label>
 </div>
-
+<div class="card"><h2>2. Billing Address</h2>
+<label>Name <input type="text" id="b_name"></label>
+<label>Street <input type="text" id="b_street"></label>
+<div class="row2"><label>City <input type="text" id="b_city"></label><label>State <input type="text" id="b_state"></label></div>
+<div class="row2"><label>ZIP <input type="text" id="b_zip"></label><label>Country <input type="text" id="b_country" value="US"></label></div>
 </div>
-</main>
-<div id="bsr-footer"></div>
-
+<div class="card"><h2>3. Shipping Address</h2>
+<label><input type="checkbox" id="same" checked style="width:auto"> Same as billing</label>
+<div id="sfields" style="display:none">
+<label>Street <input type="text" id="s_street"></label>
+<div class="row2"><label>City <input type="text" id="s_city"></label><label>State <input type="text" id="s_state"></label></div>
+<div class="row2"><label>ZIP <input type="text" id="s_zip"></label><label>Country <input type="text" id="s_country" value="US"></label></div>
+</div>
+</div>
+<div class="card"><button class="btn" id="go">Continue to payment →</button><p id="err" style="color:red"></p></div>
+</div>
+<div><div class="card summary"><h2>Order Summary</h2><div id="lines"></div><div class="total"><span>Total</span><span id="tot">$0.00</span></div></div></div>
+</div>
+</div>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  var cart = [];
-  try {
-    cart = JSON.parse(localStorage.getItem('bsr-cart') || '[]');
-  } catch(e) {}
-  
-  var sumLines = document.getElementById('sum-lines');
-  var sumTotal = document.getElementById('sum-total');
-  var total = 0;
-  
-  if (cart.length === 0) {
-    sumLines.innerHTML = '<p>Your cart is empty.</p>';
-  } else {
-    var html = '';
-    cart.forEach(function(item) {
-      var price = parseFloat(item.price || 0);
-      total += price;
-      html += '<div class="summary-line"><span>' + (item.title || item.slug) + ' × ' + (item.qty || 1) + '</span><span>$' + price.toFixed(2) + '</span></div>';
-    });
-    sumLines.innerHTML = html;
-  }
-  sumTotal.textContent = '$' + total.toFixed(2);
-  
-  document.getElementById('f-ship-same').addEventListener('change', function() {
-    document.getElementById('ship-fields').style.display = this.checked ? 'none' : 'block';
-  });
-  
-  document.getElementById('continue-to-payment').addEventListener('click', function() {
-    var errEl = document.getElementById('continue-err');
-    errEl.style.display = 'none';
-    
-    if (cart.length === 0) {
-      errEl.textContent = 'Your cart is empty.';
-      errEl.style.display = 'block';
-      return;
-    }
-    
-    var email = document.getElementById('f-email').value.trim();
-    if (!email) {
-      errEl.textContent = 'Please enter your email.';
-      errEl.style.display = 'block';
-      return;
-    }
-    
-    var sameAsBilling = document.getElementById('f-ship-same').checked;
-    
-    var payload = {
-      slugs: cart.map(function(i) { return i.slug; }),
-      email: email,
-      name: document.getElementById('f-name').value.trim(),
-      phone: document.getElementById('f-phone').value.trim(),
-      billName: document.getElementById('f-bill-name').value.trim(),
-      billLine1: document.getElementById('f-bill-line1').value.trim(),
-      billCity: document.getElementById('f-bill-city').value.trim(),
-      billState: document.getElementById('f-bill-state').value.trim(),
-      billPostal: document.getElementById('f-bill-postal').value.trim(),
-      billCountry: document.getElementById('f-bill-country').value,
-      shipLine1: sameAsBilling ? document.getElementById('f-bill-line1').value.trim() : document.getElementById('f-line1').value.trim(),
-      shipCity: sameAsBilling ? document.getElementById('f-bill-city').value.trim() : document.getElementById('f-city').value.trim(),
-      shipState: sameAsBilling ? document.getElementById('f-bill-state').value.trim() : document.getElementById('f-state').value.trim(),
-      shipPostal: sameAsBilling ? document.getElementById('f-bill-postal').value.trim() : document.getElementById('f-postal').value.trim(),
-      shipCountry: sameAsBilling ? document.getElementById('f-bill-country').value : document.getElementById('f-country').value
-    };
-    
-    sessionStorage.setItem('bsr-checkout-payload', JSON.stringify(payload));
-    window.location.href = '/checkout/payment/';
-  });
-});
+var cart=[]; try{cart=JSON.parse(localStorage.getItem('bsr-cart')||'[]');}catch(e){}
+var html='',t=0;
+cart.forEach(function(i){var p=parseFloat(i.price||0);t+=p;html+='<div class="line"><span>'+(i.title||i.slug)+'</span><span>$'+p.toFixed(2)+'</span></div>';});
+document.getElementById('lines').innerHTML=html||'<p>Cart empty</p>';
+document.getElementById('tot').textContent='$'+t.toFixed(2);
+document.getElementById('same').onchange=function(){document.getElementById('sfields').style.display=this.checked?'none':'block';};
+document.getElementById('go').onclick=function(){
+if(!cart.length){document.getElementById('err').textContent='Cart is empty';return;}
+var email=document.getElementById('email').value.trim();
+if(!email){document.getElementById('err').textContent='Enter email';return;}
+var same=document.getElementById('same').checked;
+var p={slugs:cart.map(function(i){return i.slug;}),email:email,name:document.getElementById('name').value,phone:document.getElementById('phone').value,
+bill:{name:document.getElementById('b_name').value,street:document.getElementById('b_street').value,city:document.getElementById('b_city').value,state:document.getElementById('b_state').value,zip:document.getElementById('b_zip').value,country:document.getElementById('b_country').value},
+ship:same?null:{street:document.getElementById('s_street').value,city:document.getElementById('s_city').value,state:document.getElementById('s_state').value,zip:document.getElementById('s_zip').value,country:document.getElementById('s_country').value}};
+if(same){p.ship=p.bill;}
+sessionStorage.setItem('bsr-checkout-payload',JSON.stringify(p));
+location.href='/checkout/payment/';
+};
 </script>
 </body>
 </html>
