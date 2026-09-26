@@ -8,6 +8,18 @@
 <link rel="stylesheet" href="/assets/css/theme.css?v=northwoods9">
 <script src="/assets/js/bsr.js?v=acceptbadge1" defer></script>
 <script src="/assets/js/addr-validate.js?v=20260925m" defer></script>
+
+<style>
+.bsr-val-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;}
+.bsr-val-modal{background:#fff;border-radius:12px;max-width:480px;width:100%;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,0.3);}
+.bsr-val-modal h3{margin:0 0 8px 0;font-size:1.2rem;color:#1a3c22;}
+.bsr-val-modal .val-kind{display:inline-block;background:#1a3c22;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:12px;}
+.bsr-val-modal .val-addr{background:#f8f6f0;border:1px solid #e0dccf;border-radius:8px;padding:12px;margin:12px 0;font-size:14px;line-height:1.5;}
+.bsr-val-modal .val-actions{display:flex;gap:10px;margin-top:16px;}
+.bsr-val-modal .val-actions button{flex:1;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;border:none;}
+.bsr-val-modal .val-use{background:#1a3c22;color:#fff;}
+.bsr-val-modal .val-keep{background:#f0f0f0;color:#333;}
+</style>
 </head>
 <body>
 <div id="bsr-header"></div>
@@ -182,6 +194,66 @@ function clearAllFieldErrs(){
   for(var j=0;j<inputs.length;j++) inputs[j].style.borderColor='';
 }
 
+
+function showValidationModal(kind, original, suggested, onUse, onKeep){
+  var root=document.getElementById('bsr-val-modal-root');
+  var kindLabel=kind==='bill'?'Bill to':'Ship to';
+  var fmtAddr=function(a){
+    return [a.address1||a.street, a.address2||a.street2, (a.city||'')+', '+(a.state||'')+' '+(a.postal||a.zip), a.country].filter(Boolean).join('<br>');
+  };
+  root.innerHTML=
+    '<div class="bsr-val-modal-overlay">'+
+    '<div class="bsr-val-modal">'+
+    '<div class="val-kind">'+kindLabel+'</div>'+
+    '<h3>Verify your address</h3>'+
+    '<p>Shippo suggests a correction to the '+kindLabel.toLowerCase()+' address:</p>'+
+    '<div class="val-addr"><strong>Suggested:</strong><br>'+fmtAddr(suggested)+'</div>'+
+    '<div class="val-addr"><strong>Yours:</strong><br>'+fmtAddr(original)+'</div>'+
+    '<div class="val-actions">'+
+    '<button type="button" class="val-use" id="val-use-btn">Use suggested</button>'+
+    '<button type="button" class="val-keep" id="val-keep-btn">Keep mine</button>'+
+    '</div></div></div>';
+  document.getElementById('val-use-btn').addEventListener('click',function(){
+    root.innerHTML='';onUse();
+  });
+  document.getElementById('val-keep-btn').addEventListener('click',function(){
+    root.innerHTML='';onKeep();
+  });
+}
+function validateAddressWithModal(kind, payload, callback){
+  if(!window.BSRAddrValidate||!BSRAddrValidate.validate){callback(payload);return;}
+  BSRAddrValidate.validate(payload).then(function(j){
+    if(!j||!j.ok){callback(payload);return;}
+    var corrected=j.address||null;
+    var hasSuggestion=(j.corrected||(j.corrections&&j.corrections.length));
+    if(!hasSuggestion||!corrected){callback(payload);return;}
+    // Check if actually different
+    var diff=false;
+    ['street','city','state','zip'].forEach(function(k){
+      var ck=k==='street'?'address1':(k==='zip'?'postal':k);
+      if(corrected[k]&&String(corrected[k]).toLowerCase()!==String(payload[ck]||'').toLowerCase()) diff=true;
+    });
+    if(!diff){callback(payload);return;}
+    // Show modal
+    var suggestedAddr={address1:corrected.street,address2:corrected.street2,city:corrected.city,state:corrected.state,postal:corrected.zip,country:corrected.country||payload.country};
+    showValidationModal(kind, payload, suggestedAddr,
+      function(){ // Use suggested
+        var out={};for(var k in payload) out[k]=payload[k];
+        if(corrected.street) out.address1=corrected.street;
+        if(corrected.street2) out.address2=corrected.street2;
+        if(corrected.city) out.city=corrected.city;
+        if(corrected.state) out.state=corrected.state;
+        if(corrected.zip) out.postal=corrected.zip;
+        if(corrected.country) out.country=corrected.country;
+        callback(out);
+      },
+      function(){ // Keep mine
+        callback(payload);
+      }
+    );
+  }).catch(function(){callback(payload);});
+}
+
 function validateRequiredFields(){
   var err=document.getElementById('continue-err');
   clearAllFieldErrs();
@@ -238,7 +310,7 @@ var err=document.getElementById('continue-err');err.style.display='none';
 if(!cart.length){err.textContent='Cart is empty';err.style.display='block';return;}
 if(!validateRequiredFields()){return;}
 // Shippo address validation before proceeding
-if (window.BSRAddrValidate && BSRAddrValidate.checkAndConfirm) {
+if (window.BSRAddrValidate && BSRAddrValidate.validate) {
   btn.disabled=true; btn.textContent='Validating addresses…';
   var resetBtn=function(){btn.disabled=false;btn.textContent='Continue to payment →';};
   var billSection=document.getElementById('bill-section');
@@ -272,24 +344,19 @@ if (window.BSRAddrValidate && BSRAddrValidate.checkAndConfirm) {
     proceedToPayment();
   };
   var validateBill=function(){
-    BSRAddrValidate.checkAndConfirm(billSection, billPayload, function(fixedBill){
+    validateAddressWithModal('bill', billPayload, function(fixedBill){
       writeBack(fixedBill, 'f-bill-');
-      // Update payload with corrected values
-      if(fixedBill){
-        billPayload.address1=fixedBill.address1||billPayload.address1;
-        billPayload.city=fixedBill.city||billPayload.city;
-      }
       doProceed();
-    }, resetBtn);
+    });
   };
   if(same){
     // Only validate billing (shipping same as billing)
     validateBill();
   } else {
-    BSRAddrValidate.checkAndConfirm(shipSection, shipPayload, function(fixedShip){
+    validateAddressWithModal('ship', shipPayload, function(fixedShip){
       writeBack(fixedShip, 'f-');
       validateBill();
-    }, resetBtn);
+    });
   }
   return; // Don't proceed yet, wait for validation
 }
@@ -388,5 +455,5 @@ function initAddressPickers() {
 }
 
 </script>
-</body>
+<div id="bsr-val-modal-root"></div></body>
 </html>
